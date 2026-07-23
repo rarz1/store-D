@@ -367,10 +367,7 @@
   max-height: 80vh;
 }
 
-.garment-mock__custom svg * {
-  fill: currentColor !important;
-  stroke: currentColor !important;
-}
+
 
 /* ==============================
    CONTROL GROUPS
