@@ -1,38 +1,28 @@
 import { useState, useEffect, useCallback } from "react";
-
-const slides = [
-  {
-    title: "NUEVA\nCOLECCIÓN",
-    subtitle: "DISEÑO PROPIO · ALGODÓN ORGÁNICO",
-    gradient: "linear-gradient(135deg, #131518 0%, #1e3a5f 50%, #131518 100%)",
-  },
-  {
-    title: "TU ESTILO\nTU FIRMA",
-    subtitle: "ESTAMPADOS EXCLUSIVOS · EDICIÓN LIMITADA",
-    gradient: "linear-gradient(135deg, #131518 0%, #5f1e2e 50%, #131518 100%)",
-  },
-  {
-    title: "PUREZA\nY FORMA",
-    subtitle: "PRENDAS OVERSIZE · CORTE PERFECTO",
-    gradient: "linear-gradient(135deg, #131518 0%, #2e5f1e 50%, #131518 100%)",
-  },
-];
+import { getSlides, type CarouselSlide } from "../lib/settings";
 
 export default function Carousel() {
+  const [slides, setSlides] = useState<CarouselSlide[]>([]);
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
+  useEffect(() => {
+    getSlides().then(setSlides);
+  }, []);
+
   const next = useCallback(() => {
     setCurrent((prev) => (prev + 1) % slides.length);
-  }, []);
+  }, [slides.length]);
 
   const goTo = (index: number) => setCurrent(index);
 
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || slides.length === 0) return;
     const timer = setInterval(next, 5000);
     return () => clearInterval(timer);
-  }, [isPaused, next]);
+  }, [isPaused, next, slides.length]);
+
+  if (slides.length === 0) return null;
 
   return (
     <section
@@ -42,10 +32,23 @@ export default function Carousel() {
     >
       <div className="carousel__track" style={{ transform: `translateX(-${current * 100}%)` }}>
         {slides.map((slide, i) => (
-          <div key={i} className="carousel__slide" style={{ background: slide.gradient }}>
+          <div
+            key={slide.id}
+            className={`carousel__slide carousel__slide--${slide.layout}`}
+            style={slide.image_1_url ? {
+              backgroundImage: slide.layout === "double"
+                ? `url(${slide.image_1_url}), url(${slide.image_2_url})`
+                : `url(${slide.image_1_url})`,
+              backgroundSize: slide.layout === "double" ? "50% 100%, 50% 100%" : "cover",
+              backgroundPosition: slide.layout === "double" ? "left center, right center" : "center",
+              backgroundRepeat: "no-repeat",
+            } : {
+              background: `linear-gradient(135deg, #131518 0%, #1e3a5f 50%, #131518 100%)`,
+            }}
+          >
             <div className="carousel__content">
               <h2 className="carousel__title">
-                {slide.title.split("\n").map((line, j) => (
+                {slide.text_overlay.split("\\n").map((line, j) => (
                   <span key={j}>
                     {line}
                     {j === 0 && <br />}
@@ -57,7 +60,6 @@ export default function Carousel() {
           </div>
         ))}
       </div>
-
       <div className="carousel__dots">
         {slides.map((_, i) => (
           <button

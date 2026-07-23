@@ -95,3 +95,66 @@ create policy "Admin delete" on garment_sizes for delete using (auth.role() = 'a
 create policy "Admin insert" on designs for insert with check (auth.role() = 'authenticated');
 create policy "Admin update" on designs for update using (auth.role() = 'authenticated');
 create policy "Admin delete" on designs for delete using (auth.role() = 'authenticated');
+
+-- ============================================
+-- SITE SETTINGS
+-- ============================================
+
+create table site_settings (
+  id bigint primary key generated always as identity,
+  store_title text not null default '',
+  store_subtitle text not null default '',
+  logo_url text not null default '',
+  collections_title text not null default 'COLECCIONES',
+  collections_subtitle text not null default 'Elegí tu prenda y personalizala a tu gusto',
+  color_bg text not null default '#131518',
+  color_surface text not null default '#1c1f24',
+  color_text text not null default '#f2f4f7',
+  color_accent text not null default '#f97316',
+  updated_at timestamptz default now()
+);
+
+create table carousel_slides (
+  id bigint primary key generated always as identity,
+  sort_order int not null default 0,
+  layout text not null default 'full' check (layout in ('full', 'double')),
+  image_1_url text not null default '',
+  image_2_url text default '',
+  text_overlay text not null default '',
+  subtitle text not null default ''
+);
+
+-- Seed default settings
+insert into site_settings (id, store_title, store_subtitle) values
+  (1, 'STORE', 'DISEÑO PROPIO · ALGODÓN ORGÁNICO');
+
+-- Seed default carousel slides
+insert into carousel_slides (sort_order, layout, text_overlay, subtitle) values
+  (1, 'full', 'NUEVA\nCOLECCIÓN', 'DISEÑO PROPIO · ALGODÓN ORGÁNICO'),
+  (2, 'double', 'TU ESTILO\nTU FIRMA', 'ESTAMPADOS EXCLUSIVOS · EDICIÓN LIMITADA'),
+  (3, 'full', 'PUREZA\nY FORMA', 'PRENDAS OVERSIZE · CORTE PERFECTO'),
+  (4, 'double', 'EDICIÓN\nLIMITADA', 'SOLO POR TIEMPO LIMITADO');
+
+alter table site_settings enable row level security;
+alter table carousel_slides enable row level security;
+
+create policy "Public read" on site_settings for select using (true);
+create policy "Admin insert" on site_settings for insert with check (auth.role() = 'authenticated');
+create policy "Admin update" on site_settings for update using (auth.role() = 'authenticated');
+create policy "Admin delete" on site_settings for delete using (auth.role() = 'authenticated');
+
+create policy "Public read" on carousel_slides for select using (true);
+create policy "Admin insert" on carousel_slides for insert with check (auth.role() = 'authenticated');
+create policy "Admin update" on carousel_slides for update using (auth.role() = 'authenticated');
+create policy "Admin delete" on carousel_slides for delete using (auth.role() = 'authenticated');
+
+-- ============================================
+-- STORAGE
+-- ============================================
+
+-- Run this separately in Supabase SQL Editor:
+-- insert into storage.buckets (id, name, public) values ('store-images', 'store-images', true);
+-- create policy "Public read" on storage.objects for select using (bucket_id = 'store-images');
+-- create policy "Admin upload" on storage.objects for insert with check (bucket_id = 'store-images' and auth.role() = 'authenticated');
+-- create policy "Admin update" on storage.objects for update using (bucket_id = 'store-images' and auth.role() = 'authenticated');
+-- create policy "Admin delete" on storage.objects for delete using (bucket_id = 'store-images' and auth.role() = 'authenticated');

@@ -963,3 +963,77 @@
   height: 360px;
   margin: 0 auto;
 }
+
+/* ==============================
+   ADMIN SETTINGS
+   ============================== */
+
+.admin-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+
+.admin-tab {
+  padding: 0.5rem 1rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+
+.admin-tab:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+.admin-tab--active {
+  color: var(--accent);
+  background: rgba(249, 115, 22, 0.1);
+}
+
+.admin-carousel-slide {
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+}
+
+.admin-carousel-slide__title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  margin: 0 0 0.75rem;
+}
+
+.admin-color-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.admin-color-row .admin-label {
+  min-width: 100px;
+  margin: 0;
+}
+
+.admin-color-hex {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.admin-preview-img {
+  display: block;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}

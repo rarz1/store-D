@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Carousel from "../components/Carousel";
 import { supabase, type GarmentRow } from "../lib/supabase";
 import { setMeta } from "../lib/seo";
+import { getSettings, type SiteSettings } from "../lib/settings";
 
 const iconPaths: Record<string, string> = {
   remeras: "M55 120L145 38L195 38L285 120L310 410L260 430L80 430L30 410Z",
@@ -13,9 +14,11 @@ const iconPaths: Record<string, string> = {
 export default function HomePage() {
   const navigate = useNavigate();
   const [garments, setGarments] = useState<GarmentRow[]>([]);
+  const [settings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    getSettings().then(setSiteSettings);
     setMeta({ title: "STORE · Colección", description: "Prendas personalizables. Remeras, pantalones y buzos oversize con diseño propio. Algodón orgánico, edición limitada." });
     supabase.from("garments").select("*").order("id").then(({ data, error }) => {
       if (error) console.error("Error loading garments:", error);
@@ -30,8 +33,8 @@ export default function HomePage() {
 
       <section className="categories">
         <div className="categories__header">
-          <h2 className="categories__title">COLECCIONES</h2>
-          <p className="categories__subtitle">Elegí tu prenda y personalizala a tu gusto</p>
+          <h2 className="categories__title">{settings?.collections_title || "COLECCIONES"}</h2>
+          <p className="categories__subtitle">{settings?.collections_subtitle || "Elegí tu prenda y personalizala a tu gusto"}</p>
         </div>
 
         {loading ? (

@@ -121,6 +121,18 @@ export default function AdminDashboard() {
           </tbody>
         </table>
       </section>
+
+      <section className="admin-section">
+        <div className="admin-section-header">
+          <h2>Configuración</h2>
+        </div>
+        <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginBottom: "0.75rem" }}>
+          Personalizá la tienda, el carrusel y los colores
+        </p>
+        <button className="btn-back" onClick={() => navigate("/admin/settings")}>
+          Abrir configuración
+        </button>
+      </section>
     </div>
   );
 }
