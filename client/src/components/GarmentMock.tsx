@@ -47,7 +47,12 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
   const designColor = isLight(color) ? "#1a1a1a" : "#ffffff";
 
   const mockSvg = side === "back" && svgMockBack ? svgMockBack : svgMock;
-  const coloredMock = mockSvg ? mockSvg.replace(/currentColor/gi, color) : null;
+  const coloredMock = mockSvg
+    ? mockSvg
+        .replace(/\s(width|height)="[^"]*"/g, "")
+        .replace('<svg', `<svg style="color:${color}"`)
+        .replace(/currentColor/gi, color)
+    : null;
 
   const sideDesigns = (placedDesigns ?? []).filter((d) => {
     if (side === "front") return d.position.includes("front");
