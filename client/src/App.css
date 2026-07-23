@@ -353,6 +353,7 @@
 }
 
 .garment-mock__custom {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -361,10 +362,27 @@
   margin: 0 auto;
 }
 
-.garment-mock__custom svg {
+.garment-mock__svg-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background: #fff;
+  border-radius: var(--radius-sm);
+}
+
+.garment-mock__svg-inner svg {
   width: 100%;
   height: auto;
   max-height: 80vh;
+  display: block;
+}
+
+.garment-mock__tint {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: multiply;
+  pointer-events: none;
 }
 
 

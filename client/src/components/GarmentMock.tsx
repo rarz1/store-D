@@ -48,13 +48,7 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
   const designColor = isLight(color) ? "#1a1a1a" : "#ffffff";
 
   const mockSvg = side === "back" && svgMockBack ? svgMockBack : svgMock;
-  const coloredMock = mockSvg
-    ? mockSvg
-        .replace(/\s(width|height)="[^"]*"/g, "")
-        .replace(/\sfill="(?!none)(?!currentColor)[^"]*"/gi, ' fill="currentColor"')
-        .replace('<svg', `<svg style="color:${color}"`)
-        .replace(/currentColor/gi, color)
-    : null;
+  const cleanSvg = mockSvg ? mockSvg.replace(/\s(width|height)="[^"]*"/g, "") : null;
 
   const sideDesigns = (placedDesigns ?? []).filter((d) => {
     if (side === "front") return d.position.includes("front");
@@ -63,11 +57,11 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
 
   return (
     <div className="garment-mock__svg">
-      {coloredMock ? (
-        <div
-          className="garment-mock__custom"
-          dangerouslySetInnerHTML={{ __html: coloredMock }}
-        />
+      {cleanSvg ? (
+        <div className="garment-mock__custom">
+          <div className="garment-mock__svg-inner" dangerouslySetInnerHTML={{ __html: cleanSvg }} />
+          <div className="garment-mock__tint" style={{ backgroundColor: color }} />
+        </div>
       ) : GarmentSVG ? (
         <Suspense fallback={<div className="garment-mock__fallback">...</div>}>
           <GarmentSVG color={color} />
