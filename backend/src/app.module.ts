@@ -23,6 +23,7 @@ import { SeedModule } from './seed/seed.module';
       database: process.env.POSTGRES_DB,
       entities: [Interest, Category, Product, Variant, Media],
       synchronize: true,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     }),
     InterestModule,
     CategoryModule,
