@@ -289,6 +289,24 @@
   justify-content: center;
 }
 
+.mock-duo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.mock-duo .garment-mock {
+  width: 100%;
+  max-width: 280px;
+}
+
+/* hide second mock on mobile, first mock's flip shows on mobile */
+.mock-duo .garment-mock + .garment-mock {
+  display: none;
+}
+
 .controls-section {
   padding: 0 1.25rem 1.5rem;
   display: flex;
@@ -629,7 +647,7 @@
 
   .product-content {
     display: flex;
-    max-width: 1100px;
+    max-width: 1300px;
     margin: 0 auto;
     padding-top: 1rem;
     gap: 1.5rem;
@@ -637,21 +655,37 @@
   }
 
   .mock-section {
-    flex: 0 0 auto;
-    width: 65%;
+    flex: 1;
     padding: 0.5rem 1rem;
     display: flex;
     align-items: flex-start;
     justify-content: center;
+    min-width: 0;
   }
 
-  .garment-mock {
-    max-width: none;
+  .mock-duo {
+    display: flex;
+    gap: 1rem;
     width: 100%;
+    justify-content: center;
+  }
+
+  .mock-duo .garment-mock {
+    flex: 1;
+    max-width: 340px;
+  }
+
+  .mock-duo .garment-mock + .garment-mock {
+    display: flex;
+  }
+
+  .mock-duo .garment-mock__flip {
+    display: none;
   }
 
   .controls-section {
-    flex: 1;
+    width: 280px;
+    flex-shrink: 0;
     padding: 1rem 1rem 1rem 0;
     position: sticky;
     top: 5rem;
@@ -669,20 +703,15 @@
 
 @media (min-width: 1024px) {
   .product-content {
-    max-width: 1300px;
     gap: 2rem;
   }
 
-  .mock-section {
-    width: 65%;
-  }
-
-  .garment-mock {
-    max-width: 750px;
+  .mock-duo .garment-mock {
+    max-width: 380px;
   }
 
   .controls-section {
-    max-width: 380px;
+    width: 320px;
   }
 }
 

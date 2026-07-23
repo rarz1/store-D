@@ -33,6 +33,7 @@ interface Props {
   placedDesigns?: PlacedDesign[];
   side?: Side;
   onToggleSide?: () => void;
+  hideFlip?: boolean;
 }
 
 const positionStyles: Record<Position, React.CSSProperties> = {
@@ -98,7 +99,7 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
 }
 
 export default function GarmentMock(props: Props) {
-  const { onToggleSide } = props;
+  const { onToggleSide, hideFlip } = props;
   const [localSide, setLocalSide] = useState<Side>("front");
   const side = props.side ?? localSide;
 
@@ -107,7 +108,7 @@ export default function GarmentMock(props: Props) {
   return (
     <div className="garment-mock">
       <RenderMock {...props} side={side} />
-      {(props.svgMockBack || props.svgMock) && (
+      {!hideFlip && (props.svgMockBack || props.svgMock) && (
         <button className="garment-mock__flip" onClick={toggle}>
           {side === "front" ? "Ver posterior" : "Ver frente"}
         </button>

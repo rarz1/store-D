@@ -168,18 +168,36 @@ export default function ProductPage() {
 
       <div className="product-content">
         <div className="mock-section">
-          <GarmentMock
-            garmentId={garmentId as string}
-            color={selectedColor}
-            svgMock={garment.svg_mock}
-            svgMockBack={garment.svg_mock_back}
-            placedDesigns={placedDesigns.map((p) => ({
-              variantId: p.variant.id,
-              svgContent: p.variant.svg_content,
-              position: p.position,
-              name: p.variant.name,
-            }))}
-          />
+          <div className="mock-duo">
+            <GarmentMock
+              garmentId={garmentId as string}
+              color={selectedColor}
+              svgMock={garment.svg_mock}
+              svgMockBack={garment.svg_mock_back}
+              placedDesigns={placedDesigns.map((p) => ({
+                variantId: p.variant.id,
+                svgContent: p.variant.svg_content,
+                position: p.position,
+                name: p.variant.name,
+              }))}
+            />
+            {garment.svg_mock_back && (
+              <GarmentMock
+                garmentId={garmentId as string}
+                color={selectedColor}
+                svgMock={garment.svg_mock}
+                svgMockBack={garment.svg_mock_back}
+                placedDesigns={placedDesigns.map((p) => ({
+                  variantId: p.variant.id,
+                  svgContent: p.variant.svg_content,
+                  position: p.position,
+                  name: p.variant.name,
+                }))}
+                side="back"
+                hideFlip
+              />
+            )}
+          </div>
         </div>
 
         <div className="controls-section">
