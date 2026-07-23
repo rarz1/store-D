@@ -255,10 +255,24 @@
 }
 
 .product-header__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.3rem;
   font-family: var(--font-display);
-  font-size: 1.125rem;
-  color: var(--accent);
+  font-size: 0.9rem;
+  color: var(--text-muted);
   letter-spacing: 0.02em;
+}
+
+.product-header__price strong {
+  color: var(--accent);
+  font-size: 1.125rem;
+}
+
+.product-header__addon {
+  color: var(--text);
+  font-size: 0.8rem;
 }
 
 /* Product Content */

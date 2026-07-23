@@ -150,7 +150,13 @@ export default function ProductPage() {
         <div className="product-header__info">
           <h1 className="product-header__title">{garment.name}</h1>
           <p className="product-header__desc">{garment.description}</p>
-          <span className="product-header__price">Total: ${totalPrice.toLocaleString("es-AR")}</span>
+          <div className="product-header__price">
+            <span>$${Number(garment.base_price).toLocaleString("es-AR")}</span>
+            {placedDesigns.map((p, i) => (
+              <span key={i} className="product-header__addon">+ ${Number(p.variant.additional_price + p.option.base_price).toLocaleString("es-AR")}</span>
+            ))}
+            <strong>= ${totalPrice.toLocaleString("es-AR")}</strong>
+          </div>
         </div>
         {typeof navigator.share === "function" && (
           <button className="btn-icon" onClick={handleShare} aria-label="Compartir">
@@ -297,10 +303,6 @@ export default function ProductPage() {
       </div>
 
       <div className="product-footer">
-        <div className="product-footer__total">
-          <span>Total</span>
-          <strong>${totalPrice.toLocaleString("es-AR")}</strong>
-        </div>
         {ADMIN_PHONE ? (
           <a href={`https://wa.me/${ADMIN_PHONE}?text=${whatsappMessage}`} target="_blank" rel="noopener noreferrer" className="btn-primary">
             <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
