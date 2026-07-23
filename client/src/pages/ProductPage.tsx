@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import GarmentMock from "../components/GarmentMock";
 import { supabase, type GarmentRow, type GarmentColorRow, type GarmentSizeRow, type DesignRow } from "../lib/supabase";
+import { setMeta } from "../lib/seo";
 
-const ADMIN_PHONE = "YOUR_PHONE_NUMBER";
+const ADMIN_PHONE = import.meta.env.VITE_WHATSAPP_PHONE ?? "";
 
 export default function ProductPage() {
   const { garmentId } = useParams<{ garmentId: string }>();
@@ -23,19 +24,30 @@ export default function ProductPage() {
     if (!garmentId) return;
 
     const fetchData = async () => {
-      const { data: g } = await supabase.from("garments").select("*").eq("slug", garmentId).single();
-      if (!g) { setLoading(false); return; }
-      setGarment(g);
-      setSelectedColor("");
-      setSelectedSize("");
+      try {
+        const { data: g, error: eg } = await supabase.from("garments").select("*").eq("slug", garmentId).single();
+        if (eg || !g) { setLoading(false); return; }
+        setGarment(g);
+        setSelectedColor("");
+        setSelectedSize("");
 
-      const { data: c } = await supabase.from("garment_colors").select("*").eq("garment_id", g.id);
-      const { data: s } = await supabase.from("garment_sizes").select("*").eq("garment_id", g.id);
-      const { data: d } = await supabase.from("designs").select("*").order("id");
+        const [cRes, sRes, dRes] = await Promise.all([
+          supabase.from("garment_colors").select("*").eq("garment_id", g.id),
+          supabase.from("garment_sizes").select("*").eq("garment_id", g.id),
+          supabase.from("designs").select("*").order("id"),
+        ]);
 
-      if (c) { setColors(c); setSelectedColor(c[0]?.hex ?? ""); }
-      if (s) { setSizes(s); setSelectedSize(s[0]?.name ?? ""); }
-      if (d) setDesigns(d);
+        if (cRes.data) { setColors(cRes.data); setSelectedColor(cRes.data[0]?.hex ?? ""); }
+        if (sRes.data) { setSizes(sRes.data); setSelectedSize(sRes.data[0]?.name ?? ""); }
+        if (dRes.data) setDesigns(dRes.data);
+
+        setMeta({
+          title: `${g.name} · STORE`,
+          description: `${g.name} · ${g.description} · Desde $${Number(g.base_price).toLocaleString("es-AR")}`,
+        });
+      } catch (err) {
+        console.error("Error loading product:", err);
+      }
       setLoading(false);
     };
 
@@ -43,7 +55,29 @@ export default function ProductPage() {
   }, [garmentId]);
 
   if (loading) {
-    return <div className="product-page product-page--loading"><p>Cargando...</p></div>;
+    return (
+      <div className="product-page">
+        <div className="product-content">
+          <div className="mock-section">
+            <div className="skeleton skeleton--mock" />
+          </div>
+          <div className="controls-section">
+            <div className="control-group">
+              <div className="skeleton skeleton--text" style={{ width: "4rem" }} />
+              <div style={{ display: "flex", gap: "0.75rem" }}>
+                {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton skeleton--avatar" />)}
+              </div>
+            </div>
+            <div className="control-group">
+              <div className="skeleton skeleton--text" style={{ width: "3rem" }} />
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton" style={{ width: 44, height: 44, borderRadius: "var(--radius-sm)" }} />)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!garment) {
@@ -167,7 +201,7 @@ export default function ProductPage() {
       </div>
 
       <div className="product-footer">
-        {ADMIN_PHONE !== "YOUR_PHONE_NUMBER" ? (
+        {ADMIN_PHONE ? (
           <a
             href={`https://wa.me/${ADMIN_PHONE}?text=${whatsappMessage}`}
             target="_blank"
@@ -181,7 +215,7 @@ export default function ProductPage() {
           </a>
         ) : (
           <p style={{ textAlign: "center", fontSize: "0.8rem", color: "var(--text-muted)" }}>
-            Configurá ADMIN_PHONE en App.tsx para habilitar WhatsApp
+            Configurá VITE_WHATSAPP_PHONE en .env para habilitar WhatsApp
           </p>
         )}
       </div>

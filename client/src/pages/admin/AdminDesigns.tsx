@@ -13,7 +13,8 @@ export default function AdminDesigns() {
 
   useEffect(() => {
     if (!isEdit) return;
-    supabase.from("designs").select("*").eq("id", Number(id)).single().then(({ data }) => {
+    supabase.from("designs").select("*").eq("id", Number(id)).single().then(({ data, error }) => {
+      if (error) { console.error("Error loading design:", error); return; }
       if (!data) return;
       setName(data.name);
       setSvgContent(data.svg_content);
@@ -23,13 +24,19 @@ export default function AdminDesigns() {
   const handleSave = async () => {
     if (!name || !svgContent) return;
     setSaving(true);
-    if (isEdit) {
-      await supabase.from("designs").update({ name, svg_content: svgContent }).eq("id", Number(id));
-    } else {
-      await supabase.from("designs").insert({ name, svg_content: svgContent });
+    try {
+      if (isEdit) {
+        const { error } = await supabase.from("designs").update({ name, svg_content: svgContent }).eq("id", Number(id));
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("designs").insert({ name, svg_content: svgContent });
+        if (error) throw error;
+      }
+      navigate("/admin");
+    } catch (err) {
+      console.error("Error saving design:", err);
     }
     setSaving(false);
-    navigate("/admin");
   };
 
   return (

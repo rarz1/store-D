@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Carousel from "../components/Carousel";
 import { supabase, type GarmentRow } from "../lib/supabase";
+import { setMeta } from "../lib/seo";
 
 const iconPaths: Record<string, string> = {
   remeras: "M55 120L145 38L195 38L285 120L310 410L260 430L80 430L30 410Z",
@@ -15,7 +16,9 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.from("garments").select("*").order("id").then(({ data }) => {
+    setMeta({ title: "STORE · Colección", description: "Prendas personalizables. Remeras, pantalones y buzos oversize con diseño propio. Algodón orgánico, edición limitada." });
+    supabase.from("garments").select("*").order("id").then(({ data, error }) => {
+      if (error) console.error("Error loading garments:", error);
       if (data) setGarments(data);
       setLoading(false);
     });
@@ -32,7 +35,18 @@ export default function HomePage() {
         </div>
 
         {loading ? (
-          <p className="categories__loading">Cargando...</p>
+          <div className="categories__grid">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="category-card" style={{ pointerEvents: "none" }}>
+                <div className="skeleton" style={{ width: 80, height: 104, borderRadius: "var(--radius-sm)" }} />
+                <div className="category-card__info">
+                  <div className="skeleton skeleton--text" style={{ width: "60%" }} />
+                  <div className="skeleton skeleton--text" style={{ width: "80%", height: "0.75rem" }} />
+                  <div className="skeleton skeleton--text" style={{ width: "40%", height: "0.75rem" }} />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="categories__grid">
             {garments.map((g) => {

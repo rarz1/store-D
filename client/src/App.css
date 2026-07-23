@@ -584,23 +584,32 @@
 
   .product-content {
     display: flex;
-    max-width: 800px;
+    max-width: 1100px;
     margin: 0 auto;
     padding-top: 1rem;
+    gap: 1.5rem;
+    align-items: flex-start;
   }
 
   .mock-section {
-    flex: 1;
-    padding: 1rem 2rem;
+    flex: 0 0 auto;
+    width: 65%;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
   }
 
   .garment-mock {
-    max-width: 320px;
+    max-width: none;
+    width: 100%;
   }
 
   .controls-section {
     flex: 1;
-    padding: 1rem 2rem;
+    padding: 1rem 1rem 1rem 0;
+    position: sticky;
+    top: 5rem;
   }
 
   .design-card {
@@ -614,8 +623,21 @@
 }
 
 @media (min-width: 1024px) {
+  .product-content {
+    max-width: 1300px;
+    gap: 2rem;
+  }
+
+  .mock-section {
+    width: 65%;
+  }
+
   .garment-mock {
-    max-width: 360px;
+    max-width: 750px;
+  }
+
+  .controls-section {
+    max-width: 380px;
   }
 }
 
@@ -845,4 +867,99 @@
   justify-content: center;
   color: var(--text-muted);
   min-height: 100svh;
+}
+
+/* ==============================
+   MODAL
+   ============================== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 150ms ease;
+}
+
+.modal-dialog {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  max-width: 360px;
+  width: 100%;
+  animation: scaleIn 150ms ease;
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--text);
+  letter-spacing: 0.04em;
+  margin: 0 0 0.5rem;
+}
+
+.modal-message {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ==============================
+   SKELETON
+   ============================== */
+
+.skeleton {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.skeleton--text {
+  height: 1rem;
+  width: 60%;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton--avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.skeleton--card {
+  height: 104px;
+}
+
+.skeleton--mock {
+  width: 100%;
+  max-width: 280px;
+  height: 360px;
+  margin: 0 auto;
 }

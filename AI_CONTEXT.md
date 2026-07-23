@@ -42,9 +42,32 @@
 - **Variables en Vercel**: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 - **Archivo clave**: `client/vercel.json` con rewrites para SPA routing
 
+## Variables de entorno
+
+| Variable | Ejemplo | Dónde se usa |
+|----------|---------|--------------|
+| `VITE_SUPABASE_URL` | `https://xxx.supabase.co` | `lib/supabase.ts` |
+| `VITE_SUPABASE_ANON_KEY` | `eyJ...` | `lib/supabase.ts` |
+| `VITE_WHATSAPP_PHONE` | `54123456789` | `pages/ProductPage.tsx` |
+
 ## Notas
 
 - Todo el código está en inglés, siguiendo la convención del proyecto.
-- No hay backend NestJS ni Docker — eliminados en la migración a Supabase.
 - Los diseños SVG deben usar `currentColor` para heredar el color de contraste del mock.
 - Los imports de solo tipos deben usar `import type`, no `import`.
+- Renombrar `.env.example` a `.env` y completar las variables antes de desarrollar.
+
+### Sesión 1 - 2026-07-23
+- WhatsApp phone movido a `VITE_WHATSAPP_PHONE` env var
+- Queries paralelizadas con `Promise.all` en ProductPage
+- Manejo de errores agregado a todos los calls a Supabase (.catch / try-catch)
+- Meta tags + Open Graph + JSON-LD en index.html
+- `setMeta()` helper para SEO dinámico por página
+- Skeleton loading states en HomePage y ProductPage
+- `ConfirmModal` component reemplazando `confirm()` nativo
+- Slug warning en AdminGarmentForm al editarlo
+- Tipos muertos eliminados de `types.ts`
+- Backend NestJS + admin/ legacy eliminados del repo
+- `docker-compose.yml` simplificado (solo client)
+- Errores: tsc y oxlint pasan sin errores
+- Pendientes: carrito/compras (dejado para futuro)

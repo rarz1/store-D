@@ -1,35 +1,4 @@
-
-
 services:
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: catalog
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    depends_on:
-      postgres:
-        condition: service_healthy
-    ports:
-      - "3000:3000"
-    command: npm run start:dev
-
   client:
     build:
       context: ./client
@@ -37,22 +6,6 @@ services:
     ports:
       - "5185:5185"
     environment:
-      - VITE_API_URL=http://localhost:3000/api
       - HOST=0.0.0.0
       - PORT=5185
     command: npm run dev
-
-  admin:
-    build:
-      context: ./admin
-      dockerfile: Dockerfile
-    ports:
-      - "5187:5187"
-    environment:
-      - VITE_API_URL=http://localhost:3000/api
-      - HOST=0.0.0.0
-      - PORT=5187
-    command: npm run dev
-
-volumes:
-  pgdata:

@@ -78,3 +78,20 @@ create policy "Public read" on garments for select using (true);
 create policy "Public read" on garment_colors for select using (true);
 create policy "Public read" on garment_sizes for select using (true);
 create policy "Public read" on designs for select using (true);
+
+-- Allow authenticated users (admin) to write
+create policy "Admin insert" on garments for insert with check (auth.role() = 'authenticated');
+create policy "Admin update" on garments for update using (auth.role() = 'authenticated');
+create policy "Admin delete" on garments for delete using (auth.role() = 'authenticated');
+
+create policy "Admin insert" on garment_colors for insert with check (auth.role() = 'authenticated');
+create policy "Admin update" on garment_colors for update using (auth.role() = 'authenticated');
+create policy "Admin delete" on garment_colors for delete using (auth.role() = 'authenticated');
+
+create policy "Admin insert" on garment_sizes for insert with check (auth.role() = 'authenticated');
+create policy "Admin update" on garment_sizes for update using (auth.role() = 'authenticated');
+create policy "Admin delete" on garment_sizes for delete using (auth.role() = 'authenticated');
+
+create policy "Admin insert" on designs for insert with check (auth.role() = 'authenticated');
+create policy "Admin update" on designs for update using (auth.role() = 'authenticated');
+create policy "Admin delete" on designs for delete using (auth.role() = 'authenticated');
