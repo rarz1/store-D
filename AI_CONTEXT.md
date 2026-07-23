@@ -2,31 +2,49 @@
 
 ## Estado del proyecto
 
-- **Backend**: API REST NestJS + PostgreSQL en Docker (`:3000`). Endpoints funcionales:
-  - `GET/POST/DELETE /api/interest`
-  - `GET/POST/DELETE /api/categories`
-  - `GET/POST/GET:id/DELETE /api/products`
-- **Cliente**: Catálogo de productos — consume productos con variantes (color/talle), categorías, y filtros. Incluye consulta por WhatsApp.
-- **Admin**: Panel de administración de intereses — CRUD completo.
-- **Seed**: Datos iniciales automáticos con 8 productos (Remeras, Pantalones, Buzos, Accesorios) y 37 variantes con imágenes de placeholder.
-- **Docker**: Backend y PostgreSQL en Docker. Cliente y Admin corren localmente con `npm run dev`.
-- **Cliente local** → `http://localhost:5186/` (o el puerto que muestre `npm run dev`)
-- **Admin local** → `http://localhost:5187/` (o el puerto que muestre `npm run dev`)
-- **Próximos pasos**:
-  1. Ajustes de estilo (colores, micro‑animaciones) según preferencias.
-  2. Añadir pruebas unitarias/integración.
+- **Arquitectura**: React + Supabase + Vercel (sin backend propio, sin Docker)
+- **Base de datos**: PostgreSQL en Supabase con tablas `garments`, `garment_colors`, `garment_sizes`, `designs`
+- **Autenticación admin**: Supabase Auth (email/password)
+- **Deploy**: Frontend en Vercel (`store-d-psi.vercel.app`), datos en Supabase
 
-## Historial de cambios
+## Frontend (client/)
 
-- 2026‑07‑22: Creación de módulos `Category` y `Product` (entity, dto, service, controller, module) en backend.
-- 2026‑07‑22: Entidades relacionadas: `Product → Variant → Media`, `Product → Category`.
-- 2026‑07‑22: Agregado CORS, prefijo global `/api`, y ValidationPipe en `main.ts`.
-- 2026‑07‑22: Seed automático con datos de ejemplo para ropa.
-- 2026‑07‑22: Todos los servicios Docker corriendo (postgres, backend, client, admin).
-- 2026‑07‑22: Bugfix: imports de tipos (`{ Product, Category }` → `import type { Product, Category }`) en cliente para que React monte correctamente.
+- **Stack**: React 19 + Vite + react-router-dom + @supabase/supabase-js
+- **Tipografía**: Bebas Neue (display) + Inter (body), Google Fonts
+- **Paleta**: Fondo `#131518`, superficie `#1c1f24`, acento `#f97316`
+
+### Rutas públicas
+| Ruta | Descripción |
+|------|-------------|
+| `/` | Home con carrusel editorial + grilla de categorías desde Supabase |
+| `/producto/:garmentId` | Configurador interactivo (color/talle/diseño) con mock SVG |
+
+### Rutas admin
+| Ruta | Descripción |
+|------|-------------|
+| `/admin/login` | Login con Supabase Auth |
+| `/admin` | Dashboard: lista prendas + diseños, editar/borrar |
+| `/admin/garments/:id` | Crear/editar prenda (colores, talles, precio) |
+| `/admin/designs/:id` | Crear/editar diseño SVG |
+
+### Características
+- SVGs de prendas (Remera, Pantaloneta, Buzo) con fill dinámico para cambio de color
+- Diseños almacenados como SVG text en Supabase, se renderizan inline sobre el mock
+- Selector de color (swatches), talle (chips), diseño (thumbnails con preview)
+- Carrusel editorial full-viewport con autoplay
+- Consulta por WhatsApp con resumen del producto configurado
+- Mini admin embebido para gestionar productos y diseños
+- Mobile-first, responsive, safe areas
+
+## Deploy
+
+- **URL**: https://store-d-psi.vercel.app
+- **Variables en Vercel**: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- **Archivo clave**: `client/vercel.json` con rewrites para SPA routing
 
 ## Notas
 
 - Todo el código está en inglés, siguiendo la convención del proyecto.
-- No se ha añadido ninguna dependencia nueva.
-- Los imports de solo tipos deben usar `import type`, no `import`, porque las interfaces de TypeScript se borran en runtime y el navegador tira `SyntaxError`.
+- No hay backend NestJS ni Docker — eliminados en la migración a Supabase.
+- Los diseños SVG deben usar `currentColor` para heredar el color de contraste del mock.
+- Los imports de solo tipos deben usar `import type`, no `import`.
