@@ -1039,7 +1039,7 @@
 }
 
 /* ==============================
-   STORE BANNER (hero overlay)
+   STORE BANNER (page header)
    ============================== */
 
 .home__hero {
@@ -1048,68 +1048,67 @@
 
 .store-banner {
   position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 3;
   pointer-events: none;
+  padding: 1.5rem 2rem;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 60%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
-.store-banner__glass {
+.store-banner__inner {
   pointer-events: auto;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  padding: 2rem 3rem;
-  border-radius: 50%;
-  aspect-ratio: 2 / 1;
-  justify-content: center;
-  background: color-mix(in srgb, var(--bg) 55%, transparent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid color-mix(in srgb, var(--text) 15%, transparent);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  min-width: min(380px, 80vw);
+  gap: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .store-banner__logo {
-  height: 56px;
+  height: 48px;
   width: auto;
   object-fit: contain;
-  margin-bottom: 0.25rem;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.store-banner__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .store-banner__title {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 8vw, 4rem);
+  font-size: clamp(1.25rem, 4vw, 2rem);
   line-height: 1;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   color: var(--accent);
-  margin: 0;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .store-banner__subtitle {
-  font-size: clamp(0.6rem, 2vw, 0.8rem);
+  font-size: clamp(0.55rem, 1.5vw, 0.7rem);
   letter-spacing: 0.2em;
   color: var(--text);
-  margin: 0;
   font-weight: 500;
-  opacity: 0.8;
-  text-align: center;
+  opacity: 0.75;
 }
 
 @media (max-width: 640px) {
-  .store-banner__glass {
-    padding: 1.25rem 1.5rem;
-    min-width: min(280px, 85vw);
-    aspect-ratio: 2 / 1;
+  .store-banner {
+    padding: 0.75rem 1rem;
   }
 
   .store-banner__logo {
-    height: 36px;
+    height: 32px;
+  }
+
+  .store-banner__inner {
+    gap: 0.65rem;
   }
 }
