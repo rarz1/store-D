@@ -51,6 +51,7 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
   const coloredMock = mockSvg
     ? mockSvg
         .replace(/\s(width|height)="[^"]*"/g, "")
+        .replace(/\sfill="(?!none)(?!currentColor)[^"]*"/gi, ' fill="currentColor"')
         .replace('<svg', `<svg style="color:${color}"`)
         .replace(/currentColor/gi, color)
     : null;
