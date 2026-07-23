@@ -1210,3 +1210,188 @@
     gap: 0.65rem;
   }
 }
+
+/* ==============================
+   GARMENT MOCK FLIP
+   ============================== */
+
+.garment-mock__flip {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  padding: 0.4rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 20px;
+  transition: all 250ms ease;
+  letter-spacing: 0.03em;
+}
+
+.garment-mock__flip:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+/* ==============================
+   DESIGN OPTION SELECTOR
+   ============================== */
+
+.design-option-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.design-option-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.6rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: all 200ms ease;
+  min-width: 120px;
+}
+
+.design-option-card:hover {
+  border-color: var(--accent);
+  background: var(--surface-hover);
+}
+
+.design-option-card--active {
+  border-color: var(--accent);
+  background: rgba(249, 115, 22, 0.08);
+}
+
+.design-option-card__name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.design-option-card__price {
+  font-size: 0.7rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.design-option-card__count {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+/* ==============================
+   PLACED DESIGNS
+   ============================== */
+
+.placed-design-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.5rem;
+  gap: 0.5rem;
+}
+
+.placed-design-row__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.placed-design-row__name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.placed-design-row__pos {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.placed-design-row__price {
+  font-size: 0.7rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.placement-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.5rem;
+}
+
+/* ==============================
+   PRODUCT FOOTER TOTAL
+   ============================== */
+
+.product-footer__total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.75rem;
+}
+
+.product-footer__total span {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.product-footer__total strong {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+/* ==============================
+   ADMIN VARIANT EDITOR
+   ============================== */
+
+.admin-variant {
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+}
+
+.admin-variant__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.admin-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0;
+}

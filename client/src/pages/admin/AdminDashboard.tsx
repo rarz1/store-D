@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase, type GarmentRow, type DesignRow } from "../../lib/supabase";
+import { supabase, type GarmentRow, type DesignOptionRow } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import ConfirmModal from "../../components/ConfirmModal";
 import { getSettings, saveSettings, getSlides, saveSlide, uploadImage, applyColors, type SiteSettings, type CarouselSlide } from "../../lib/settings";
@@ -12,7 +12,8 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("products");
   const [garments, setGarments] = useState<GarmentRow[]>([]);
-  const [designs, setDesigns] = useState<DesignRow[]>([]);
+  const [designOptions, setDesignOptions] = useState<DesignOptionRow[]>([]);
+  const [variantCounts, setVariantCounts] = useState<Record<number, number>>({});
   const [confirmTarget, setConfirmTarget] = useState<{ type: "garment" | "design"; id: number } | null>(null);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [slides, setSlides] = useState<CarouselSlide[]>([]);
@@ -23,9 +24,17 @@ export default function AdminDashboard() {
       if (error) console.error("Error loading garments:", error);
       if (data) setGarments(data);
     });
-    supabase.from("designs").select("*").order("id").then(({ data, error }) => {
+    supabase.from("design_options").select("*").order("id").then(async ({ data, error }) => {
       if (error) console.error("Error loading designs:", error);
-      if (data) setDesigns(data);
+      if (data) {
+        setDesignOptions(data);
+        const counts: Record<number, number> = {};
+        for (const d of data) {
+          const { count } = await supabase.from("design_variants").select("id", { count: "exact", head: true }).eq("design_option_id", d.id);
+          counts[d.id] = count ?? 0;
+        }
+        setVariantCounts(counts);
+      }
     });
     getSettings().then(setSettings);
     getSlides().then(setSlides);
@@ -39,9 +48,10 @@ export default function AdminDashboard() {
   };
 
   const deleteDesign = async (id: number) => {
-    const { error } = await supabase.from("designs").delete().eq("id", id);
+    await supabase.from("design_variants").delete().eq("design_option_id", id);
+    const { error } = await supabase.from("design_options").delete().eq("id", id);
     if (error) { console.error("Error deleting design:", error); return; }
-    setDesigns((prev) => prev.filter((d) => d.id !== id));
+    setDesignOptions((prev) => prev.filter((d) => d.id !== id));
     setConfirmTarget(null);
   };
 
@@ -98,6 +108,7 @@ export default function AdminDashboard() {
                   <th>Nombre</th>
                   <th>Slug</th>
                   <th>Precio</th>
+                  <th>Etiquetas</th>
                   <th></th>
                 </tr>
               </thead>
@@ -107,6 +118,9 @@ export default function AdminDashboard() {
                     <td>{g.name}</td>
                     <td style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>{g.slug}</td>
                     <td>${Number(g.base_price).toLocaleString("es-AR")}</td>
+                    <td style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                      {(g.tags ?? []).join(", ")}
+                    </td>
                     <td className="admin-actions">
                       <button className="btn-small" onClick={() => navigate(`/admin/garments/${g.id}/edit`)}>Editar</button>
                       <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "garment", id: g.id })}>Borrar</button>
@@ -128,20 +142,20 @@ export default function AdminDashboard() {
               <thead>
                 <tr>
                   <th>Nombre</th>
-                  <th>Vista previa</th>
+                  <th>Variantes</th>
+                  <th>Precio base</th>
+                  <th>Etiquetas</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
-                {designs.map((d) => (
+                {designOptions.map((d) => (
                   <tr key={d.id}>
                     <td>{d.name}</td>
-                    <td style={{ width: 60 }}>
-                      <div
-                        className="design-card__svg"
-                        style={{ width: 50, height: 55 }}
-                        dangerouslySetInnerHTML={{ __html: d.svg_content.slice(0, 200) }}
-                      />
+                    <td>{variantCounts[d.id] ?? 0}</td>
+                    <td>${Number(d.base_price).toLocaleString("es-AR")}</td>
+                    <td style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                      {(d.tags ?? []).join(", ")}
                     </td>
                     <td className="admin-actions">
                       <button className="btn-small" onClick={() => navigate(`/admin/designs/${d.id}/edit`)}>Editar</button>

@@ -159,3 +159,44 @@ create policy "Admin delete" on carousel_slides for delete using (auth.role() = 
 -- create policy "Admin upload" on storage.objects for insert with check (bucket_id = 'store-images' and auth.role() = 'authenticated');
 -- create policy "Admin update" on storage.objects for update using (bucket_id = 'store-images' and auth.role() = 'authenticated');
 -- create policy "Admin delete" on storage.objects for delete using (bucket_id = 'store-images' and auth.role() = 'authenticated');
+
+-- ============================================
+-- DESIGN OPTIONS (replaces 'designs' as parent)
+-- ============================================
+
+create table if not exists design_options (
+  id bigint primary key generated always as identity,
+  name text not null,
+  description text not null default '',
+  base_price numeric(10,2) not null default 0,
+  tags text[] not null default '{}',
+  created_at timestamptz default now()
+);
+
+create table if not exists design_variants (
+  id bigint primary key generated always as identity,
+  design_option_id bigint references design_options(id) on delete cascade,
+  name text not null,
+  svg_content text not null default '',
+  image_url text not null default '',
+  additional_price numeric(10,2) not null default 0,
+  positions jsonb not null default '["small_front","large_front","small_back","large_back"]',
+  sort_order int not null default 0,
+  created_at timestamptz default now()
+);
+
+alter table garments add column if not exists svg_mock_back text not null default '';
+alter table garments add column if not exists tags text[] not null default '{}';
+
+alter table design_options enable row level security;
+alter table design_variants enable row level security;
+
+create policy "Public read" on design_options for select using (true);
+create policy "Admin insert" on design_options for insert with check (auth.role() = 'authenticated');
+create policy "Admin update" on design_options for update using (auth.role() = 'authenticated');
+create policy "Admin delete" on design_options for delete using (auth.role() = 'authenticated');
+
+create policy "Public read" on design_variants for select using (true);
+create policy "Admin insert" on design_variants for insert with check (auth.role() = 'authenticated');
+create policy "Admin update" on design_variants for update using (auth.role() = 'authenticated');
+create policy "Admin delete" on design_variants for delete using (auth.role() = 'authenticated');

@@ -16,6 +16,8 @@ export default function AdminGarmentForm() {
   const [description, setDescription] = useState("");
   const [basePrice, setBasePrice] = useState("");
   const [svgMock, setSvgMock] = useState("");
+  const [svgMockBack, setSvgMockBack] = useState("");
+  const [tags, setTags] = useState("");
   const [colors, setColors] = useState<ColorEntry[]>([{ name: "", hex: "#000000" }]);
   const [sizes, setSizes] = useState<SizeEntry[]>([{ name: "" }]);
   const [saving, setSaving] = useState(false);
@@ -32,6 +34,8 @@ export default function AdminGarmentForm() {
       setDescription(g.description);
       setBasePrice(String(g.base_price));
       if (g.svg_mock) setSvgMock(g.svg_mock);
+      if (g.svg_mock_back) setSvgMockBack(g.svg_mock_back);
+      if (g.tags?.length) setTags(g.tags.join(", "));
     });
     supabase.from("garment_colors").select("*").eq("garment_id", numId).then(({ data, error }) => {
       if (error) { console.error("Error loading colors:", error); return; }
@@ -50,14 +54,16 @@ export default function AdminGarmentForm() {
     try {
       if (isEdit) {
         const numId = Number(id);
-        const { error: eg } = await supabase.from("garments").update({ name, slug, description, base_price: parseFloat(basePrice), svg_mock: svgMock }).eq("id", numId);
+        const parsedTags = tags.split(",").map((t) => t.trim()).filter(Boolean);
+        const { error: eg } = await supabase.from("garments").update({ name, slug, description, base_price: parseFloat(basePrice), svg_mock: svgMock, svg_mock_back: svgMockBack, tags: parsedTags }).eq("id", numId);
         if (eg) throw eg;
         await supabase.from("garment_colors").delete().eq("garment_id", numId);
         await supabase.from("garment_sizes").delete().eq("garment_id", numId);
         await supabase.from("garment_colors").insert(colors.filter((c) => c.name).map((c) => ({ garment_id: numId, name: c.name, hex: c.hex })));
         await supabase.from("garment_sizes").insert(sizes.filter((s) => s.name).map((s) => ({ garment_id: numId, name: s.name })));
       } else {
-        const { data, error } = await supabase.from("garments").insert({ name, slug, description, base_price: parseFloat(basePrice) }).select().single();
+        const parsedTags = tags.split(",").map((t) => t.trim()).filter(Boolean);
+        const { data, error } = await supabase.from("garments").insert({ name, slug, description, base_price: parseFloat(basePrice), svg_mock: svgMock, svg_mock_back: svgMockBack, tags: parsedTags }).select().single();
         if (error) throw error;
         if (data) {
           await supabase.from("garment_colors").insert(colors.filter((c) => c.name).map((c) => ({ garment_id: data.id, name: c.name, hex: c.hex })));
@@ -117,6 +123,36 @@ export default function AdminGarmentForm() {
             <button className="btn-small btn-small--danger" style={{ marginTop: 4 }} onClick={() => setSvgMock("")}>Quitar SVG</button>
           </div>
         )}
+
+        <label className="admin-label">Mock SVG - Vista posterior</label>
+        <input className="admin-input" type="file" accept=".svg" onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          const text = await file.text();
+          setSvgMockBack(text);
+        }} />
+        {svgMockBack && (
+          <div style={{ marginTop: 8 }}>
+            <div style={{
+              width: 120, height: 156, background: "var(--surface)",
+              border: "1px solid var(--border)", borderRadius: "var(--radius-sm)",
+              display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
+            }}>
+              <div style={{ width: 80, height: 104, color: "var(--text)" }}
+                dangerouslySetInnerHTML={{ __html: svgMockBack.replace(/currentColor/gi, "var(--text)") }}
+              />
+            </div>
+            <button className="btn-small btn-small--danger" style={{ marginTop: 4 }} onClick={() => setSvgMockBack("")}>Quitar SVG</button>
+          </div>
+        )}
+
+        <label className="admin-label">
+          Etiquetas
+          <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginLeft: 8, fontWeight: 400 }}>
+            separadas por coma
+          </span>
+        </label>
+        <input className="admin-input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="hombre, mujer, unisex, urbano" />
 
         <label className="admin-label">
           Colores

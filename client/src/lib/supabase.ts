@@ -12,6 +12,8 @@ export type GarmentRow = {
   description: string;
   base_price: number;
   svg_mock: string;
+  svg_mock_back: string;
+  tags: string[];
   created_at: string;
 };
 
@@ -28,9 +30,25 @@ export type GarmentSizeRow = {
   name: string;
 };
 
-export type DesignRow = {
+export type DesignOptionRow = {
   id: number;
   name: string;
-  svg_content: string;
+  description: string;
+  base_price: number;
+  tags: string[];
   created_at: string;
 };
+
+export type DesignVariantRow = {
+  id: number;
+  design_option_id: number;
+  name: string;
+  svg_content: string;
+  image_url: string;
+  additional_price: number;
+  positions: string[];
+  sort_order: number;
+  created_at: string;
+};
+
+export type DesignRow = DesignOptionRow & { variants: DesignVariantRow[] };
