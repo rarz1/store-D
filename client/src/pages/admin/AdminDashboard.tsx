@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase, type GarmentRow, type DesignOptionRow } from "../../lib/supabase";
+import { supabase, type GarmentRow, type DesignOptionRow, type DesignVariantRow } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import ConfirmModal from "../../components/ConfirmModal";
 import { getSettings, saveSettings, getSlides, saveSlide, uploadImage, applyColors, type SiteSettings, type CarouselSlide } from "../../lib/settings";
@@ -18,6 +18,9 @@ export default function AdminDashboard() {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [slides, setSlides] = useState<CarouselSlide[]>([]);
   const [saving, setSaving] = useState(false);
+  const [variantDesign, setVariantDesign] = useState<DesignOptionRow | null>(null);
+  const [variants, setVariants] = useState<DesignVariantRow[]>([]);
+  const [variantForm, setVariantForm] = useState<Partial<DesignVariantRow> | null>(null);
 
   useEffect(() => {
     supabase.from("garments").select("*").order("id").then(({ data, error }) => {
@@ -53,6 +56,48 @@ export default function AdminDashboard() {
     if (error) { console.error("Error deleting design:", error); return; }
     setDesignOptions((prev) => prev.filter((d) => d.id !== id));
     setConfirmTarget(null);
+  };
+
+  const openVariants = async (d: DesignOptionRow) => {
+    setVariantDesign(d);
+    const { data } = await supabase.from("design_variants").select("*").eq("design_option_id", d.id).order("sort_order");
+    setVariants(data ?? []);
+    setVariantForm(null);
+  };
+
+  const addVariant = () => {
+    setVariantForm({
+      design_option_id: variantDesign!.id, name: "", svg_content: "",
+      additional_price: 0, positions: ["small_front", "large_front", "small_back", "large_back"],
+      sort_order: variants.length,
+    });
+  };
+
+  const editVariant = (v: DesignVariantRow) => {
+    setVariantForm({ ...v });
+  };
+
+  const saveVariant = async () => {
+    if (!variantForm || !variantForm.name) return;
+    const payload = {
+      name: variantForm.name, svg_content: variantForm.svg_content ?? "",
+      image_url: variantForm.image_url ?? "", additional_price: variantForm.additional_price ?? 0,
+      positions: variantForm.positions ?? [], sort_order: variantForm.sort_order ?? 0,
+    };
+    if (variantForm.id) {
+      await supabase.from("design_variants").update(payload).eq("id", variantForm.id);
+    } else {
+      await supabase.from("design_variants").insert({ ...payload, design_option_id: variantDesign!.id }).select().single();
+    }
+    const { data } = await supabase.from("design_variants").select("*").eq("design_option_id", variantDesign!.id).order("sort_order");
+    setVariants(data ?? []);
+    setVariantForm(null);
+  };
+
+  const deleteVariant = async (id: number) => {
+    await supabase.from("design_variants").delete().eq("id", id);
+    setVariants((prev) => prev.filter((v) => v.id !== id));
+    setVariantForm(null);
   };
 
   const handleSaveSettings = async () => {
@@ -158,6 +203,7 @@ export default function AdminDashboard() {
                       {(d.tags ?? []).join(", ")}
                     </td>
                     <td className="admin-actions">
+                      <button className="btn-small" onClick={() => openVariants(d)}>Variantes</button>
                       <button className="btn-small" onClick={() => navigate(`/admin/designs/${d.id}/edit`)}>Editar</button>
                       <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "design", id: d.id })}>Borrar</button>
                     </td>
@@ -166,9 +212,69 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </section>
-        </>
-      )}
+        {variantDesign && (
+          <div className="modal-overlay" onClick={() => setVariantDesign(null)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="admin-section-header">
+                <h3>Variantes · {variantDesign.name}</h3>
+                <button className="btn-back" onClick={() => setVariantDesign(null)}>Cerrar</button>
+              </div>
 
+              {variantForm && (
+                <div className="admin-variant-form">
+                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
+                    <input className="admin-input" style={{ flex: 1 }} value={variantForm.name ?? ""}
+                      onChange={(e) => setVariantForm({ ...variantForm, name: e.target.value })} placeholder="Nombre" />
+                    <input className="admin-input" type="number" style={{ width: 120 }} value={variantForm.additional_price ?? 0}
+                      onChange={(e) => setVariantForm({ ...variantForm, additional_price: parseFloat(e.target.value) || 0 })} placeholder="$" />
+                  </div>
+                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.75rem" }}>
+                    <input type="file" accept=".svg" style={{ flex: 1 }}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setVariantForm({ ...variantForm, svg_content: await file.text() });
+                      }} />
+                    {variantForm.svg_content && (
+                      <button className="btn-small btn-small--danger" onClick={() => setVariantForm({ ...variantForm, svg_content: "" })}>Quitar</button>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                    <button className="btn-primary" style={{ flex: 1 }} onClick={saveVariant}>
+                      {variantForm.id ? "Actualizar" : "Agregar"} variante
+                    </button>
+                    <button className="btn-small" onClick={() => setVariantForm(null)}>Cancelar</button>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                {variants.map((v) => (
+                  <div key={v.id} className="variant-card">
+                    {v.svg_content && (
+                      <div className="variant-card__svg"
+                        dangerouslySetInnerHTML={{ __html: v.svg_content.replace(/currentColor/gi, "var(--accent)") }} />
+                    )}
+                    <div className="variant-card__info">
+                      <strong>{v.name}</strong>
+                      <span>+${Number(v.additional_price).toLocaleString("es-AR")}</span>
+                      <small>{(v.positions ?? []).join(", ")}</small>
+                    </div>
+                    <div className="variant-card__actions">
+                      <button className="btn-small" onClick={() => editVariant(v)}>Editar</button>
+                      <button className="btn-small btn-small--danger" onClick={() => deleteVariant(v.id)}>X</button>
+                    </div>
+                  </div>
+                ))}
+                {!variantForm && (
+                  <button className="btn-back" onClick={addVariant}>+ Agregar variante</button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+      )}
       {tab === "store" && settings && (
         <div className="admin-form">
           <label className="admin-label">Título de la tienda</label>

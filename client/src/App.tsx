@@ -44,6 +44,10 @@ export default function App() {
             element={<AuthGuard><AdminGarmentForm /></AuthGuard>}
           />
           <Route
+            path="/admin/designs/:id/edit"
+            element={<AuthGuard><AdminDesigns /></AuthGuard>}
+          />
+          <Route
             path="/admin/designs/:id"
             element={<AuthGuard><AdminDesigns /></AuthGuard>}
           />
