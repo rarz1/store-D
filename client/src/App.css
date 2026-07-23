@@ -1487,3 +1487,143 @@
   border-radius: var(--radius-sm);
   margin-bottom: 1rem;
 }
+
+/* ==============================
+   PRODUCT CHOICE BUTTONS
+   ============================== */
+
+.choice-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 200ms ease;
+  text-align: left;
+}
+
+.choice-btn:hover {
+  border-color: var(--accent);
+}
+
+.choice-btn__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  min-width: 4.5rem;
+}
+
+.choice-btn__value {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.choice-btn__arrow {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ==============================
+   PRODUCT HEADER CHOICES
+   ============================== */
+
+.product-header__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.25rem;
+}
+
+.product-header__choices span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+/* ==============================
+   MODAL HEADER
+   ============================== */
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.modal-header h3 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--text);
+  letter-spacing: 0.03em;
+  margin: 0;
+}
+
+/* ==============================
+   COLOR GRID (modal)
+   ============================== */
+
+.color-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+.color-grid .color-swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+/* ==============================
+   SIZE GRID (modal)
+   ============================== */
+
+.size-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+/* ==============================
+   VARIANT GRID (modal)
+   ============================== */
+
+.variant-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.variant-grid .variant-card {
+  width: calc(50% - 0.25rem);
+  min-width: 120px;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.variant-grid .variant-card:hover {
+  border-color: var(--accent);
+  background: var(--surface-hover);
+}
+
+.variant-card--selected {
+  border-color: var(--accent) !important;
+  background: rgba(249, 115, 22, 0.08) !important;
+}

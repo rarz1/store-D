@@ -34,10 +34,14 @@ export default function ProductPage() {
   const [selectedSize, setSelectedSize] = useState("");
   type OptionWithVariants = DesignOptionRow & { variants: DesignVariantRow[] };
   const [selectedOption, setSelectedOption] = useState<OptionWithVariants | null>(null);
-  const [placedDesigns, setPlacedDesigns] = useState<PlacedDesign[]>([]);
-  const [addingPlacement, setAddingPlacement] = useState(false);
-  const [newVariantId, setNewVariantId] = useState<number | null>(null);
-  const [newPosition, setNewPosition] = useState<Position>("small_front");
+  const [placedDesigns] = useState<PlacedDesign[]>([]);
+
+  const [showColorModal, setShowColorModal] = useState(false);
+  const [showSizeModal, setShowSizeModal] = useState(false);
+  const [showDesignModal, setShowDesignModal] = useState(false);
+  const [showVariantModal, setShowVariantModal] = useState(false);
+
+  const [tempVariantId, setTempVariantId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!garmentId) return;
@@ -86,20 +90,9 @@ export default function ProductPage() {
     sum + (p.option.base_price ?? 0) + (p.variant.additional_price ?? 0), 0
   );
 
-  const addPlacement = () => {
-    if (!newVariantId || !selectedOption) return;
-    const variant = selectedOption.variants.find((v) => v.id === newVariantId);
-    if (!variant) return;
-    setPlacedDesigns([...placedDesigns, { variant, option: selectedOption, position: newPosition }]);
-    setAddingPlacement(false);
-    setNewVariantId(null);
-  };
-
-  const removePlacement = (i: number) => {
-    setPlacedDesigns(placedDesigns.filter((_, j) => j !== i));
-  };
-
   const colorName = colors.find((c) => c.hex === selectedColor)?.name ?? "";
+  const sizeName = selectedSize;
+
   const whatsappMessage = encodeURIComponent(
     `Hola! Quiero consultar por:\n` +
     `• Prenda: ${garment?.name ?? ""}\n` +
@@ -150,8 +143,14 @@ export default function ProductPage() {
         <div className="product-header__info">
           <h1 className="product-header__title">{garment.name}</h1>
           <p className="product-header__desc">{garment.description}</p>
+          {(colorName || sizeName) && (
+            <div className="product-header__choices">
+              {colorName && <span>Color: {colorName}</span>}
+              {sizeName && <span>Talle: {sizeName}</span>}
+            </div>
+          )}
           <div className="product-header__price">
-            <span>$${Number(garment.base_price).toLocaleString("es-AR")}</span>
+            <span>${Number(garment.base_price).toLocaleString("es-AR")}</span>
             {placedDesigns.map((p, i) => (
               <span key={i} className="product-header__addon">+ ${Number(p.variant.additional_price + p.option.base_price).toLocaleString("es-AR")}</span>
             ))}
@@ -185,14 +184,58 @@ export default function ProductPage() {
 
         <div className="controls-section">
           <div className="control-group">
-            <label className="control-label">COLOR</label>
-            <div className="color-selector">
+            <button className="choice-btn" onClick={() => setShowColorModal(true)}>
+              <span className="choice-btn__label">Color</span>
+              <span className="choice-btn__value">{colorName || "Elegir"}</span>
+              <svg className="choice-btn__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="control-group">
+            <button className="choice-btn" onClick={() => setShowSizeModal(true)}>
+              <span className="choice-btn__label">Talle</span>
+              <span className="choice-btn__value">{sizeName || "Elegir"}</span>
+              <svg className="choice-btn__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+
+          {designOptions.length > 0 && (
+            <div className="control-group">
+              <button className="choice-btn" onClick={() => setShowDesignModal(true)}>
+                <span className="choice-btn__label">Clase de diseño</span>
+                <span className="choice-btn__value">{selectedOption?.name || "Elegir"}</span>
+                <svg className="choice-btn__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                  <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* COLOR MODAL */}
+      {showColorModal && (
+        <div className="modal-overlay" onClick={() => setShowColorModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Elegí el color</h3>
+              <button className="btn-icon" onClick={() => setShowColorModal(false)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+            <div className="color-grid">
               {colors.map((c) => (
                 <button
                   key={c.hex}
                   className={`color-swatch${selectedColor === c.hex ? " color-swatch--active" : ""}`}
                   style={{ background: c.hex }}
-                  onClick={() => setSelectedColor(c.hex)}
+                  onClick={() => { setSelectedColor(c.hex); setShowColorModal(false); }}
                   aria-label={c.name} title={c.name}
                 >
                   {selectedColor === c.hex && (
@@ -204,103 +247,107 @@ export default function ProductPage() {
               ))}
             </div>
           </div>
+        </div>
+      )}
 
-          <div className="control-group">
-            <label className="control-label">TALLE</label>
-            <div className="size-selector">
+      {/* SIZE MODAL */}
+      {showSizeModal && (
+        <div className="modal-overlay" onClick={() => setShowSizeModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Elegí el talle</h3>
+              <button className="btn-icon" onClick={() => setShowSizeModal(false)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+            <div className="size-grid">
               {sizes.map((s) => (
                 <button
                   key={s.name}
                   className={`size-chip${selectedSize === s.name ? " size-chip--active" : ""}`}
-                  onClick={() => setSelectedSize(s.name)}
+                  onClick={() => { setSelectedSize(s.name); setShowSizeModal(false); }}
                 >{s.name}</button>
               ))}
             </div>
           </div>
+        </div>
+      )}
 
-          {designOptions.length > 0 && (
-            <div className="control-group">
-              <label className="control-label">LÍNEA DE DISEÑO</label>
-              <div className="design-option-selector">
-                {designOptions.map((opt) => (
+      {/* DESIGN MODAL */}
+      {showDesignModal && (
+        <div className="modal-overlay" onClick={() => setShowDesignModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Elegí clase de diseño</h3>
+              <button className="btn-icon" onClick={() => setShowDesignModal(false)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+            <div className="design-option-selector">
+              {designOptions.map((opt) => (
+                <button
+                  key={opt.id}
+                  className={`design-option-card${selectedOption?.id === opt.id ? " design-option-card--active" : ""}`}
+                  onClick={() => {
+                    setSelectedOption(opt);
+                    setShowDesignModal(false);
+                    setShowVariantModal(true);
+                    setTempVariantId(null);
+                  }}
+                >
+                  <span className="design-option-card__name">{opt.name}</span>
+                  {opt.base_price > 0 && (
+                    <span className="design-option-card__price">+${Number(opt.base_price).toLocaleString("es-AR")}</span>
+                  )}
+                  <span className="design-option-card__count">{opt.variants.length} variantes</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VARIANT MODAL */}
+      {showVariantModal && selectedOption && (
+        <div className="modal-overlay" onClick={() => setShowVariantModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Tipo de diseño · {selectedOption.name}</h3>
+              <button className="btn-icon" onClick={() => setShowVariantModal(false)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+            {selectedOption.variants.length === 0 ? (
+              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", textAlign: "center" }}>
+                Esta línea no tiene variantes aún
+              </p>
+            ) : (
+              <div className="variant-grid">
+                {selectedOption.variants.filter((v) => v.svg_content).map((v) => (
                   <button
-                    key={opt.id}
-                    className={`design-option-card${selectedOption?.id === opt.id ? " design-option-card--active" : ""}`}
-                    onClick={() => { setSelectedOption(opt); setAddingPlacement(false); }}
+                    key={v.id}
+                    className={`variant-card${tempVariantId === v.id ? " variant-card--selected" : ""}`}
+                    onClick={() => setTempVariantId(v.id)}
                   >
-                    <span className="design-option-card__name">{opt.name}</span>
-                    {opt.base_price > 0 && (
-                      <span className="design-option-card__price">+${Number(opt.base_price).toLocaleString("es-AR")}</span>
-                    )}
-                    <span className="design-option-card__count">{opt.variants.length} variantes</span>
+                    <div className="variant-card__svg"
+                      dangerouslySetInnerHTML={{ __html: v.svg_content.replace(/currentColor/gi, "var(--accent)") }} />
+                    <div className="variant-card__info">
+                      <strong>{v.name}</strong>
+                      {v.additional_price > 0 && <span>+${Number(v.additional_price).toLocaleString("es-AR")}</span>}
+                    </div>
                   </button>
                 ))}
-                {!selectedOption && (
-                  <button className="btn-small" onClick={() => setSelectedOption(designOptions[0])}>
-                    Sin diseño
-                  </button>
-                )}
               </div>
-            </div>
-          )}
-
-          {selectedOption && selectedOption.variants.length > 0 && (
-            <div className="control-group">
-              <label className="control-label">DISEÑOS COLOCADOS</label>
-
-              {placedDesigns.map((p, i) => (
-                <div key={i} className="placed-design-row">
-                  <div className="placed-design-row__info">
-                    <span className="placed-design-row__name">{p.variant.name}</span>
-                    <span className="placed-design-row__pos">{positionLabels[p.position]}</span>
-                    <span className="placed-design-row__price">+${Number(p.variant.additional_price).toLocaleString("es-AR")}</span>
-                  </div>
-                  <button className="btn-small btn-small--danger" onClick={() => removePlacement(i)}>X</button>
-                </div>
-              ))}
-
-              {addingPlacement ? (
-                <div className="placement-form">
-                  <select className="admin-input" value={newVariantId ?? ""} onChange={(e) => setNewVariantId(Number(e.target.value))}>
-                    <option value="">Seleccionar variante</option>
-                    {selectedOption.variants.filter((v) => v.svg_content).map((v) => (
-                      <option key={v.id} value={v.id}>{v.name} (+${Number(v.additional_price).toLocaleString("es-AR")})</option>
-                    ))}
-                  </select>
-                  <select className="admin-input" value={newPosition} onChange={(e) => setNewPosition(e.target.value as Position)}>
-                    {(newVariantId ? selectedOption.variants.find((v) => v.id === newVariantId)?.positions ?? [] : []).map((pos) => (
-                      <option key={pos} value={pos}>{positionLabels[pos as Position] ?? pos}</option>
-                    ))}
-                  </select>
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
-                    <button className="btn-small" onClick={addPlacement} disabled={!newVariantId}>Agregar</button>
-                    <button className="btn-small" onClick={() => setAddingPlacement(false)}>Cancelar</button>
-                  </div>
-                  {newVariantId && selectedOption.variants.find((v) => v.id === newVariantId) && (
-                    <div className="admin-preview" style={{ marginTop: 8 }}>
-                      <div className="design-card__svg" style={{ width: 60, height: 66 }}
-                        dangerouslySetInnerHTML={{
-                          __html: selectedOption.variants.find((v) => v.id === newVariantId)!.svg_content.replace(/currentColor/gi, "var(--accent)"),
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <button className="btn-small" onClick={() => { setAddingPlacement(true); setNewVariantId(null); }}>
-                  + Agregar diseño
-                </button>
-              )}
-            </div>
-          )}
-
-          {selectedOption && selectedOption.variants.length === 0 && (
-            <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-              Esta línea no tiene variantes aún
-            </p>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="product-footer">
         {ADMIN_PHONE ? (
