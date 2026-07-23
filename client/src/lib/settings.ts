@@ -30,7 +30,9 @@ export async function getSettings(): Promise<SiteSettings | null> {
 }
 
 export async function saveSettings(settings: Partial<SiteSettings>): Promise<boolean> {
-  const { error } = await supabase.from("site_settings").update(settings).eq("id", 1);
+  const { id, updated_at, ...payload } = settings;
+  const { error } = await supabase.from("site_settings").update(payload).eq("id", 1);
+  if (error) console.error("saveSettings error:", error);
   return !error;
 }
 
