@@ -15,6 +15,7 @@ export default function AdminGarmentForm() {
   const [originalSlug, setOriginalSlug] = useState("");
   const [description, setDescription] = useState("");
   const [basePrice, setBasePrice] = useState("");
+  const [svgMock, setSvgMock] = useState("");
   const [colors, setColors] = useState<ColorEntry[]>([{ name: "", hex: "#000000" }]);
   const [sizes, setSizes] = useState<SizeEntry[]>([{ name: "" }]);
   const [saving, setSaving] = useState(false);
@@ -30,6 +31,7 @@ export default function AdminGarmentForm() {
       setOriginalSlug(g.slug);
       setDescription(g.description);
       setBasePrice(String(g.base_price));
+      if (g.svg_mock) setSvgMock(g.svg_mock);
     });
     supabase.from("garment_colors").select("*").eq("garment_id", numId).then(({ data, error }) => {
       if (error) { console.error("Error loading colors:", error); return; }
@@ -48,7 +50,7 @@ export default function AdminGarmentForm() {
     try {
       if (isEdit) {
         const numId = Number(id);
-        const { error: eg } = await supabase.from("garments").update({ name, slug, description, base_price: parseFloat(basePrice) }).eq("id", numId);
+        const { error: eg } = await supabase.from("garments").update({ name, slug, description, base_price: parseFloat(basePrice), svg_mock: svgMock }).eq("id", numId);
         if (eg) throw eg;
         await supabase.from("garment_colors").delete().eq("garment_id", numId);
         await supabase.from("garment_sizes").delete().eq("garment_id", numId);
@@ -93,6 +95,28 @@ export default function AdminGarmentForm() {
 
         <label className="admin-label">Precio base ($)</label>
         <input className="admin-input" type="number" value={basePrice} onChange={(e) => setBasePrice(e.target.value)} placeholder="8500" />
+
+        <label className="admin-label">Mock SVG</label>
+        <input className="admin-input" type="file" accept=".svg" onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          const text = await file.text();
+          setSvgMock(text);
+        }} />
+        {svgMock && (
+          <div style={{ marginTop: 8 }}>
+            <div style={{
+              width: 120, height: 156, background: "var(--surface)",
+              border: "1px solid var(--border)", borderRadius: "var(--radius-sm)",
+              display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
+            }}>
+              <div style={{ width: 80, height: 104, color: "var(--text)" }}
+                dangerouslySetInnerHTML={{ __html: svgMock.replace(/currentColor/gi, "var(--text)") }}
+              />
+            </div>
+            <button className="btn-small btn-small--danger" style={{ marginTop: 4 }} onClick={() => setSvgMock("")}>Quitar SVG</button>
+          </div>
+        )}
 
         <label className="admin-label">
           Colores

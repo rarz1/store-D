@@ -18,9 +18,10 @@ interface Props {
   garmentId: string;
   color: string;
   designSvg: string | null;
+  svgMock?: string;
 }
 
-export default function GarmentMock({ garmentId, color, designSvg }: Props) {
+export default function GarmentMock({ garmentId, color, designSvg, svgMock }: Props) {
   const GarmentSVG = garmentComponents[garmentId];
 
   const designColor = isLight(color) ? "#1a1a1a" : "#ffffff";
@@ -28,10 +29,19 @@ export default function GarmentMock({ garmentId, color, designSvg }: Props) {
     ? designSvg.replace(/currentColor/gi, designColor)
     : null;
 
+  const mockSvg = svgMock
+    ? svgMock.replace(/currentColor/gi, color)
+    : null;
+
   return (
     <div className="garment-mock">
       <div className="garment-mock__svg">
-        {GarmentSVG ? (
+        {svgMock && mockSvg ? (
+          <div
+            className="garment-mock__custom"
+            dangerouslySetInnerHTML={{ __html: mockSvg }}
+          />
+        ) : GarmentSVG ? (
           <Suspense fallback={<div className="garment-mock__fallback">...</div>}>
             <GarmentSVG color={color} />
           </Suspense>

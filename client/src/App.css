@@ -243,6 +243,17 @@
   line-height: 1.3;
 }
 
+.product-header__desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0.15rem 0 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .product-header__price {
   font-family: var(--font-display);
   font-size: 1.125rem;
@@ -307,6 +318,21 @@
 .garment-mock__design svg {
   width: 100%;
   height: 100%;
+}
+
+.garment-mock__custom {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.garment-mock__custom svg {
+  width: 100%;
+  height: 100%;
+  max-width: 340px;
+  max-height: 440px;
 }
 
 /* ==============================

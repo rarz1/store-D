@@ -10,6 +10,7 @@ create table garments (
   slug text unique not null,
   description text not null default '',
   base_price numeric(10,2) not null default 0,
+  svg_mock text not null default '',
   created_at timestamptz default now()
 );
 

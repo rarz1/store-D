@@ -74,13 +74,12 @@ export default function HomePage() {
                       <span style={{ fontSize: "2rem", color: "var(--accent)" }}>{g.name[0]}</span>
                     )}
                   </div>
-                  <div className="category-card__info">
-                    <h3 className="category-card__name">{g.name}</h3>
-                    <p className="category-card__desc">{g.description}</p>
-                    <span className="category-card__price">
-                      Desde ${Number(g.base_price).toLocaleString("es-AR")}
-                    </span>
-                  </div>
+                    <div className="category-card__info">
+                      <h3 className="category-card__name">{g.name}</h3>
+                      <span className="category-card__price">
+                        Desde ${Number(g.base_price).toLocaleString("es-AR")}
+                      </span>
+                    </div>
                 </button>
               );
             })}

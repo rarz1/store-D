@@ -11,6 +11,7 @@ export type GarmentRow = {
   slug: string;
   description: string;
   base_price: number;
+  svg_mock: string;
   created_at: string;
 };
 

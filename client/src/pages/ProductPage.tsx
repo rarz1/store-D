@@ -114,6 +114,7 @@ export default function ProductPage() {
         </button>
         <div className="product-header__info">
           <h1 className="product-header__title">{garment.name}</h1>
+          <p className="product-header__desc">{garment.description}</p>
           <span className="product-header__price">${Number(garment.base_price).toLocaleString("es-AR")}</span>
         </div>
         {typeof navigator.share === "function" && (
@@ -131,6 +132,7 @@ export default function ProductPage() {
             garmentId={garmentId as string}
             color={selectedColor}
             designSvg={selectedDesign?.svg_content ?? null}
+            svgMock={garment.svg_mock}
           />
         </div>
 
