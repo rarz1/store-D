@@ -125,8 +125,8 @@ create table carousel_slides (
 );
 
 -- Seed default settings
-insert into site_settings (id, store_title, store_subtitle) values
-  (1, 'STORE', 'DISEÑO PROPIO · ALGODÓN ORGÁNICO');
+insert into site_settings (store_title, store_subtitle) values
+  ('STORE', 'DISEÑO PROPIO · ALGODÓN ORGÁNICO');
 
 -- Seed default carousel slides
 insert into carousel_slides (sort_order, layout, text_overlay, subtitle) values

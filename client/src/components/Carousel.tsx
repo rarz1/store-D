@@ -31,7 +31,7 @@ export default function Carousel() {
       onMouseLeave={() => setIsPaused(false)}
     >
       <div className="carousel__track" style={{ transform: `translateX(-${current * 100}%)` }}>
-        {slides.map((slide, i) => (
+        {slides.map((slide) => (
           <div
             key={slide.id}
             className={`carousel__slide carousel__slide--${slide.layout}`}
