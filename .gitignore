@@ -5,3 +5,5 @@ dist/
 *.log
 .next/
 .cache/
+backend/dist/
+.DS_Store
