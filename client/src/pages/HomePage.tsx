@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Carousel from "../components/Carousel";
+import StoreBanner from "../components/StoreBanner";
 import { supabase, type GarmentRow } from "../lib/supabase";
 import { setMeta } from "../lib/seo";
 import { getSettings, type SiteSettings } from "../lib/settings";
@@ -29,7 +30,10 @@ export default function HomePage() {
 
   return (
     <div className="home">
-      <Carousel />
+      <div className="home__hero">
+        <Carousel />
+        {settings && <StoreBanner settings={settings} />}
+      </div>
 
       <section className="categories">
         <div className="categories__header">

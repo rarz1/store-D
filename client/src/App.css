@@ -1037,3 +1037,79 @@
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
 }
+
+/* ==============================
+   STORE BANNER (hero overlay)
+   ============================== */
+
+.home__hero {
+  position: relative;
+}
+
+.store-banner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.store-banner__glass {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem 3rem;
+  border-radius: 50%;
+  aspect-ratio: 2 / 1;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--text) 15%, transparent);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  min-width: min(380px, 80vw);
+}
+
+.store-banner__logo {
+  height: 56px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 0.25rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.store-banner__title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 8vw, 4rem);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.store-banner__subtitle {
+  font-size: clamp(0.6rem, 2vw, 0.8rem);
+  letter-spacing: 0.2em;
+  color: var(--text);
+  margin: 0;
+  font-weight: 500;
+  opacity: 0.8;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .store-banner__glass {
+    padding: 1.25rem 1.5rem;
+    min-width: min(280px, 85vw);
+    aspect-ratio: 2 / 1;
+  }
+
+  .store-banner__logo {
+    height: 36px;
+  }
+}
