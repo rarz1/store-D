@@ -10,3 +10,4 @@
 {"type":"screen-added","file":"C:\\Users\\User\\OneDrive\\Documentos\\PROYECTOS\\STORE\\.superpowers\\brainstorm\\1008a788\\content\\preview.html"}
 {"source":"user-event","type":"click","text":"✅\n      Sí, previewQue se vea cómo queda antes de agregar al carrito","choice":"yes","id":null,"timestamp":1785020403665}
 {"type":"screen-added","file":"C:\\Users\\User\\OneDrive\\Documentos\\PROYECTOS\\STORE\\.superpowers\\brainstorm\\1008a788\\content\\waiting.html"}
+{"type":"server-stopped","reason":"idle timeout"}

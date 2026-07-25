@@ -3,8 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import GarmentMock from "../components/GarmentMock";
 import DesignFlow from "../components/DesignFlow";
 import HelpModal from "../components/HelpModal";
-import ColorModal from "../components/ColorModal";
-import SizeModal from "../components/SizeModal";
 import { useCart } from "../lib/cart";
 import { useToast } from "../lib/toast";
 import { useGarment, useGarmentColors, useGarmentSizes, useEstampados, useEstampadoSizes, useEstampadoLocations } from "../lib/hooks";
@@ -279,21 +277,61 @@ export default function ProductPage() {
         </div>
       </div>
 
-      <ColorModal
-        open={showColorModal}
-        colors={colors}
-        selectedColor={selectedColor}
-        onSelect={setSelectedColor}
-        onClose={() => setShowColorModal(false)}
-      />
+      {showColorModal && (
+        <div className="modal-overlay" onClick={() => setShowColorModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Elegí el color</h3>
+              <button className="btn-icon" onClick={() => setShowColorModal(false)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+            <div className="color-grid">
+              {colors.map((c) => (
+                <button
+                  key={c.hex}
+                  className={`color-swatch${selectedColor === c.hex ? " color-swatch--active" : ""}`}
+                  style={{ background: c.hex }}
+                  onClick={() => { setSelectedColor(c.hex); setShowColorModal(false); }}
+                  aria-label={c.name} title={c.name}
+                >
+                  {selectedColor === c.hex && (
+                    <svg viewBox="0 0 12 12" fill="none" width="14" height="14">
+                      <path d="M2 6l3 3 5-5" stroke={c.hex === "#f0f0f0" ? "#1a1a1a" : "#fff"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
-      <SizeModal
-        open={showSizeModal}
-        sizes={sizes}
-        selectedSize={selectedSize}
-        onSelect={setSelectedSize}
-        onClose={() => setShowSizeModal(false)}
-      />
+      {showSizeModal && (
+        <div className="modal-overlay" onClick={() => setShowSizeModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Elegí el talle</h3>
+              <button className="btn-icon" onClick={() => setShowSizeModal(false)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+            <div className="size-grid">
+              {sizes.map((s) => (
+                <button
+                  key={s.name}
+                  className={`size-chip${selectedSize === s.name ? " size-chip--active" : ""}`}
+                  onClick={() => { setSelectedSize(s.name); setShowSizeModal(false); }}
+                >{s.name}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <HelpModal open={showHelpModal} onClose={() => setShowHelpModal(false)} />
 
