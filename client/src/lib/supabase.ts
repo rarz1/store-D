@@ -52,3 +52,35 @@ export type DesignVariantRow = {
 };
 
 export type DesignRow = DesignOptionRow & { variants: DesignVariantRow[] };
+
+export type EstampadoRow = {
+  id: number;
+  name: string;
+  description: string;
+  svg_content: string;
+  image_url: string;
+  active: boolean;
+  tags: string[];
+  sort_order: number;
+  created_at: string;
+};
+
+export type EstampadoSizeRow = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  width_percent: number;
+  price_increment: number;
+  sort_order: number;
+};
+
+export type EstampadoLocationRow = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  position_key: string;
+  price_increment: number;
+  sort_order: number;
+};
