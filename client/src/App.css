@@ -1659,3 +1659,100 @@
   border-color: var(--accent) !important;
   background: rgba(249, 115, 22, 0.08) !important;
 }
+
+/* ─── Design Flow ─────────────────────────────── */
+.design-flow__body {
+  padding: 0 0.25rem 0.75rem;
+}
+
+.design-flow__confirm {
+  margin-top: 0.5rem;
+}
+
+.control-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+/* ─── Help Modal ──────────────────────────────── */
+.help-steps ol {
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.help-steps li {
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* ─── Tag Chips ───────────────────────────────── */
+.tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tag-chip {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.tag-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tag-chip--active {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+
+/* ─── Placed Estampados ───────────────────────── */
+.placed-estampados {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* ─── Help button ─────────────────────────────── */
+.btn-small--help {
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-small--help:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ─── Choice btn arrow ────────────────────────── */
+.choice-btn__arrow {
+  transition: transform 0.2s;
+}
+
+.choice-btn__arrow--open {
+  transform: rotate(90deg);
+}
