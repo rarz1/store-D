@@ -1,24 +1,20 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import GarmentMock from "../components/GarmentMock";
-import { supabase, type GarmentRow, type GarmentColorRow, type GarmentSizeRow, type DesignOptionRow, type DesignVariantRow } from "../lib/supabase";
+import { supabase, type GarmentRow, type GarmentColorRow, type GarmentSizeRow, type EstampadoRow, type EstampadoSizeRow, type EstampadoLocationRow } from "../lib/supabase";
 import { setMeta } from "../lib/seo";
+import DesignFlow from "../components/DesignFlow";
+import HelpModal from "../components/HelpModal";
+import { useToast } from "../lib/toast";
 
 const ADMIN_PHONE = import.meta.env.VITE_WHATSAPP_PHONE ?? "";
-type Position = "small_front" | "large_front" | "small_back" | "large_back";
+type Position = "small_front" | "small_front_right" | "large_front" | "small_back" | "large_back" | "sleeve";
 
-interface PlacedDesign {
-  variant: DesignVariantRow;
-  option: DesignOptionRow;
-  position: Position;
+interface PlacedEstampado {
+  estampado: EstampadoRow;
+  size: EstampadoSizeRow;
+  locations: EstampadoLocationRow[];
 }
-
-const positionLabels: Record<Position, string> = {
-  small_front: "Pequeño - Frente",
-  large_front: "Grande - Frente",
-  small_back: "Pequeño - Posterior",
-  large_back: "Grande - Posterior",
-};
 
 export default function ProductPage() {
   const { garmentId } = useParams<{ garmentId: string }>();
@@ -27,21 +23,19 @@ export default function ProductPage() {
   const [garment, setGarment] = useState<GarmentRow | null>(null);
   const [colors, setColors] = useState<GarmentColorRow[]>([]);
   const [sizes, setSizes] = useState<GarmentSizeRow[]>([]);
-  const [designOptions, setDesignOptions] = useState<(DesignOptionRow & { variants: DesignVariantRow[] })[]>([]);
+  const [estampados, setEstampados] = useState<EstampadoRow[]>([]);
+  const [stampSizes, setStampSizes] = useState<EstampadoSizeRow[]>([]);
+  const [stampLocations, setStampLocations] = useState<EstampadoLocationRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
-  type OptionWithVariants = DesignOptionRow & { variants: DesignVariantRow[] };
-  const [selectedOption, setSelectedOption] = useState<OptionWithVariants | null>(null);
-  const [placedDesigns] = useState<PlacedDesign[]>([]);
+  const [placedEstampados, setPlacedEstampados] = useState<PlacedEstampado[]>([]);
 
   const [showColorModal, setShowColorModal] = useState(false);
   const [showSizeModal, setShowSizeModal] = useState(false);
-  const [showDesignModal, setShowDesignModal] = useState(false);
-  const [showVariantModal, setShowVariantModal] = useState(false);
-
-  const [tempVariantId, setTempVariantId] = useState<number | null>(null);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     if (!garmentId) return;
@@ -52,26 +46,19 @@ export default function ProductPage() {
         if (!g) { setLoading(false); return; }
         setGarment(g);
 
-        const [cRes, sRes, doRes] = await Promise.all([
+        const [cRes, sRes, eRes, esRes, elRes] = await Promise.all([
           supabase.from("garment_colors").select("*").eq("garment_id", g.id),
           supabase.from("garment_sizes").select("*").eq("garment_id", g.id),
-          supabase.from("design_options").select("*").order("id"),
+          supabase.from("estampados").select("*").eq("active", true).order("sort_order"),
+          supabase.from("estampado_sizes").select("*").order("sort_order"),
+          supabase.from("estampado_locations").select("*").order("sort_order"),
         ]);
 
         if (cRes.data) { setColors(cRes.data); setSelectedColor(cRes.data[0]?.hex ?? ""); }
         if (sRes.data) { setSizes(sRes.data); setSelectedSize(sRes.data[0]?.name ?? ""); }
-
-        if (doRes.data) {
-          const withVariants: OptionWithVariants[] = await Promise.all(
-            doRes.data.map(async (opt) => {
-              const { data: variants } = await supabase
-                .from("design_variants").select("*")
-                .eq("design_option_id", opt.id).order("sort_order");
-              return { ...opt, variants: variants ?? [] };
-            })
-          );
-          setDesignOptions(withVariants);
-        }
+        if (eRes.data) setEstampados(eRes.data);
+        if (esRes.data) setStampSizes(esRes.data);
+        if (elRes.data) setStampLocations(elRes.data);
 
         setMeta({
           title: `${g.name} · STORE`,
@@ -86,8 +73,8 @@ export default function ProductPage() {
     fetchData();
   }, [garmentId]);
 
-  const totalPrice = (garment?.base_price ?? 0) + placedDesigns.reduce((sum, p) =>
-    sum + (p.option.base_price ?? 0) + (p.variant.additional_price ?? 0), 0
+  const totalPrice = (garment?.base_price ?? 0) + placedEstampados.reduce((sum, p) =>
+    sum + p.size.price_increment + p.locations.reduce((s, l) => s + l.price_increment, 0), 0
   );
 
   const colorName = colors.find((c) => c.hex === selectedColor)?.name ?? "";
@@ -98,13 +85,21 @@ export default function ProductPage() {
     `• Prenda: ${garment?.name ?? ""}\n` +
     `• Color: ${colorName}\n` +
     `• Talle: ${selectedSize}\n` +
-    placedDesigns.map((p) => `• ${p.option.name} (${p.variant.name}) - ${positionLabels[p.position]}: +$${Number(p.variant.additional_price + p.option.base_price).toLocaleString("es-AR")}`).join("\n") +
+    placedEstampados.map((p) =>
+      `• ${p.estampado.name} (${p.size.name}) - ${p.locations.map((l) => l.name).join(", ")}: +$${Number(
+        p.size.price_increment + p.locations.reduce((s, l) => s + l.price_increment, 0)
+      ).toLocaleString("es-AR")}`
+    ).join("\n") +
     `\n• Total: $${totalPrice.toLocaleString("es-AR")}`
   );
 
   const handleShare = async () => {
     try { await navigator.share({ title: `${garment?.name} · STORE`, text: `Mirá esta prenda: ${garment?.name}`, url: window.location.href }); }
     catch { /* fallback */ }
+  };
+
+  const removeEstampado = (index: number) => {
+    setPlacedEstampados((prev) => prev.filter((_, i) => i !== index));
   };
 
   if (loading) {
@@ -132,6 +127,15 @@ export default function ProductPage() {
     );
   }
 
+  const placedDesignsForMock = placedEstampados.flatMap((p) =>
+    p.locations.map((l) => ({
+      variantId: p.estampado.id,
+      svgContent: p.estampado.svg_content,
+      position: l.position_key as Position,
+      name: p.estampado.name,
+    }))
+  );
+
   return (
     <div className="product-page">
       <header className="product-header">
@@ -151,8 +155,10 @@ export default function ProductPage() {
           )}
           <div className="product-header__price">
             <span>${Number(garment.base_price).toLocaleString("es-AR")}</span>
-            {placedDesigns.map((p, i) => (
-              <span key={i} className="product-header__addon">+ ${Number(p.variant.additional_price + p.option.base_price).toLocaleString("es-AR")}</span>
+            {placedEstampados.map((p, i) => (
+              <span key={i} className="product-header__addon">
+                + ${Number(p.size.price_increment + p.locations.reduce((s, l) => s + l.price_increment, 0)).toLocaleString("es-AR")}
+              </span>
             ))}
             <strong>= ${totalPrice.toLocaleString("es-AR")}</strong>
           </div>
@@ -174,12 +180,7 @@ export default function ProductPage() {
               color={selectedColor}
               svgMock={garment.svg_mock}
               svgMockBack={garment.svg_mock_back}
-              placedDesigns={placedDesigns.map((p) => ({
-                variantId: p.variant.id,
-                svgContent: p.variant.svg_content,
-                position: p.position,
-                name: p.variant.name,
-              }))}
+              placedDesigns={placedDesignsForMock}
             />
             {garment.svg_mock_back && (
               <GarmentMock
@@ -187,12 +188,7 @@ export default function ProductPage() {
                 color={selectedColor}
                 svgMock={garment.svg_mock}
                 svgMockBack={garment.svg_mock_back}
-                placedDesigns={placedDesigns.map((p) => ({
-                  variantId: p.variant.id,
-                  svgContent: p.variant.svg_content,
-                  position: p.position,
-                  name: p.variant.name,
-                }))}
+                placedDesigns={placedDesignsForMock}
                 side="back"
                 hideFlip
               />
@@ -221,15 +217,52 @@ export default function ProductPage() {
             </button>
           </div>
 
-          {designOptions.length > 0 && (
+          {estampados.length > 0 && (
             <div className="control-group">
-              <button className="choice-btn" onClick={() => setShowDesignModal(true)}>
-                <span className="choice-btn__label">Clase de diseño</span>
-                <span className="choice-btn__value">{selectedOption?.name || "Elegir"}</span>
-                <svg className="choice-btn__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                  <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
+              <div className="control-group__header">
+                <span className="control-label">PERSONALIZÁ TU PRENDA</span>
+                <button className="btn-small btn-small--help" onClick={() => setShowHelpModal(true)} title="¿Cómo funciona?">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M12 17h.01" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
+
+              {placedEstampados.length > 0 && (
+                <div className="placed-estampados">
+                  {placedEstampados.map((p, i) => (
+                    <div key={i} className="placed-estampado-row">
+                      <div className="placed-estampado-row__info">
+                        <span className="placed-estampado-row__name">{p.estampado.name} · {p.size.name}</span>
+                        <span className="placed-estampado-row__locs">{p.locations.map(l => l.name).join(", ")}</span>
+                      </div>
+                      <span className="placed-estampado-row__price">
+                        +${(p.size.price_increment + p.locations.reduce((s, l) => s + l.price_increment, 0)).toLocaleString("es-AR")}
+                      </span>
+                      <button className="btn-small btn-small--danger" onClick={() => removeEstampado(i)}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <DesignFlow
+                estampados={estampados}
+                stampSizes={stampSizes}
+                stampLocations={stampLocations}
+                onAdd={(item) => {
+                  const isDuplicate = placedEstampados.some((p) =>
+                    p.estampado.id === item.estampado.id &&
+                    JSON.stringify(p.locations.map(l => l.id).sort()) === JSON.stringify(item.locations.map(l => l.id).sort())
+                  );
+                  if (isDuplicate) {
+                    toast.warning("Este diseño ya está agregado en esa ubicación");
+                    return;
+                  }
+                  setPlacedEstampados([...placedEstampados, item]);
+                }}
+              />
             </div>
           )}
         </div>
@@ -293,79 +326,7 @@ export default function ProductPage() {
         </div>
       )}
 
-      {/* DESIGN MODAL */}
-      {showDesignModal && (
-        <div className="modal-overlay" onClick={() => setShowDesignModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Elegí clase de diseño</h3>
-              <button className="btn-icon" onClick={() => setShowDesignModal(false)}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-            <div className="design-option-selector">
-              {designOptions.map((opt) => (
-                <button
-                  key={opt.id}
-                  className={`design-option-card${selectedOption?.id === opt.id ? " design-option-card--active" : ""}`}
-                  onClick={() => {
-                    setSelectedOption(opt);
-                    setShowDesignModal(false);
-                    setShowVariantModal(true);
-                    setTempVariantId(null);
-                  }}
-                >
-                  <span className="design-option-card__name">{opt.name}</span>
-                  {opt.base_price > 0 && (
-                    <span className="design-option-card__price">+${Number(opt.base_price).toLocaleString("es-AR")}</span>
-                  )}
-                  <span className="design-option-card__count">{opt.variants.length} variantes</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* VARIANT MODAL */}
-      {showVariantModal && selectedOption && (
-        <div className="modal-overlay" onClick={() => setShowVariantModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Tipo de diseño · {selectedOption.name}</h3>
-              <button className="btn-icon" onClick={() => setShowVariantModal(false)}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-            {selectedOption.variants.length === 0 ? (
-              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", textAlign: "center" }}>
-                Esta línea no tiene variantes aún
-              </p>
-            ) : (
-              <div className="variant-grid">
-                {selectedOption.variants.filter((v) => v.svg_content).map((v) => (
-                  <button
-                    key={v.id}
-                    className={`variant-card${tempVariantId === v.id ? " variant-card--selected" : ""}`}
-                    onClick={() => setTempVariantId(v.id)}
-                  >
-                    <div className="variant-card__svg"
-                      dangerouslySetInnerHTML={{ __html: v.svg_content.replace(/currentColor/gi, "var(--accent)") }} />
-                    <div className="variant-card__info">
-                      <strong>{v.name}</strong>
-                      {v.additional_price > 0 && <span>+${Number(v.additional_price).toLocaleString("es-AR")}</span>}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <HelpModal open={showHelpModal} onClose={() => setShowHelpModal(false)} />
 
       <div className="product-footer">
         {ADMIN_PHONE ? (
