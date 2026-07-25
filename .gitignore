@@ -7,3 +7,5 @@ dist/
 .cache/
 backend/dist/
 .DS_Store
+.superpowers/
+
