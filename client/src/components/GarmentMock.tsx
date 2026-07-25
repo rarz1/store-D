@@ -15,7 +15,7 @@ function isLight(hex: string) {
 }
 
 type Side = "front" | "back";
-type Position = "small_front" | "large_front" | "small_back" | "large_back";
+type Position = "small_front" | "small_front_right" | "large_front" | "small_back" | "large_back" | "sleeve";
 
 interface PlacedDesign {
   variantId: number;
@@ -38,9 +38,11 @@ interface Props {
 
 const positionStyles: Record<Position, React.CSSProperties> = {
   small_front: { top: "32%", left: "30%", width: "40%", height: "22%" },
+  small_front_right: { top: "32%", left: "55%", width: "40%", height: "22%" },
   large_front: { top: "26%", left: "18%", width: "64%", height: "36%" },
   small_back: { top: "32%", left: "30%", width: "40%", height: "22%" },
   large_back: { top: "26%", left: "18%", width: "64%", height: "36%" },
+  sleeve: { top: "8%", left: "2%", width: "15%", height: "20%" },
 };
 
 function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, designSvg, side }: Props) {
@@ -55,6 +57,7 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
     : null;
 
   const sideDesigns = (placedDesigns ?? []).filter((d) => {
+    if (d.position === "sleeve") return true;
     if (side === "front") return d.position.includes("front");
     return d.position.includes("back");
   });
