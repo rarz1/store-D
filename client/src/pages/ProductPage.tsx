@@ -1,113 +1,111 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import GarmentMock from "../components/GarmentMock";
-import { supabase, type GarmentRow, type GarmentColorRow, type GarmentSizeRow, type DesignOptionRow, type DesignVariantRow } from "../lib/supabase";
+import DesignFlow from "../components/DesignFlow";
+import HelpModal from "../components/HelpModal";
+import ColorModal from "../components/ColorModal";
+import SizeModal from "../components/SizeModal";
+import { useCart } from "../lib/cart";
+import { useToast } from "../lib/toast";
+import { useGarment, useGarmentColors, useGarmentSizes, useEstampados, useEstampadoSizes, useEstampadoLocations } from "../lib/hooks";
 import { setMeta } from "../lib/seo";
+import type { EstampadoRow, EstampadoSizeRow, EstampadoLocationRow } from "../lib/supabase";
 
 const ADMIN_PHONE = import.meta.env.VITE_WHATSAPP_PHONE ?? "";
-type Position = "small_front" | "large_front" | "small_back" | "large_back";
 
-interface PlacedDesign {
-  variant: DesignVariantRow;
-  option: DesignOptionRow;
-  position: Position;
+interface PlacedEstampado {
+  estampado: EstampadoRow;
+  size: EstampadoSizeRow;
+  locations: EstampadoLocationRow[];
 }
-
-const positionLabels: Record<Position, string> = {
-  small_front: "Pequeño - Frente",
-  large_front: "Grande - Frente",
-  small_back: "Pequeño - Posterior",
-  large_back: "Grande - Posterior",
-};
 
 export default function ProductPage() {
   const { garmentId } = useParams<{ garmentId: string }>();
   const navigate = useNavigate();
+  const { addItem, openCart } = useCart();
+  const toast = useToast();
 
-  const [garment, setGarment] = useState<GarmentRow | null>(null);
-  const [colors, setColors] = useState<GarmentColorRow[]>([]);
-  const [sizes, setSizes] = useState<GarmentSizeRow[]>([]);
-  const [designOptions, setDesignOptions] = useState<(DesignOptionRow & { variants: DesignVariantRow[] })[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: garment, isLoading: garmentLoading } = useGarment(garmentId ?? "");
+  const { data: colors = [] } = useGarmentColors(garment?.id ?? 0);
+  const { data: sizes = [] } = useGarmentSizes(garment?.id ?? 0);
+  const { data: estampados = [] } = useEstampados();
+  const { data: stampSizes = [] } = useEstampadoSizes();
+  const { data: stampLocations = [] } = useEstampadoLocations();
 
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
-  type OptionWithVariants = DesignOptionRow & { variants: DesignVariantRow[] };
-  const [selectedOption, setSelectedOption] = useState<OptionWithVariants | null>(null);
-  const [placedDesigns] = useState<PlacedDesign[]>([]);
+  const [placedEstampados, setPlacedEstampados] = useState<PlacedEstampado[]>([]);
 
   const [showColorModal, setShowColorModal] = useState(false);
   const [showSizeModal, setShowSizeModal] = useState(false);
-  const [showDesignModal, setShowDesignModal] = useState(false);
-  const [showVariantModal, setShowVariantModal] = useState(false);
-
-  const [tempVariantId, setTempVariantId] = useState<number | null>(null);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   useEffect(() => {
-    if (!garmentId) return;
+    if (colors.length > 0 && !selectedColor) setSelectedColor(colors[0].hex);
+  }, [colors]);
 
-    const fetchData = async () => {
-      try {
-        const { data: g } = await supabase.from("garments").select("*").eq("slug", garmentId).single();
-        if (!g) { setLoading(false); return; }
-        setGarment(g);
+  useEffect(() => {
+    if (sizes.length > 0 && !selectedSize) setSelectedSize(sizes[0].name);
+  }, [sizes]);
 
-        const [cRes, sRes, doRes] = await Promise.all([
-          supabase.from("garment_colors").select("*").eq("garment_id", g.id),
-          supabase.from("garment_sizes").select("*").eq("garment_id", g.id),
-          supabase.from("design_options").select("*").order("id"),
-        ]);
+  useEffect(() => {
+    if (garment) {
+      setMeta({
+        title: `${garment.name} · STORE`,
+        description: `${garment.name} · ${garment.description} · Desde $${Number(garment.base_price).toLocaleString("es-AR")}`,
+      });
+    }
+  }, [garment]);
 
-        if (cRes.data) { setColors(cRes.data); setSelectedColor(cRes.data[0]?.hex ?? ""); }
-        if (sRes.data) { setSizes(sRes.data); setSelectedSize(sRes.data[0]?.name ?? ""); }
-
-        if (doRes.data) {
-          const withVariants: OptionWithVariants[] = await Promise.all(
-            doRes.data.map(async (opt) => {
-              const { data: variants } = await supabase
-                .from("design_variants").select("*")
-                .eq("design_option_id", opt.id).order("sort_order");
-              return { ...opt, variants: variants ?? [] };
-            })
-          );
-          setDesignOptions(withVariants);
-        }
-
-        setMeta({
-          title: `${g.name} · STORE`,
-          description: `${g.name} · ${g.description} · Desde $${Number(g.base_price).toLocaleString("es-AR")}`,
-        });
-      } catch (err) {
-        console.error("Error loading product:", err);
-      }
-      setLoading(false);
-    };
-
-    fetchData();
-  }, [garmentId]);
-
-  const totalPrice = (garment?.base_price ?? 0) + placedDesigns.reduce((sum, p) =>
-    sum + (p.option.base_price ?? 0) + (p.variant.additional_price ?? 0), 0
-  );
+  const totalPrice = (garment?.base_price ?? 0) + placedEstampados.reduce((sum, p) => {
+    const sizeInc = p.size.price_increment;
+    const locInc = p.locations.reduce((s, l) => s + l.price_increment, 0);
+    return sum + sizeInc + locInc;
+  }, 0);
 
   const colorName = colors.find((c) => c.hex === selectedColor)?.name ?? "";
-  const sizeName = selectedSize;
 
-  const whatsappMessage = encodeURIComponent(
-    `Hola! Quiero consultar por:\n` +
-    `• Prenda: ${garment?.name ?? ""}\n` +
-    `• Color: ${colorName}\n` +
-    `• Talle: ${selectedSize}\n` +
-    placedDesigns.map((p) => `• ${p.option.name} (${p.variant.name}) - ${positionLabels[p.position]}: +$${Number(p.variant.additional_price + p.option.base_price).toLocaleString("es-AR")}`).join("\n") +
-    `\n• Total: $${totalPrice.toLocaleString("es-AR")}`
-  );
+  const buildWhatsAppMessage = () => {
+    const lines = [
+      "Hola! Quiero consultar por:",
+      `• Prenda: ${garment?.name ?? ""}`,
+      `• Color: ${colorName}`,
+      `• Talle: ${selectedSize}`,
+    ];
+    placedEstampados.forEach((p) => {
+      const sizeInc = p.size.price_increment;
+      const locInc = p.locations.reduce((s, l) => s + l.price_increment, 0);
+      lines.push(`• ${p.estampado.name} (${p.size.name}) - ${p.locations.map(l => l.name).join(", ")}: +$${(sizeInc + locInc).toLocaleString("es-AR")}`);
+    });
+    lines.push(`• Total: $${totalPrice.toLocaleString("es-AR")}`);
+    return encodeURIComponent(lines.join("\n"));
+  };
 
   const handleShare = async () => {
     try { await navigator.share({ title: `${garment?.name} · STORE`, text: `Mirá esta prenda: ${garment?.name}`, url: window.location.href }); }
     catch { /* fallback */ }
   };
 
-  if (loading) {
+  const handleAddToCart = () => {
+    if (!garment) return;
+    addItem({
+      garmentId: garment.id,
+      garmentName: garment.name,
+      garmentSlug: garment.slug,
+      garmentBasePrice: garment.base_price,
+      colorHex: selectedColor,
+      colorName: colorName,
+      size: selectedSize,
+      estampados: placedEstampados,
+    });
+    openCart();
+  };
+
+  const removeEstampado = (index: number) => {
+    setPlacedEstampados((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  if (garmentLoading) {
     return (
       <div className="product-page">
         <div className="product-content">
@@ -115,7 +113,7 @@ export default function ProductPage() {
           <div className="controls-section">
             <div className="skeleton skeleton--text" style={{ width: "4rem" }} />
             <div style={{ display: "flex", gap: "0.75rem" }}>
-              {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton skeleton--avatar" />)}
+              {[1, 2, 3].map((i) => <div key={i} className="skeleton skeleton--avatar" />)}
             </div>
           </div>
         </div>
@@ -132,6 +130,17 @@ export default function ProductPage() {
     );
   }
 
+  const whatsappMessage = buildWhatsAppMessage();
+
+  const placedDesigns = placedEstampados.flatMap((p) =>
+    p.locations.map((loc) => ({
+      variantId: p.estampado.id,
+      svgContent: p.estampado.svg_content,
+      position: loc.position_key as "small_front" | "small_front_right" | "large_front" | "small_back" | "large_back" | "sleeve",
+      name: p.estampado.name,
+    }))
+  );
+
   return (
     <div className="product-page">
       <header className="product-header">
@@ -143,17 +152,18 @@ export default function ProductPage() {
         <div className="product-header__info">
           <h1 className="product-header__title">{garment.name}</h1>
           <p className="product-header__desc">{garment.description}</p>
-          {(colorName || sizeName) && (
+          {(colorName || selectedSize) && (
             <div className="product-header__choices">
               {colorName && <span>Color: {colorName}</span>}
-              {sizeName && <span>Talle: {sizeName}</span>}
+              {selectedSize && <span>Talle: {selectedSize}</span>}
             </div>
           )}
           <div className="product-header__price">
-            <span>${Number(garment.base_price).toLocaleString("es-AR")}</span>
-            {placedDesigns.map((p, i) => (
-              <span key={i} className="product-header__addon">+ ${Number(p.variant.additional_price + p.option.base_price).toLocaleString("es-AR")}</span>
-            ))}
+            <span>Base: ${Number(garment.base_price).toLocaleString("es-AR")}</span>
+            {placedEstampados.map((p, i) => {
+              const inc = p.size.price_increment + p.locations.reduce((s, l) => s + l.price_increment, 0);
+              return <span key={i} className="product-header__addon">+ ${inc.toLocaleString("es-AR")}</span>;
+            })}
             <strong>= ${totalPrice.toLocaleString("es-AR")}</strong>
           </div>
         </div>
@@ -174,12 +184,7 @@ export default function ProductPage() {
               color={selectedColor}
               svgMock={garment.svg_mock}
               svgMockBack={garment.svg_mock_back}
-              placedDesigns={placedDesigns.map((p) => ({
-                variantId: p.variant.id,
-                svgContent: p.variant.svg_content,
-                position: p.position,
-                name: p.variant.name,
-              }))}
+              placedDesigns={placedDesigns}
             />
             {garment.svg_mock_back && (
               <GarmentMock
@@ -187,12 +192,7 @@ export default function ProductPage() {
                 color={selectedColor}
                 svgMock={garment.svg_mock}
                 svgMockBack={garment.svg_mock_back}
-                placedDesigns={placedDesigns.map((p) => ({
-                  variantId: p.variant.id,
-                  svgContent: p.variant.svg_content,
-                  position: p.position,
-                  name: p.variant.name,
-                }))}
+                placedDesigns={placedDesigns}
                 side="back"
                 hideFlip
               />
@@ -214,158 +214,88 @@ export default function ProductPage() {
           <div className="control-group">
             <button className="choice-btn" onClick={() => setShowSizeModal(true)}>
               <span className="choice-btn__label">Talle</span>
-              <span className="choice-btn__value">{sizeName || "Elegir"}</span>
+              <span className="choice-btn__value">{selectedSize || "Elegir"}</span>
               <svg className="choice-btn__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
                 <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           </div>
 
-          {designOptions.length > 0 && (
-            <div className="control-group">
-              <button className="choice-btn" onClick={() => setShowDesignModal(true)}>
-                <span className="choice-btn__label">Clase de diseño</span>
-                <span className="choice-btn__value">{selectedOption?.name || "Elegir"}</span>
-                <svg className="choice-btn__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                  <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+          <div className="control-group">
+            <div className="control-group__header">
+              <span className="control-label">PERSONALIZÁ TU PRENDA</span>
+              <button className="btn-small btn-small--help" onClick={() => setShowHelpModal(true)} title="¿Cómo funciona?">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M12 17h.01" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* COLOR MODAL */}
-      {showColorModal && (
-        <div className="modal-overlay" onClick={() => setShowColorModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Elegí el color</h3>
-              <button className="btn-icon" onClick={() => setShowColorModal(false)}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-            <div className="color-grid">
-              {colors.map((c) => (
-                <button
-                  key={c.hex}
-                  className={`color-swatch${selectedColor === c.hex ? " color-swatch--active" : ""}`}
-                  style={{ background: c.hex }}
-                  onClick={() => { setSelectedColor(c.hex); setShowColorModal(false); }}
-                  aria-label={c.name} title={c.name}
-                >
-                  {selectedColor === c.hex && (
-                    <svg viewBox="0 0 12 12" fill="none" width="14" height="14">
-                      <path d="M2 6l3 3 5-5" stroke={c.hex === "#f0f0f0" ? "#1a1a1a" : "#fff"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SIZE MODAL */}
-      {showSizeModal && (
-        <div className="modal-overlay" onClick={() => setShowSizeModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Elegí el talle</h3>
-              <button className="btn-icon" onClick={() => setShowSizeModal(false)}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-            <div className="size-grid">
-              {sizes.map((s) => (
-                <button
-                  key={s.name}
-                  className={`size-chip${selectedSize === s.name ? " size-chip--active" : ""}`}
-                  onClick={() => { setSelectedSize(s.name); setShowSizeModal(false); }}
-                >{s.name}</button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* DESIGN MODAL */}
-      {showDesignModal && (
-        <div className="modal-overlay" onClick={() => setShowDesignModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Elegí clase de diseño</h3>
-              <button className="btn-icon" onClick={() => setShowDesignModal(false)}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-            <div className="design-option-selector">
-              {designOptions.map((opt) => (
-                <button
-                  key={opt.id}
-                  className={`design-option-card${selectedOption?.id === opt.id ? " design-option-card--active" : ""}`}
-                  onClick={() => {
-                    setSelectedOption(opt);
-                    setShowDesignModal(false);
-                    setShowVariantModal(true);
-                    setTempVariantId(null);
-                  }}
-                >
-                  <span className="design-option-card__name">{opt.name}</span>
-                  {opt.base_price > 0 && (
-                    <span className="design-option-card__price">+${Number(opt.base_price).toLocaleString("es-AR")}</span>
-                  )}
-                  <span className="design-option-card__count">{opt.variants.length} variantes</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* VARIANT MODAL */}
-      {showVariantModal && selectedOption && (
-        <div className="modal-overlay" onClick={() => setShowVariantModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Tipo de diseño · {selectedOption.name}</h3>
-              <button className="btn-icon" onClick={() => setShowVariantModal(false)}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-            {selectedOption.variants.length === 0 ? (
-              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", textAlign: "center" }}>
-                Esta línea no tiene variantes aún
-              </p>
-            ) : (
-              <div className="variant-grid">
-                {selectedOption.variants.filter((v) => v.svg_content).map((v) => (
-                  <button
-                    key={v.id}
-                    className={`variant-card${tempVariantId === v.id ? " variant-card--selected" : ""}`}
-                    onClick={() => setTempVariantId(v.id)}
-                  >
-                    <div className="variant-card__svg"
-                      dangerouslySetInnerHTML={{ __html: v.svg_content.replace(/currentColor/gi, "var(--accent)") }} />
-                    <div className="variant-card__info">
-                      <strong>{v.name}</strong>
-                      {v.additional_price > 0 && <span>+${Number(v.additional_price).toLocaleString("es-AR")}</span>}
+            {placedEstampados.length > 0 && (
+              <div className="placed-estampados">
+                {placedEstampados.map((p, i) => (
+                  <div key={i} className="placed-estampado-row">
+                    <div className="placed-estampado-row__info">
+                      <span className="placed-estampado-row__name">{p.estampado.name} · {p.size.name}</span>
+                      <span className="placed-estampado-row__locs">{p.locations.map(l => l.name).join(", ")}</span>
                     </div>
-                  </button>
+                    <span className="placed-estampado-row__price">
+                      +${(p.size.price_increment + p.locations.reduce((s, l) => s + l.price_increment, 0)).toLocaleString("es-AR")}
+                    </span>
+                    <button className="btn-small btn-small--danger" onClick={() => removeEstampado(i)}>✕</button>
+                  </div>
                 ))}
               </div>
             )}
+
+            <DesignFlow
+              estampados={estampados}
+              stampSizes={stampSizes}
+              stampLocations={stampLocations}
+              onAdd={(item) => {
+                const isDuplicate = placedEstampados.some((p) =>
+                  p.estampado.id === item.estampado.id &&
+                  JSON.stringify(p.locations.map(l => l.id).sort()) === JSON.stringify(item.locations.map(l => l.id).sort())
+                );
+                if (isDuplicate) {
+                  toast.warning("Este diseño ya está agregado en esa ubicación");
+                  return;
+                }
+                setPlacedEstampados([...placedEstampados, item]);
+              }}
+            />
           </div>
+
+          <button className="btn-primary" style={{ width: "100%", marginTop: "1rem" }} onClick={handleAddToCart}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20" style={{marginRight: "0.5rem"}}>
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3 6h18" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M16 10a4 4 0 010 8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Agregar al carrito
+          </button>
         </div>
-      )}
+      </div>
+
+      <ColorModal
+        open={showColorModal}
+        colors={colors}
+        selectedColor={selectedColor}
+        onSelect={setSelectedColor}
+        onClose={() => setShowColorModal(false)}
+      />
+
+      <SizeModal
+        open={showSizeModal}
+        sizes={sizes}
+        selectedSize={selectedSize}
+        onSelect={setSelectedSize}
+        onClose={() => setShowSizeModal(false)}
+      />
+
+      <HelpModal open={showHelpModal} onClose={() => setShowHelpModal(false)} />
 
       <div className="product-footer">
         {ADMIN_PHONE ? (
