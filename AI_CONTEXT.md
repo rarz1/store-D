@@ -3,7 +3,7 @@
 ## Estado del proyecto
 
 - **Arquitectura**: React + Supabase + Vercel (sin backend propio, sin Docker)
-- **Base de datos**: PostgreSQL en Supabase con tablas `garments`, `garment_colors`, `garment_sizes`, `designs`, `site_settings`, `carousel_slides`
+- **Base de datos**: PostgreSQL en Supabase con tablas `garments`, `garment_colors`, `garment_sizes`, `estampados`, `diseno_tipos`, `estampado_sizes`, `estampado_locations`, `garment_estampado_sizes`, `garment_estampado_locations`, `site_settings`, `carousel_slides`
 - **Storage**: Bucket `store-images` (público) para logo y carrusel
 - **Autenticación admin**: Supabase Auth (email/password)
 - **Deploy**: Frontend en Vercel (`store-d-psi.vercel.app`), datos en Supabase
@@ -36,8 +36,24 @@
 - StoreBanner: barra superior con glass effect sobre el carrusel, muestra logo + título + subtítulo
 - Colores aplicados como CSS variables desde `site_settings`, editables con live preview
 - Consulta por WhatsApp con resumen del producto configurado
-- Admin con 4 tabs: Productos (prendas + diseños), Tienda (info + logo), Carrusel (slides), Colores (pick + preview)
+- Admin con 4 tabs: Productos (prendas + tamaños/ubicaciones editables), Diseños (clases + tipos), Tienda (info + logo), Carrusel (slides), Colores (pick + preview)
 - Mobile-first, responsive, safe areas
+
+## Estampado system
+
+- `estampados` = clases de diseño (ej: Animal Print, Geométricos)
+- `diseno_tipos` = sub-diseños dentro de una clase (ej: Leopardo dentro de Animal Print), cada uno con su propio SVG
+- `estampado_sizes` = escala del diseño (Pequeño 25% → Full 100% del ancho), controla qué % del área de la prenda ocupa
+- `estampado_locations` = posición en el mock (Pecho Izq, Centro Espalda, etc.), el `position_key` mapea a coordenadas SVG en GarmentMock
+- `garment_estampado_sizes`/`garment_estampado_locations` = junction tables: qué sizes/locations están disponibles por prenda
+- Flujo en frontend: usuario elige clase → tipo → tamaño → ubicación(es) → confirma
+
+## Admin reciente
+
+- Tabla prendas: sin columna Etiquetas
+- Tamaños estampado: editables in-line con botón + Agregar (Nombre, Tamaño %, Incremento $, Orden)
+- Ubicaciones estampado: editables in-line con botón + Agregar (Nombre, Position key, Incremento $, Orden)
+- Diseños: expandible por clase para ver/crear/editar/borrar tipos, muestra error si falla el guardado
 
 ## Deploy
 

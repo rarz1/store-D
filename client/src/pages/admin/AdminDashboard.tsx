@@ -37,6 +37,10 @@ export default function AdminDashboard() {
 
   const [newLocationForm, setNewLocationForm] = useState<Partial<EstampadoLocationRow> | null>(null);
 
+  const [newSizeForm, setNewSizeForm] = useState<Partial<EstampadoSizeRow> | null>(null);
+
+  const [tipoError, setTipoError] = useState<string | null>(null);
+
   useEffect(() => {
     supabase.from("garments").select("*").order("id").then(({ data, error }) => {
       if (error) console.error("Error loading garments:", error);
@@ -133,6 +137,15 @@ export default function AdminDashboard() {
     setNewLocationForm(null);
   };
 
+  const addSize = async () => {
+    if (!newSizeForm?.name) return;
+    const p = { name: newSizeForm.name, slug: newSizeForm.slug ?? newSizeForm.name.toLowerCase().replace(/[^a-z0-9]+/g, "_"), description: "", width_percent: newSizeForm.width_percent ?? 50, price_increment: newSizeForm.price_increment ?? 0, sort_order: newSizeForm.sort_order ?? estampadoSizes.length };
+    const { data, error } = await supabase.from("estampado_sizes").insert(p).select();
+    if (error) { console.error("Error adding size:", error); return; }
+    if (data) setEstampadoSizes((prev) => [...prev, data[0] as EstampadoSizeRow]);
+    setNewSizeForm(null);
+  };
+
   const handleSaveSettings = async () => {
     if (!settings) return;
     setSaving(true);
@@ -209,6 +222,9 @@ export default function AdminDashboard() {
           <section className="admin-section">
             <div className="admin-section-header">
               <h2>Tamaños de estampado</h2>
+              <button className="btn-back" onClick={() => setNewSizeForm({ name: "", slug: "", width_percent: 50, price_increment: 0, sort_order: estampadoSizes.length })}>
+                + Agregar
+              </button>
             </div>
             <table className="admin-table">
               <thead>
@@ -243,6 +259,20 @@ export default function AdminDashboard() {
                 ))}
               </tbody>
             </table>
+            {newSizeForm && (
+              <div className="admin-form" style={{ marginTop: "0.75rem" }}>
+                <label className="admin-label">Nombre</label>
+                <input className="admin-input" value={newSizeForm.name ?? ""} onChange={(e) => setNewSizeForm({ ...newSizeForm, name: e.target.value, slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "_") })} />
+                <label className="admin-label">Tamaño %</label>
+                <input className="admin-input admin-input--sm" type="number" value={newSizeForm.width_percent ?? 50} onChange={(e) => setNewSizeForm({ ...newSizeForm, width_percent: parseInt(e.target.value) || 0 })} />
+                <label className="admin-label">Incremento $</label>
+                <input className="admin-input admin-input--sm" type="number" value={newSizeForm.price_increment ?? 0} onChange={(e) => setNewSizeForm({ ...newSizeForm, price_increment: parseInt(e.target.value) || 0 })} />
+                <div className="admin-form-actions">
+                  <button className="btn-back" onClick={() => setNewSizeForm(null)}>Cancelar</button>
+                  <button className="btn-primary" onClick={addSize} disabled={!newSizeForm.name}>Crear</button>
+                </div>
+              </div>
+            )}
           </section>
 
           <section className="admin-section">
@@ -382,18 +412,19 @@ export default function AdminDashboard() {
                             {tipoForm && tipoForm.estampado_id === e.id && (
                               <div className="admin-form" style={{ marginBottom: "0.75rem" }}>
                                 <label className="admin-label">Nombre</label>
-                                <input className="admin-input" value={tipoForm.name ?? ""} onChange={(e2) => setTipoForm({ ...tipoForm, name: e2.target.value })} />
+                                <input className="admin-input" value={tipoForm.name ?? ""} onChange={(e2) => { setTipoError(null); setTipoForm({ ...tipoForm, name: e2.target.value }); }} />
                                 <label className="admin-label">Descripción</label>
                                 <input className="admin-input" value={tipoForm.description ?? ""} onChange={(e2) => setTipoForm({ ...tipoForm, description: e2.target.value })} />
                                 <label className="admin-label">SVG</label>
                                 <textarea className="admin-textarea" rows={4} value={tipoForm.svg_content ?? ""} onChange={(e2) => setTipoForm({ ...tipoForm, svg_content: e2.target.value })} />
                                 <label className="admin-label">URL imagen (opcional)</label>
                                 <input className="admin-input" value={tipoForm.image_url ?? ""} onChange={(e2) => setTipoForm({ ...tipoForm, image_url: e2.target.value })} />
+                                {tipoError && <p className="admin-error">{tipoError}</p>}
                                 <div className="admin-form-actions">
-                                  <button className="btn-back" onClick={() => setTipoForm(null)}>Cancelar</button>
+                                  <button className="btn-back" onClick={() => { setTipoForm(null); setTipoError(null); }}>Cancelar</button>
                                   <button className="btn-primary" disabled={!tipoForm.name || saving}
                                     onClick={async () => {
-                                      if (!tipoForm.name) return; setSaving(true);
+                                      if (!tipoForm.name) return; setSaving(true); setTipoError(null);
                                       const p = { estampado_id: e.id, name: tipoForm.name, description: tipoForm.description ?? "", svg_content: tipoForm.svg_content ?? "", image_url: tipoForm.image_url ?? "", sort_order: tipoForm.sort_order ?? 0 };
                                       let err: any;
                                       if (tipoForm.id) {
@@ -403,7 +434,7 @@ export default function AdminDashboard() {
                                         const { error } = await supabase.from("diseno_tipos").insert(p);
                                         err = error;
                                       }
-                                      if (err) { console.error("Error saving tipo:", err); setSaving(false); return; }
+                                      if (err) { console.error("Error saving tipo:", err); setTipoError(err.message || "Error al guardar"); setSaving(false); return; }
                                       setSaving(false); setTipoForm(null);
                                       await loadTipos(e.id);
                                     }}
