@@ -298,6 +298,8 @@ create table if not exists diseno_tipos (
   description text not null default '',
   svg_content text not null default '',
   image_url text not null default '',
+  tags text[] not null default '{}',
+  active boolean not null default true,
   sort_order int not null default 0,
   created_at timestamptz default now()
 );
@@ -310,7 +312,7 @@ create policy "Admin update" on diseno_tipos for update using (auth.role() = 'au
 create policy "Admin delete" on diseno_tipos for delete using (auth.role() = 'authenticated');
 
 -- Sample tipos for each clase
-insert into diseno_tipos (estampado_id, name, description, svg_content, sort_order) values
+insert into diseno_tipos (estampado_id, name, description, svg_content, tags, active, sort_order) values
   (1, 'Triángulo simple', 'Un triángulo limpio y minimalista', '<svg viewBox="0 0 120 140" fill="none"><polygon points="60,10 110,130 10,130" fill="currentColor" opacity="0.8"/></svg>', 1),
   (1, 'Diamante', 'Dos triángulos enfrentados', '<svg viewBox="0 0 120 140" fill="none"><polygon points="60,10 110,70 60,130 10,70" fill="currentColor" opacity="0.8"/><polygon points="60,30 90,70 60,110 30,70" fill="currentColor" opacity="0.4"/></svg>', 2),
   (2, 'Rosa', 'Flor clásica de 5 pétalos', '<svg viewBox="0 0 120 140" fill="none"><circle cx="60" cy="70" r="30" fill="currentColor" opacity="0.2"/><ellipse cx="60" cy="45" rx="12" ry="8" fill="currentColor" opacity="0.5"/><ellipse cx="60" cy="95" rx="12" ry="8" fill="currentColor" opacity="0.5"/><ellipse cx="41" cy="58" rx="8" ry="12" fill="currentColor" opacity="0.5"/><ellipse cx="79" cy="58" rx="8" ry="12" fill="currentColor" opacity="0.5"/><ellipse cx="41" cy="82" rx="8" ry="12" fill="currentColor" opacity="0.5"/><ellipse cx="79" cy="82" rx="8" ry="12" fill="currentColor" opacity="0.5"/><circle cx="60" cy="70" r="6" fill="currentColor" opacity="0.7"/></svg>', 1),
@@ -348,6 +350,10 @@ create policy "Admin delete" on garment_estampado_sizes for delete using (auth.r
 create policy "Public read" on garment_estampado_locations for select using (true);
 create policy "Admin insert" on garment_estampado_locations for insert with check (auth.role() = 'authenticated');
 create policy "Admin delete" on garment_estampado_locations for delete using (auth.role() = 'authenticated');
+
+-- Add columns if table already exists (migration)
+alter table diseno_tipos add column if not exists tags text[] not null default '{}';
+alter table diseno_tipos add column if not exists active boolean not null default true;
 
 -- Link all existing sizes/locations to all garments by default
 insert into garment_estampado_sizes (garment_id, estampado_size_id)

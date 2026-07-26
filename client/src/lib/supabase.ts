@@ -92,6 +92,8 @@ export type DisenoTipoRow = {
   description: string;
   svg_content: string;
   image_url: string;
+  tags: string[];
+  active: boolean;
   sort_order: number;
   created_at: string;
 };

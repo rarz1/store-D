@@ -405,7 +405,7 @@ export default function AdminDashboard() {
                           <td colSpan={6} style={{ padding: "0.5rem 1rem 1rem", background: "var(--surface)" }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
                               <strong style={{ fontSize: "0.85rem" }}>Tipos de {e.name}</strong>
-                              <button className="btn-back" onClick={() => setTipoForm({ estampado_id: e.id, name: "", description: "", svg_content: "", image_url: "", sort_order: (tiposByClase[e.id] ?? []).length })}>
+                              <button className="btn-back" onClick={() => setTipoForm({ estampado_id: e.id, name: "", description: "", svg_content: "", image_url: "", tags: [], active: true, sort_order: (tiposByClase[e.id] ?? []).length })}>
                                 + Nuevo tipo
                               </button>
                             </div>
@@ -415,17 +415,20 @@ export default function AdminDashboard() {
                                 <input className="admin-input" value={tipoForm.name ?? ""} onChange={(e2) => { setTipoError(null); setTipoForm({ ...tipoForm, name: e2.target.value }); }} />
                                 <label className="admin-label">Descripción</label>
                                 <input className="admin-input" value={tipoForm.description ?? ""} onChange={(e2) => setTipoForm({ ...tipoForm, description: e2.target.value })} />
+                                <label className="admin-label">Tags (separados por coma)</label>
+                                <input className="admin-input" value={Array.isArray(tipoForm.tags) ? tipoForm.tags.join(", ") : ""} onChange={(e2) => setTipoForm({ ...tipoForm, tags: e2.target.value.split(",").map((t: string) => t.trim()).filter(Boolean) })} />
                                 <label className="admin-label">SVG</label>
                                 <textarea className="admin-textarea" rows={4} value={tipoForm.svg_content ?? ""} onChange={(e2) => setTipoForm({ ...tipoForm, svg_content: e2.target.value })} />
                                 <label className="admin-label">URL imagen (opcional)</label>
                                 <input className="admin-input" value={tipoForm.image_url ?? ""} onChange={(e2) => setTipoForm({ ...tipoForm, image_url: e2.target.value })} />
+                                <label className="admin-label"><input type="checkbox" checked={tipoForm.active ?? true} onChange={(e2) => setTipoForm({ ...tipoForm, active: e2.target.checked })} />{" Activo"}</label>
                                 {tipoError && <p className="admin-error">{tipoError}</p>}
                                 <div className="admin-form-actions">
                                   <button className="btn-back" onClick={() => { setTipoForm(null); setTipoError(null); }}>Cancelar</button>
                                   <button className="btn-primary" disabled={!tipoForm.name || saving}
                                     onClick={async () => {
                                       if (!tipoForm.name) return; setSaving(true); setTipoError(null);
-                                      const p = { estampado_id: e.id, name: tipoForm.name, description: tipoForm.description ?? "", svg_content: tipoForm.svg_content ?? "", image_url: tipoForm.image_url ?? "", sort_order: tipoForm.sort_order ?? 0 };
+                                      const p = { estampado_id: e.id, name: tipoForm.name, description: tipoForm.description ?? "", svg_content: tipoForm.svg_content ?? "", image_url: tipoForm.image_url ?? "", tags: tipoForm.tags ?? [], active: tipoForm.active ?? true, sort_order: tipoForm.sort_order ?? 0 };
                                       let err: any;
                                       if (tipoForm.id) {
                                         const { error } = await supabase.from("diseno_tipos").update(p).eq("id", tipoForm.id);
@@ -450,7 +453,9 @@ export default function AdminDashboard() {
                                 <div style={{ flex: 1 }}>
                                   <strong style={{ fontSize: "0.85rem" }}>{t.name}</strong>
                                   {t.description && <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginLeft: "0.5rem" }}>{t.description}</span>}
+                                  {(t.tags ?? []).length > 0 && <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginLeft: "0.5rem" }}>#{ (t.tags ?? []).join(", #")}</span>}
                                 </div>
+                                <span style={{ fontSize: "0.75rem", marginRight: "0.5rem", color: t.active ? "var(--accent)" : "var(--text-muted)" }}>{t.active ? "✓" : "✕"}</span>
                                 {t.svg_content && (
                                   <div style={{ width: 28, height: 28, color: "var(--accent)", marginRight: "0.5rem" }}
                                     dangerouslySetInnerHTML={{ __html: t.svg_content.replace(/currentColor/gi, "var(--accent)") }} />
