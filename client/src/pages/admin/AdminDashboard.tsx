@@ -12,8 +12,6 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("products");
   const [garments, setGarments] = useState<GarmentRow[]>([]);
-  const [designOptions, setDesignOptions] = useState<DesignOptionRow[]>([]);
-  const [variantCounts, setVariantCounts] = useState<Record<number, number>>({});
   const [confirmTarget, setConfirmTarget] = useState<{ type: "garment" | "estampado" | "diseno_tipo"; id: number; parentId?: number } | null>(null);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [slides, setSlides] = useState<CarouselSlide[]>([]);
@@ -71,14 +69,6 @@ export default function AdminDashboard() {
     const { error } = await supabase.from("garments").delete().eq("id", id);
     if (error) { console.error("Error deleting garment:", error); return; }
     setGarments((prev) => prev.filter((g) => g.id !== id));
-    setConfirmTarget(null);
-  };
-
-  const deleteDesign = async (id: number) => {
-    await supabase.from("design_variants").delete().eq("design_option_id", id);
-    const { error } = await supabase.from("design_options").delete().eq("id", id);
-    if (error) { console.error("Error deleting design:", error); return; }
-    setDesignOptions((prev) => prev.filter((d) => d.id !== id));
     setConfirmTarget(null);
   };
 

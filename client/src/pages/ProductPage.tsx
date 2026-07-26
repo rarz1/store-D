@@ -32,7 +32,6 @@ export default function ProductPage() {
   const { data: stampSizes = [] } = useGarmentEstampadoSizes(garment?.id ?? 0);
   const { data: stampLocations = [] } = useGarmentEstampadoLocations(garment?.id ?? 0);
   const [tiposByClase, setTiposByClase] = useState<Record<number, DisenoTipoRow[]>>({});
-  const [loadingTipos, setLoadingTipos] = useState(false);
 
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
@@ -40,10 +39,8 @@ export default function ProductPage() {
 
   const handleSelectClase = async (claseId: number) => {
     if (tiposByClase[claseId]) return;
-    setLoadingTipos(true);
     const { data } = await supabase.from("diseno_tipos").select("*").eq("estampado_id", claseId).order("sort_order");
     if (data) setTiposByClase((prev) => ({ ...prev, [claseId]: data as DisenoTipoRow[] }));
-    setLoadingTipos(false);
   };
 
   const [showColorModal, setShowColorModal] = useState(false);

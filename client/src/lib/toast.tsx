@@ -117,7 +117,7 @@ function Toast({ toast, onHide }: { toast: Toast; onHide: (id: string) => void }
         background: bg,
         borderLeftColor: border,
         "--icon-color": iconColor,
-      }}
+      } as Record<string, string>}
       role="alert"
       aria-live={toast.type === "error" ? "assertive" : "polite"}
     >
