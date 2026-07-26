@@ -29,6 +29,14 @@ export default function AdminDashboard() {
   const [estampadoSizes, setEstampadoSizes] = useState<EstampadoSizeRow[]>([]);
   const [estampadoLocations, setEstampadoLocations] = useState<EstampadoLocationRow[]>([]);
 
+  const [editingSizeId, setEditingSizeId] = useState<number | null>(null);
+  const [editingSizeData, setEditingSizeData] = useState<Partial<EstampadoSizeRow> | null>(null);
+
+  const [editingLocationId, setEditingLocationId] = useState<number | null>(null);
+  const [editingLocationData, setEditingLocationData] = useState<Partial<EstampadoLocationRow> | null>(null);
+
+  const [newLocationForm, setNewLocationForm] = useState<Partial<EstampadoLocationRow> | null>(null);
+
   useEffect(() => {
     supabase.from("garments").select("*").order("id").then(({ data, error }) => {
       if (error) console.error("Error loading garments:", error);
@@ -88,6 +96,43 @@ export default function AdminDashboard() {
     setConfirmTarget(null);
   };
 
+  const startEditSize = (s: EstampadoSizeRow) => {
+    setEditingSizeId(s.id);
+    setEditingSizeData({ name: s.name, width_percent: s.width_percent, price_increment: s.price_increment, sort_order: s.sort_order });
+  };
+
+  const saveSizeEdit = async () => {
+    if (editingSizeId === null || !editingSizeData) return;
+    const { error } = await supabase.from("estampado_sizes").update(editingSizeData).eq("id", editingSizeId);
+    if (error) { console.error("Error saving size:", error); return; }
+    setEstampadoSizes((prev) => prev.map((s) => s.id === editingSizeId ? { ...s, ...editingSizeData } as EstampadoSizeRow : s));
+    setEditingSizeId(null);
+    setEditingSizeData(null);
+  };
+
+  const startEditLocation = (l: EstampadoLocationRow) => {
+    setEditingLocationId(l.id);
+    setEditingLocationData({ name: l.name, price_increment: l.price_increment, sort_order: l.sort_order, position_key: l.position_key });
+  };
+
+  const saveLocationEdit = async () => {
+    if (editingLocationId === null || !editingLocationData) return;
+    const { error } = await supabase.from("estampado_locations").update(editingLocationData).eq("id", editingLocationId);
+    if (error) { console.error("Error saving location:", error); return; }
+    setEstampadoLocations((prev) => prev.map((l) => l.id === editingLocationId ? { ...l, ...editingLocationData } as EstampadoLocationRow : l));
+    setEditingLocationId(null);
+    setEditingLocationData(null);
+  };
+
+  const addLocation = async () => {
+    if (!newLocationForm?.name) return;
+    const p = { name: newLocationForm.name, slug: newLocationForm.slug ?? newLocationForm.name.toLowerCase().replace(/[^a-z0-9]+/g, "_"), description: newLocationForm.description ?? "", position_key: newLocationForm.position_key ?? newLocationForm.slug ?? "", price_increment: newLocationForm.price_increment ?? 0, sort_order: newLocationForm.sort_order ?? estampadoLocations.length };
+    const { data, error } = await supabase.from("estampado_locations").insert(p).select();
+    if (error) { console.error("Error adding location:", error); return; }
+    if (data) setEstampadoLocations((prev) => [...prev, data[0] as EstampadoLocationRow]);
+    setNewLocationForm(null);
+  };
+
   const handleSaveSettings = async () => {
     if (!settings) return;
     setSaving(true);
@@ -142,7 +187,6 @@ export default function AdminDashboard() {
                   <th>Nombre</th>
                   <th>Slug</th>
                   <th>Precio</th>
-                  <th>Etiquetas</th>
                   <th></th>
                 </tr>
               </thead>
@@ -152,9 +196,6 @@ export default function AdminDashboard() {
                     <td>{g.name}</td>
                     <td style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>{g.slug}</td>
                     <td>${Number(g.base_price).toLocaleString("es-AR")}</td>
-                    <td style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                      {(g.tags ?? []).join(", ")}
-                    </td>
                     <td className="admin-actions">
                       <button className="btn-small" onClick={() => navigate(`/admin/garments/${g.id}/edit`)}>Editar</button>
                       <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "garment", id: g.id })}>Borrar</button>
@@ -171,16 +212,33 @@ export default function AdminDashboard() {
             </div>
             <table className="admin-table">
               <thead>
-                <tr><th>Nombre</th><th>Slug</th><th>Ancho %</th><th>Incremento $</th><th>Orden</th></tr>
+                <tr><th>Nombre</th><th>Tamaño %</th><th>Incremento $</th><th>Orden</th><th></th></tr>
               </thead>
               <tbody>
                 {estampadoSizes.map((s) => (
                   <tr key={s.id}>
-                    <td>{s.name}</td>
-                    <td style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>{s.slug}</td>
-                    <td>{s.width_percent}%</td>
-                    <td>+${Number(s.price_increment).toLocaleString("es-AR")}</td>
-                    <td>{s.sort_order}</td>
+                    {editingSizeId === s.id && editingSizeData ? (
+                      <>
+                        <td><input className="admin-input" value={editingSizeData.name ?? ""} onChange={(e) => setEditingSizeData({ ...editingSizeData, name: e.target.value })} /></td>
+                        <td><input className="admin-input admin-input--sm" type="number" value={editingSizeData.width_percent ?? 0} onChange={(e) => setEditingSizeData({ ...editingSizeData, width_percent: parseInt(e.target.value) || 0 })} /></td>
+                        <td><input className="admin-input admin-input--sm" type="number" value={editingSizeData.price_increment ?? 0} onChange={(e) => setEditingSizeData({ ...editingSizeData, price_increment: parseInt(e.target.value) || 0 })} /></td>
+                        <td><input className="admin-input admin-input--sm" type="number" value={editingSizeData.sort_order ?? 0} onChange={(e) => setEditingSizeData({ ...editingSizeData, sort_order: parseInt(e.target.value) || 0 })} /></td>
+                        <td className="admin-actions">
+                          <button className="btn-small" onClick={saveSizeEdit}>Guardar</button>
+                          <button className="btn-small btn-small--danger" onClick={() => { setEditingSizeId(null); setEditingSizeData(null); }}>X</button>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td>{s.name}</td>
+                        <td>{s.width_percent}%</td>
+                        <td>+${Number(s.price_increment).toLocaleString("es-AR")}</td>
+                        <td>{s.sort_order}</td>
+                        <td className="admin-actions">
+                          <button className="btn-small" onClick={() => startEditSize(s)}>Editar</button>
+                        </td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -190,23 +248,57 @@ export default function AdminDashboard() {
           <section className="admin-section">
             <div className="admin-section-header">
               <h2>Ubicaciones de estampado</h2>
+              <button className="btn-back" onClick={() => setNewLocationForm({ name: "", slug: "", description: "", position_key: "", price_increment: 0, sort_order: estampadoLocations.length })}>
+                + Agregar
+              </button>
             </div>
             <table className="admin-table">
               <thead>
-                <tr><th>Nombre</th><th>Slug</th><th>Position key</th><th>Incremento $</th><th>Orden</th></tr>
+                <tr><th>Nombre</th><th>Position key</th><th>Incremento $</th><th>Orden</th><th></th></tr>
               </thead>
               <tbody>
                 {estampadoLocations.map((l) => (
                   <tr key={l.id}>
-                    <td>{l.name}</td>
-                    <td style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>{l.slug}</td>
-                    <td style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>{l.position_key}</td>
-                    <td>+${Number(l.price_increment).toLocaleString("es-AR")}</td>
-                    <td>{l.sort_order}</td>
+                    {editingLocationId === l.id && editingLocationData ? (
+                      <>
+                        <td><input className="admin-input" value={editingLocationData.name ?? ""} onChange={(e) => setEditingLocationData({ ...editingLocationData, name: e.target.value })} /></td>
+                        <td><input className="admin-input admin-input--sm" value={editingLocationData.position_key ?? ""} onChange={(e) => setEditingLocationData({ ...editingLocationData, position_key: e.target.value })} /></td>
+                        <td><input className="admin-input admin-input--sm" type="number" value={editingLocationData.price_increment ?? 0} onChange={(e) => setEditingLocationData({ ...editingLocationData, price_increment: parseInt(e.target.value) || 0 })} /></td>
+                        <td><input className="admin-input admin-input--sm" type="number" value={editingLocationData.sort_order ?? 0} onChange={(e) => setEditingLocationData({ ...editingLocationData, sort_order: parseInt(e.target.value) || 0 })} /></td>
+                        <td className="admin-actions">
+                          <button className="btn-small" onClick={saveLocationEdit}>Guardar</button>
+                          <button className="btn-small btn-small--danger" onClick={() => { setEditingLocationId(null); setEditingLocationData(null); }}>X</button>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td>{l.name}</td>
+                        <td style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>{l.position_key}</td>
+                        <td>+${Number(l.price_increment).toLocaleString("es-AR")}</td>
+                        <td>{l.sort_order}</td>
+                        <td className="admin-actions">
+                          <button className="btn-small" onClick={() => startEditLocation(l)}>Editar</button>
+                        </td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
+            {newLocationForm && (
+              <div className="admin-form" style={{ marginTop: "0.75rem" }}>
+                <label className="admin-label">Nombre</label>
+                <input className="admin-input" value={newLocationForm.name ?? ""} onChange={(e) => setNewLocationForm({ ...newLocationForm, name: e.target.value, slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "_") })} />
+                <label className="admin-label">Slug / Position key</label>
+                <input className="admin-input" value={newLocationForm.position_key ?? newLocationForm.slug ?? ""} onChange={(e) => setNewLocationForm({ ...newLocationForm, position_key: e.target.value, slug: e.target.value })} />
+                <label className="admin-label">Incremento $</label>
+                <input className="admin-input admin-input--sm" type="number" value={newLocationForm.price_increment ?? 0} onChange={(e) => setNewLocationForm({ ...newLocationForm, price_increment: parseInt(e.target.value) || 0 })} />
+                <div className="admin-form-actions">
+                  <button className="btn-back" onClick={() => setNewLocationForm(null)}>Cancelar</button>
+                  <button className="btn-primary" onClick={addLocation} disabled={!newLocationForm.name}>Crear</button>
+                </div>
+              </div>
+            )}
           </section>
         </>
       )}
@@ -236,7 +328,15 @@ export default function AdminDashboard() {
                     onClick={async () => {
                       if (!estampadoForm.name) return; setSaving(true);
                       const p = { name: estampadoForm.name, description: estampadoForm.description ?? "", svg_content: "", image_url: "", active: estampadoForm.active ?? true, tags: estampadoForm.tags ?? [], sort_order: estampadoForm.sort_order ?? 0 };
-                      if (estampadoForm.id) { await supabase.from("estampados").update(p).eq("id", estampadoForm.id); } else { await supabase.from("estampados").insert(p); }
+                      let err: any;
+                      if (estampadoForm.id) {
+                        const { error } = await supabase.from("estampados").update(p).eq("id", estampadoForm.id);
+                        err = error;
+                      } else {
+                        const { error } = await supabase.from("estampados").insert(p);
+                        err = error;
+                      }
+                      if (err) { console.error("Error saving estampado:", err); setSaving(false); return; }
                       setSaving(false); setEstampadoForm(null);
                       const { data } = await supabase.from("estampados").select("*").order("sort_order");
                       if (data) setEstampados(data);
@@ -295,7 +395,15 @@ export default function AdminDashboard() {
                                     onClick={async () => {
                                       if (!tipoForm.name) return; setSaving(true);
                                       const p = { estampado_id: e.id, name: tipoForm.name, description: tipoForm.description ?? "", svg_content: tipoForm.svg_content ?? "", image_url: tipoForm.image_url ?? "", sort_order: tipoForm.sort_order ?? 0 };
-                                      if (tipoForm.id) { await supabase.from("diseno_tipos").update(p).eq("id", tipoForm.id); } else { await supabase.from("diseno_tipos").insert(p); }
+                                      let err: any;
+                                      if (tipoForm.id) {
+                                        const { error } = await supabase.from("diseno_tipos").update(p).eq("id", tipoForm.id);
+                                        err = error;
+                                      } else {
+                                        const { error } = await supabase.from("diseno_tipos").insert(p);
+                                        err = error;
+                                      }
+                                      if (err) { console.error("Error saving tipo:", err); setSaving(false); return; }
                                       setSaving(false); setTipoForm(null);
                                       await loadTipos(e.id);
                                     }}
