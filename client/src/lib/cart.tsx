@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
-import type { EstampadoRow, EstampadoSizeRow, EstampadoLocationRow } from "./supabase";
+import type { EstampadoRow, EstampadoSizeRow, EstampadoLocationRow, DisenoTipoRow } from "./supabase";
 
 export interface CartItem {
   garmentId: number;
@@ -11,6 +11,7 @@ export interface CartItem {
   size: string;
   estampados: Array<{
     estampado: EstampadoRow;
+    tipo: DisenoTipoRow;
     size: EstampadoSizeRow;
     locations: EstampadoLocationRow[];
   }>;
@@ -116,7 +117,7 @@ function CartDrawer() {
                     </span>
                     {item.estampados.length > 0 && (
                       <span className="cart-drawer__item-estampados">
-                        {item.estampados.map((p) => `${p.estampado.name} (${p.size.name})`).join(", ")}
+                        {item.estampados.map((p) => `${p.estampado.name} · ${p.tipo.name} (${p.size.name})`).join(", ")}
                       </span>
                     )}
                   </div>

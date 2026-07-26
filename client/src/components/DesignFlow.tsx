@@ -1,37 +1,52 @@
 import { useState } from "react";
-import type { EstampadoRow, EstampadoSizeRow, EstampadoLocationRow } from "../lib/supabase";
+import type { EstampadoRow, DisenoTipoRow, EstampadoSizeRow, EstampadoLocationRow } from "../lib/supabase";
 import EstampadoSelector from "./EstampadoSelector";
 import SizeSelector from "./SizeSelector";
 import LocationSelector from "./LocationSelector";
 
 interface PlacedEstampado {
   estampado: EstampadoRow;
+  tipo: DisenoTipoRow;
   size: EstampadoSizeRow;
   locations: EstampadoLocationRow[];
 }
 
 interface Props {
   estampados: EstampadoRow[];
+  tiposByClase: Record<number, DisenoTipoRow[]>;
   stampSizes: EstampadoSizeRow[];
   stampLocations: EstampadoLocationRow[];
   onAdd: (item: PlacedEstampado) => void;
   onOpenHelp: () => void;
+  onSelectClase: (claseId: number) => void;
 }
 
-type Step = "closed" | "design" | "size" | "location";
+type Step = "closed" | "clase" | "tipo" | "size" | "location";
 
-export default function DesignFlow({ estampados, stampSizes, stampLocations, onAdd, onOpenHelp }: Props) {
+export default function DesignFlow({ estampados, tiposByClase, stampSizes, stampLocations, onAdd, onOpenHelp, onSelectClase }: Props) {
   const [step, setStep] = useState<Step>("closed");
-  const [selectedEstampadoId, setSelectedEstampadoId] = useState<number | null>(null);
+  const [selectedClaseId, setSelectedClaseId] = useState<number | null>(null);
+  const [selectedTipoId, setSelectedTipoId] = useState<number | null>(null);
   const [selectedSizeId, setSelectedSizeId] = useState<number | null>(null);
   const [selectedLocationIds, setSelectedLocationIds] = useState<number[]>([]);
 
-  const selectedEstampado = estampados.find((e) => e.id === selectedEstampadoId) ?? null;
+  const selectedClase = estampados.find((e) => e.id === selectedClaseId) ?? null;
+  const tipos = selectedClaseId ? (tiposByClase[selectedClaseId] ?? []) : [];
+  const selectedTipo = tipos.find((t) => t.id === selectedTipoId) ?? null;
   const selectedSizeObj = stampSizes.find((s) => s.id === selectedSizeId) ?? null;
   const selectedLocations = stampLocations.filter((l) => selectedLocationIds.includes(l.id));
 
-  const handleSelectDesign = (id: number) => {
-    setSelectedEstampadoId(id);
+  const handleSelectClase = (id: number) => {
+    setSelectedClaseId(id);
+    setSelectedTipoId(null);
+    setSelectedSizeId(stampSizes[0]?.id ?? null);
+    setSelectedLocationIds([]);
+    setStep("tipo");
+    onSelectClase(id);
+  };
+
+  const handleSelectTipo = (id: number) => {
+    setSelectedTipoId(id);
     setSelectedSizeId(stampSizes[0]?.id ?? null);
     setSelectedLocationIds([]);
     setStep("size");
@@ -50,18 +65,21 @@ export default function DesignFlow({ estampados, stampSizes, stampLocations, onA
   };
 
   const handleConfirm = () => {
-    if (!selectedEstampado || !selectedSizeObj) return;
-    onAdd({ estampado: selectedEstampado, size: selectedSizeObj, locations: selectedLocations });
-    setSelectedEstampadoId(null);
+    if (!selectedClase || !selectedTipo || !selectedSizeObj) return;
+    onAdd({ estampado: selectedClase, tipo: selectedTipo, size: selectedSizeObj, locations: selectedLocations });
+    setSelectedClaseId(null);
+    setSelectedTipoId(null);
     setSelectedSizeId(null);
     setSelectedLocationIds([]);
     setStep("closed");
   };
 
+  const toggleOpen = () => setStep(step === "closed" ? "clase" : "closed");
+
   return (
     <div className="design-flow">
       <div className="control-group">
-        <div className="control-group__header control-group__header--clickable" onClick={() => setStep(step === "closed" ? "design" : "closed")}>
+        <div className="control-group__header control-group__header--clickable" onClick={toggleOpen}>
           <span className="control-label">PERSONALIZÁ TU PRENDA</span>
           <button className="btn-small btn-small--help" onClick={(e) => { e.stopPropagation(); onOpenHelp(); }} title="¿Cómo funciona?">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
@@ -78,14 +96,10 @@ export default function DesignFlow({ estampados, stampSizes, stampLocations, onA
 
         {step !== "closed" && estampados.length > 0 && (
           <>
-            <button className="choice-btn" onClick={() => setStep("closed")} style={{ marginBottom: "0.5rem" }}>
-              <span className="choice-btn__label">Estampado</span>
+            <button className="choice-btn" onClick={toggleOpen} style={{ marginBottom: "0.5rem" }}>
+              <span className="choice-btn__label">Diseño</span>
               <span className="choice-btn__value">
-                {step === "design"
-                  ? "Seleccionando..."
-                  : selectedEstampado
-                    ? `${selectedEstampado.name} (${selectedSizeObj?.name ?? ""})`
-                    : "Elegir estampado"}
+                {selectedClase ? `${selectedClase.name}${selectedTipo ? ` · ${selectedTipo.name}` : ""}${selectedSizeObj ? ` (${selectedSizeObj.name})` : ""}` : "Elegir diseño"}
               </span>
               <svg className="choice-btn__arrow choice-btn__arrow--open" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
                 <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -93,12 +107,43 @@ export default function DesignFlow({ estampados, stampSizes, stampLocations, onA
             </button>
 
             <div className="design-flow__body">
-              {step === "design" && (
+              {step === "clase" && (
                 <EstampadoSelector
                   estampados={estampados}
-                  selectedId={selectedEstampadoId}
-                  onSelect={handleSelectDesign}
+                  selectedId={selectedClaseId}
+                  onSelect={handleSelectClase}
                 />
+              )}
+
+              {step === "tipo" && (
+                <div className="control-group">
+                  <span className="control-label">TIPO DE {selectedClase?.name.toUpperCase()}</span>
+                  <div className="estampado-grid">
+                    {tipos.map((t) => (
+                      <button
+                        key={t.id}
+                        className={`estampado-card${selectedTipoId === t.id ? " estampado-card--active" : ""}`}
+                        onClick={() => handleSelectTipo(t.id)}
+                      >
+                        <div className="estampado-card__preview">
+                          {t.image_url ? (
+                            <img src={t.image_url} alt={t.name} />
+                          ) : t.svg_content ? (
+                            <div className="estampado-card__svg"
+                              dangerouslySetInnerHTML={{ __html: t.svg_content.replace(/currentColor/gi, "var(--accent)") }}
+                            />
+                          ) : (
+                            <span style={{ fontSize: "1.5rem", opacity: 0.3 }}>?</span>
+                          )}
+                        </div>
+                        <div className="estampado-card__info">
+                          <span className="estampado-card__name">{t.name}</span>
+                          {t.description && <span className="estampado-card__desc">{t.description}</span>}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
 
               {(step === "size" || step === "location") && (

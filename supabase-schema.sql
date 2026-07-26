@@ -285,5 +285,74 @@ insert into estampados (name, description, svg_content, tags, sort_order) values
   ('Olas', 'Líneas onduladas paralelas', '<svg viewBox="0 0 200 220" fill="none"><path d="M10 160Q30 120 50 140Q70 160 90 130Q110 100 130 120Q150 140 170 110Q190 80 190 80" stroke="currentColor" stroke-width="3" opacity="0.6" fill="none" stroke-linecap="round"/><path d="M10 140Q30 100 50 120Q70 140 90 110Q110 80 130 100Q150 120 170 90Q190 60 190 60" stroke="currentColor" stroke-width="2" opacity="0.3" fill="none" stroke-linecap="round"/><path d="M10 180Q30 140 50 160Q70 180 90 150Q110 120 130 140Q150 160 170 130Q190 100 190 100" stroke="currentColor" stroke-width="1.5" opacity="0.2" fill="none" stroke-linecap="round"/></svg>', ARRAY['ondas','abstracto','minimalista'], 3),
   ('Tipográfico', 'Letras bold con línea divisoria', '<svg viewBox="0 0 200 220" fill="none"><text x="100" y="100" text-anchor="middle" dominant-baseline="central" fill="currentColor" opacity="0.9" font-family="''Bebas Neue'',Impact,sans-serif" font-size="90" letter-spacing="8">RAW</text><text x="100" y="145" text-anchor="middle" dominant-baseline="central" fill="currentColor" opacity="0.4" font-family="system-ui,sans-serif" font-size="13" letter-spacing="6">EST. 2026</text><line x1="40" y1="162" x2="160" y2="162" stroke="currentColor" stroke-width="1" opacity="0.3"/></svg>', ARRAY['tipográfico','texto'], 4),
   ('Silueta', 'Montañas y astro en capas', '<svg viewBox="0 0 200 220" fill="none"><path d="M0 200L40 120L80 160L120 90L160 140L200 100L200 220L0 220Z" fill="currentColor" opacity="0.4"/><path d="M0 200L30 150L70 180L110 120L150 160L200 130L200 220L0 220Z" fill="currentColor" opacity="0.2"/><circle cx="160" cy="80" r="22" fill="currentColor" opacity="0.5"/><circle cx="160" cy="80" r="14" fill="currentColor" opacity="0.7"/><circle cx="160" cy="80" r="6" fill="currentColor" opacity="0.9"/></svg>', ARRAY['silueta','naturaleza'], 5),
-  ('Mandala', 'Círculos concéntricos punteados', '<svg viewBox="0 0 200 220" fill="none"><circle cx="100" cy="110" r="85" stroke="currentColor" stroke-width="1" opacity="0.2"/><circle cx="100" cy="110" r="65" stroke="currentColor" stroke-width="1" opacity="0.25"/><circle cx="100" cy="110" r="45" stroke="currentColor" stroke-width="1" opacity="0.3"/><circle cx="100" cy="110" r="25" stroke="currentColor" stroke-width="1" opacity="0.35"/><circle cx="100" cy="110" r="10" fill="currentColor" opacity="0.15"/><circle cx="100" cy="110" r="4" fill="currentColor" opacity="0.4"/></svg>', ARRAY['mandala','abstracto'], 6)
-on conflict (name) do nothing;
+  ('Mandala', 'Círculos concéntricos punteados', '<svg viewBox="0 0 200 220" fill="none"><circle cx="100" cy="110" r="85" stroke="currentColor" stroke-width="1" opacity="0.2"/><circle cx="100" cy="110" r="65" stroke="currentColor" stroke-width="1" opacity="0.25"/><circle cx="100" cy="110" r="45" stroke="currentColor" stroke-width="1" opacity="0.3"/><circle cx="100" cy="110" r="25" stroke="currentColor" stroke-width="1" opacity="0.35"/><circle cx="100" cy="110" r="10" fill="currentColor" opacity="0.15"/><circle cx="100" cy="110" r="4" fill="currentColor" opacity="0.4"/></svg>', ARRAY['mandala','abstracto'], 6);
+
+-- ============================================
+-- TIPOS DE DISEÑO (sub-diseños dentro de cada clase)
+-- ============================================
+
+create table if not exists diseno_tipos (
+  id bigint primary key generated always as identity,
+  estampado_id bigint references estampados(id) on delete cascade,
+  name text not null,
+  description text not null default '',
+  svg_content text not null default '',
+  image_url text not null default '',
+  sort_order int not null default 0,
+  created_at timestamptz default now()
+);
+
+alter table diseno_tipos enable row level security;
+
+create policy "Public read" on diseno_tipos for select using (true);
+create policy "Admin insert" on diseno_tipos for insert with check (auth.role() = 'authenticated');
+create policy "Admin update" on diseno_tipos for update using (auth.role() = 'authenticated');
+create policy "Admin delete" on diseno_tipos for delete using (auth.role() = 'authenticated');
+
+-- Sample tipos for each clase
+insert into diseno_tipos (estampado_id, name, description, svg_content, sort_order) values
+  (1, 'Triángulo simple', 'Un triángulo limpio y minimalista', '<svg viewBox="0 0 120 140" fill="none"><polygon points="60,10 110,130 10,130" fill="currentColor" opacity="0.8"/></svg>', 1),
+  (1, 'Diamante', 'Dos triángulos enfrentados', '<svg viewBox="0 0 120 140" fill="none"><polygon points="60,10 110,70 60,130 10,70" fill="currentColor" opacity="0.8"/><polygon points="60,30 90,70 60,110 30,70" fill="currentColor" opacity="0.4"/></svg>', 2),
+  (2, 'Rosa', 'Flor clásica de 5 pétalos', '<svg viewBox="0 0 120 140" fill="none"><circle cx="60" cy="70" r="30" fill="currentColor" opacity="0.2"/><ellipse cx="60" cy="45" rx="12" ry="8" fill="currentColor" opacity="0.5"/><ellipse cx="60" cy="95" rx="12" ry="8" fill="currentColor" opacity="0.5"/><ellipse cx="41" cy="58" rx="8" ry="12" fill="currentColor" opacity="0.5"/><ellipse cx="79" cy="58" rx="8" ry="12" fill="currentColor" opacity="0.5"/><ellipse cx="41" cy="82" rx="8" ry="12" fill="currentColor" opacity="0.5"/><ellipse cx="79" cy="82" rx="8" ry="12" fill="currentColor" opacity="0.5"/><circle cx="60" cy="70" r="6" fill="currentColor" opacity="0.7"/></svg>', 1),
+  (2, 'Girasol', 'Pétalos alargados alrededor del centro', '<svg viewBox="0 0 120 140" fill="none"><circle cx="60" cy="70" r="8" fill="currentColor" opacity="0.9"/><ellipse cx="60" cy="35" rx="4" ry="10" fill="currentColor" opacity="0.4"/><ellipse cx="60" cy="105" rx="4" ry="10" fill="currentColor" opacity="0.4"/><ellipse cx="35" cy="70" rx="10" ry="4" fill="currentColor" opacity="0.4"/><ellipse cx="85" cy="70" rx="10" ry="4" fill="currentColor" opacity="0.4"/><ellipse cx="42" cy="42" rx="4" ry="9" fill="currentColor" opacity="0.3" transform="rotate(45 42 42)"/><ellipse cx="78" cy="98" rx="4" ry="9" fill="currentColor" opacity="0.3" transform="rotate(45 78 98)"/><ellipse cx="78" cy="42" rx="9" ry="4" fill="currentColor" opacity="0.3" transform="rotate(45 78 42)"/><ellipse cx="42" cy="98" rx="9" ry="4" fill="currentColor" opacity="0.3" transform="rotate(45 42 98)"/></svg>', 2),
+  (3, 'Ola simple', 'Una sola línea de onda', '<svg viewBox="0 0 120 60" fill="none"><path d="M10 30Q30 10 50 30Q70 50 90 30Q110 10 110 30" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8"/></svg>', 1),
+  (3, 'Ola doble', 'Dos ondas paralelas', '<svg viewBox="0 0 120 80" fill="none"><path d="M10 25Q30 5 50 25Q70 45 90 25Q110 5 110 25" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.7"/><path d="M10 55Q30 35 50 55Q70 75 90 55Q110 35 110 55" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.4"/></svg>', 2),
+  (4, 'Bold', 'Texto grueso y recto', '<svg viewBox="0 0 120 100" fill="none"><text x="60" y="55" text-anchor="middle" dominant-baseline="central" fill="currentColor" font-family="Impact,sans-serif" font-size="72" letter-spacing="4" opacity="0.9">X</text></svg>', 1),
+  (4, 'Fino', 'Texto elegante en cursiva', '<svg viewBox="0 0 120 100" fill="none"><text x="60" y="55" text-anchor="middle" dominant-baseline="central" fill="currentColor" font-family="Georgia,serif" font-size="60" font-style="italic" opacity="0.7">x</text></svg>', 2),
+  (5, 'Montaña', 'Pico sencillo', '<svg viewBox="0 0 120 100" fill="none"><path d="M0 100L40 30L60 55L80 20L120 100Z" fill="currentColor" opacity="0.6"/><circle cx="80" cy="20" r="6" fill="currentColor" opacity="0.8"/></svg>', 1),
+  (6, 'Anillos', 'Anillos concéntricos', '<svg viewBox="0 0 120 140" fill="none"><circle cx="60" cy="70" r="50" stroke="currentColor" stroke-width="2" opacity="0.3"/><circle cx="60" cy="70" r="35" stroke="currentColor" stroke-width="2" opacity="0.4"/><circle cx="60" cy="70" r="20" stroke="currentColor" stroke-width="2" opacity="0.5"/><circle cx="60" cy="70" r="8" fill="currentColor" opacity="0.6"/></svg>', 1);
+
+-- ============================================
+-- GARMENT × ESTAMPADO JOIN TABLES
+-- ============================================
+
+create table if not exists garment_estampado_sizes (
+  garment_id bigint references garments(id) on delete cascade,
+  estampado_size_id bigint references estampado_sizes(id) on delete cascade,
+  primary key (garment_id, estampado_size_id)
+);
+
+create table if not exists garment_estampado_locations (
+  garment_id bigint references garments(id) on delete cascade,
+  estampado_location_id bigint references estampado_locations(id) on delete cascade,
+  primary key (garment_id, estampado_location_id)
+);
+
+alter table garment_estampado_sizes enable row level security;
+alter table garment_estampado_locations enable row level security;
+
+create policy "Public read" on garment_estampado_sizes for select using (true);
+create policy "Admin insert" on garment_estampado_sizes for insert with check (auth.role() = 'authenticated');
+create policy "Admin delete" on garment_estampado_sizes for delete using (auth.role() = 'authenticated');
+
+create policy "Public read" on garment_estampado_locations for select using (true);
+create policy "Admin insert" on garment_estampado_locations for insert with check (auth.role() = 'authenticated');
+create policy "Admin delete" on garment_estampado_locations for delete using (auth.role() = 'authenticated');
+
+-- Link all existing sizes/locations to all garments by default
+insert into garment_estampado_sizes (garment_id, estampado_size_id)
+  select g.id, s.id from garments g, estampado_sizes s
+  on conflict do nothing;
+insert into garment_estampado_locations (garment_id, estampado_location_id)
+  select g.id, l.id from garments g, estampado_locations l
+  on conflict do nothing;

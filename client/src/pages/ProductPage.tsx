@@ -5,14 +5,16 @@ import DesignFlow from "../components/DesignFlow";
 import HelpModal from "../components/HelpModal";
 import { useCart } from "../lib/cart";
 import { useToast } from "../lib/toast";
-import { useGarment, useGarmentColors, useGarmentSizes, useEstampados, useEstampadoSizes, useEstampadoLocations } from "../lib/hooks";
+import { useGarment, useGarmentColors, useGarmentSizes, useEstampados, useGarmentEstampadoSizes, useGarmentEstampadoLocations } from "../lib/hooks";
+import { supabase } from "../lib/supabase";
 import { setMeta } from "../lib/seo";
-import type { EstampadoRow, EstampadoSizeRow, EstampadoLocationRow } from "../lib/supabase";
+import type { EstampadoRow, DisenoTipoRow, EstampadoSizeRow, EstampadoLocationRow } from "../lib/supabase";
 
 const ADMIN_PHONE = import.meta.env.VITE_WHATSAPP_PHONE ?? "";
 
 interface PlacedEstampado {
   estampado: EstampadoRow;
+  tipo: DisenoTipoRow;
   size: EstampadoSizeRow;
   locations: EstampadoLocationRow[];
 }
@@ -27,12 +29,22 @@ export default function ProductPage() {
   const { data: colors = [] } = useGarmentColors(garment?.id ?? 0);
   const { data: sizes = [] } = useGarmentSizes(garment?.id ?? 0);
   const { data: estampados = [] } = useEstampados();
-  const { data: stampSizes = [] } = useEstampadoSizes();
-  const { data: stampLocations = [] } = useEstampadoLocations();
+  const { data: stampSizes = [] } = useGarmentEstampadoSizes(garment?.id ?? 0);
+  const { data: stampLocations = [] } = useGarmentEstampadoLocations(garment?.id ?? 0);
+  const [tiposByClase, setTiposByClase] = useState<Record<number, DisenoTipoRow[]>>({});
+  const [loadingTipos, setLoadingTipos] = useState(false);
 
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [placedEstampados, setPlacedEstampados] = useState<PlacedEstampado[]>([]);
+
+  const handleSelectClase = async (claseId: number) => {
+    if (tiposByClase[claseId]) return;
+    setLoadingTipos(true);
+    const { data } = await supabase.from("diseno_tipos").select("*").eq("estampado_id", claseId).order("sort_order");
+    if (data) setTiposByClase((prev) => ({ ...prev, [claseId]: data as DisenoTipoRow[] }));
+    setLoadingTipos(false);
+  };
 
   const [showColorModal, setShowColorModal] = useState(false);
   const [showSizeModal, setShowSizeModal] = useState(false);
@@ -73,7 +85,7 @@ export default function ProductPage() {
     placedEstampados.forEach((p) => {
       const sizeInc = p.size.price_increment;
       const locInc = p.locations.reduce((s, l) => s + l.price_increment, 0);
-      lines.push(`• ${p.estampado.name} (${p.size.name}) - ${p.locations.map(l => l.name).join(", ")}: +$${(sizeInc + locInc).toLocaleString("es-AR")}`);
+      lines.push(`• ${p.estampado.name} · ${p.tipo.name} (${p.size.name}) - ${p.locations.map(l => l.name).join(", ")}: +$${(sizeInc + locInc).toLocaleString("es-AR")}`);
     });
     lines.push(`• Total: $${totalPrice.toLocaleString("es-AR")}`);
     return encodeURIComponent(lines.join("\n"));
@@ -132,10 +144,10 @@ export default function ProductPage() {
 
   const placedDesigns = placedEstampados.flatMap((p) =>
     p.locations.map((loc) => ({
-      variantId: p.estampado.id,
-      svgContent: p.estampado.svg_content,
+      variantId: p.tipo.id,
+      svgContent: p.tipo.svg_content || p.estampado.svg_content,
       position: loc.position_key as "small_front" | "small_front_right" | "large_front" | "small_back" | "large_back" | "sleeve",
-      name: p.estampado.name,
+      name: `${p.estampado.name} · ${p.tipo.name}`,
     }))
   );
 
@@ -225,7 +237,7 @@ export default function ProductPage() {
                 {placedEstampados.map((p, i) => (
                   <div key={i} className="placed-estampado-row">
                     <div className="placed-estampado-row__info">
-                      <span className="placed-estampado-row__name">{p.estampado.name} · {p.size.name}</span>
+                      <span className="placed-estampado-row__name">{p.estampado.name} · {p.tipo.name} · {p.size.name}</span>
                       <span className="placed-estampado-row__locs">{p.locations.map(l => l.name).join(", ")}</span>
                     </div>
                     <span className="placed-estampado-row__price">
@@ -239,12 +251,15 @@ export default function ProductPage() {
 
             <DesignFlow
               estampados={estampados}
+              tiposByClase={tiposByClase}
               stampSizes={stampSizes}
               stampLocations={stampLocations}
               onOpenHelp={() => setShowHelpModal(true)}
+              onSelectClase={handleSelectClase}
               onAdd={(item) => {
                 const isDuplicate = placedEstampados.some((p) =>
                   p.estampado.id === item.estampado.id &&
+                  p.tipo.id === item.tipo.id &&
                   JSON.stringify(p.locations.map(l => l.id).sort()) === JSON.stringify(item.locations.map(l => l.id).sort())
                 );
                 if (isDuplicate) {

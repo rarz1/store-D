@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase, type GarmentRow, type DesignOptionRow, type DesignVariantRow, type EstampadoRow } from "../../lib/supabase";
+import { supabase, type GarmentRow, type EstampadoRow, type DisenoTipoRow, type EstampadoSizeRow, type EstampadoLocationRow } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import ConfirmModal from "../../components/ConfirmModal";
 import { getSettings, saveSettings, getSlides, saveSlide, uploadImage, applyColors, type SiteSettings, type CarouselSlide } from "../../lib/settings";
 
-type Tab = "products" | "estampados" | "store" | "carousel" | "colors";
+type Tab = "products" | "disenos" | "store" | "carousel" | "colors";
 
 export default function AdminDashboard() {
   const { logout } = useAuth();
@@ -14,32 +14,25 @@ export default function AdminDashboard() {
   const [garments, setGarments] = useState<GarmentRow[]>([]);
   const [designOptions, setDesignOptions] = useState<DesignOptionRow[]>([]);
   const [variantCounts, setVariantCounts] = useState<Record<number, number>>({});
-  const [confirmTarget, setConfirmTarget] = useState<{ type: "garment" | "design" | "estampado"; id: number } | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{ type: "garment" | "estampado" | "diseno_tipo"; id: number; parentId?: number } | null>(null);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [slides, setSlides] = useState<CarouselSlide[]>([]);
   const [saving, setSaving] = useState(false);
-  const [variantDesign, setVariantDesign] = useState<DesignOptionRow | null>(null);
-  const [variants, setVariants] = useState<DesignVariantRow[]>([]);
-  const [variantForm, setVariantForm] = useState<Partial<DesignVariantRow> | null>(null);
+
   const [estampados, setEstampados] = useState<EstampadoRow[]>([]);
   const [estampadoForm, setEstampadoForm] = useState<Partial<EstampadoRow> | null>(null);
+
+  const [tiposByClase, setTiposByClase] = useState<Record<number, DisenoTipoRow[]>>({});
+  const [expandedClase, setExpandedClase] = useState<number | null>(null);
+  const [tipoForm, setTipoForm] = useState<Partial<DisenoTipoRow> | null>(null);
+
+  const [estampadoSizes, setEstampadoSizes] = useState<EstampadoSizeRow[]>([]);
+  const [estampadoLocations, setEstampadoLocations] = useState<EstampadoLocationRow[]>([]);
 
   useEffect(() => {
     supabase.from("garments").select("*").order("id").then(({ data, error }) => {
       if (error) console.error("Error loading garments:", error);
       if (data) setGarments(data);
-    });
-    supabase.from("design_options").select("*").order("id").then(async ({ data, error }) => {
-      if (error) console.error("Error loading designs:", error);
-      if (data) {
-        setDesignOptions(data);
-        const counts: Record<number, number> = {};
-        for (const d of data) {
-          const { count } = await supabase.from("design_variants").select("id", { count: "exact", head: true }).eq("design_option_id", d.id);
-          counts[d.id] = count ?? 0;
-        }
-        setVariantCounts(counts);
-      }
     });
     getSettings().then(setSettings);
     getSlides().then(setSlides);
@@ -47,7 +40,20 @@ export default function AdminDashboard() {
       if (error) console.error("Error loading estampados:", error);
       if (data) setEstampados(data);
     });
+    supabase.from("estampado_sizes").select("*").order("sort_order").then(({ data, error }) => {
+      if (error) console.error("Error loading sizes:", error);
+      if (data) setEstampadoSizes(data);
+    });
+    supabase.from("estampado_locations").select("*").order("sort_order").then(({ data, error }) => {
+      if (error) console.error("Error loading locations:", error);
+      if (data) setEstampadoLocations(data);
+    });
   }, []);
+
+  const loadTipos = async (claseId: number) => {
+    const { data } = await supabase.from("diseno_tipos").select("*").eq("estampado_id", claseId).order("sort_order");
+    if (data) setTiposByClase((prev) => ({ ...prev, [claseId]: data }));
+  };
 
   const deleteGarment = async (id: number) => {
     const { error } = await supabase.from("garments").delete().eq("id", id);
@@ -70,48 +76,16 @@ export default function AdminDashboard() {
     setEstampados((prev) => prev.filter((e) => e.id !== id));
     setConfirmTarget(null);
     setEstampadoForm(null);
+    setExpandedClase(null);
   };
 
-  const openVariants = async (d: DesignOptionRow) => {
-    setVariantDesign(d);
-    const { data } = await supabase.from("design_variants").select("*").eq("design_option_id", d.id).order("sort_order");
-    setVariants(data ?? []);
-    setVariantForm(null);
-  };
-
-  const addVariant = () => {
-    setVariantForm({
-      design_option_id: variantDesign!.id, name: "", svg_content: "",
-      additional_price: 0, positions: ["small_front", "large_front", "small_back", "large_back"],
-      sort_order: variants.length,
-    });
-  };
-
-  const editVariant = (v: DesignVariantRow) => {
-    setVariantForm({ ...v });
-  };
-
-  const saveVariant = async () => {
-    if (!variantForm || !variantForm.name) return;
-    const payload = {
-      name: variantForm.name, svg_content: variantForm.svg_content ?? "",
-      image_url: variantForm.image_url ?? "", additional_price: variantForm.additional_price ?? 0,
-      positions: variantForm.positions ?? [], sort_order: variantForm.sort_order ?? 0,
-    };
-    if (variantForm.id) {
-      await supabase.from("design_variants").update(payload).eq("id", variantForm.id);
-    } else {
-      await supabase.from("design_variants").insert({ ...payload, design_option_id: variantDesign!.id }).select().single();
-    }
-    const { data } = await supabase.from("design_variants").select("*").eq("design_option_id", variantDesign!.id).order("sort_order");
-    setVariants(data ?? []);
-    setVariantForm(null);
-  };
-
-  const deleteVariant = async (id: number) => {
-    await supabase.from("design_variants").delete().eq("id", id);
-    setVariants((prev) => prev.filter((v) => v.id !== id));
-    setVariantForm(null);
+  const deleteTipo = async (id: number, claseId: number) => {
+    await supabase.from("diseno_tipos").delete().eq("id", id);
+    setTiposByClase((prev) => ({
+      ...prev,
+      [claseId]: (prev[claseId] ?? []).filter((t) => t.id !== id),
+    }));
+    setConfirmTarget(null);
   };
 
   const handleSaveSettings = async () => {
@@ -126,13 +100,13 @@ export default function AdminDashboard() {
     <div className="admin-page">
       <ConfirmModal
         open={confirmTarget !== null}
-        title={confirmTarget?.type === "garment" ? "Eliminar prenda" : confirmTarget?.type === "estampado" ? "Eliminar estampado" : "Eliminar diseño"}
-        message={confirmTarget?.type === "garment" ? "¿Eliminar esta prenda? Esta acción no se puede deshacer." : confirmTarget?.type === "estampado" ? "¿Eliminar este estampado? Esta acción no se puede deshacer." : "¿Eliminar este diseño? Esta acción no se puede deshacer."}
+        title={confirmTarget?.type === "garment" ? "Eliminar prenda" : confirmTarget?.type === "estampado" ? "Eliminar clase" : "Eliminar tipo"}
+        message={confirmTarget?.type === "garment" ? "¿Eliminar esta prenda? Esta acción no se puede deshacer." : confirmTarget?.type === "estampado" ? "¿Eliminar esta clase de diseño? También se eliminarán sus tipos." : "¿Eliminar este tipo de diseño?"}
         onConfirm={() => {
           if (!confirmTarget) return;
           if (confirmTarget.type === "garment") deleteGarment(confirmTarget.id);
           else if (confirmTarget.type === "estampado") deleteEstampado(confirmTarget.id);
-          else deleteDesign(confirmTarget.id);
+          else if (confirmTarget.type === "diseno_tipo") deleteTipo(confirmTarget.id, confirmTarget.parentId!);
         }}
         onCancel={() => setConfirmTarget(null)}
       />
@@ -140,13 +114,13 @@ export default function AdminDashboard() {
       <div className="admin-topbar">
         <h1>Admin</h1>
         <nav className="admin-nav">
-          {(["products", "estampados", "store", "carousel", "colors"] as const).map((t) => (
+          {(["products", "disenos", "store", "carousel", "colors"] as const).map((t) => (
             <button
               key={t}
               className={`admin-nav__tab${tab === t ? " admin-nav__tab--active" : ""}`}
               onClick={() => setTab(t)}
             >
-              {t === "products" ? "Productos" : t === "estampados" ? "Estampados" : t === "store" ? "Tienda" : t === "carousel" ? "Carrusel" : "Colores"}
+              {t === "products" ? "Productos" : t === "disenos" ? "Diseños" : t === "store" ? "Tienda" : t === "carousel" ? "Carrusel" : "Colores"}
             </button>
           ))}
         </nav>
@@ -193,197 +167,163 @@ export default function AdminDashboard() {
 
           <section className="admin-section">
             <div className="admin-section-header">
-              <h2>Diseños</h2>
-              <button className="btn-back" onClick={() => navigate("/admin/designs/new")}>
-                + Nuevo
-              </button>
+              <h2>Tamaños de estampado</h2>
             </div>
             <table className="admin-table">
               <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Variantes</th>
-                  <th>Precio base</th>
-                  <th>Etiquetas</th>
-                  <th></th>
-                </tr>
+                <tr><th>Nombre</th><th>Slug</th><th>Ancho %</th><th>Incremento $</th><th>Orden</th></tr>
               </thead>
               <tbody>
-                {designOptions.map((d) => (
-                  <tr key={d.id}>
-                    <td>{d.name}</td>
-                    <td>{variantCounts[d.id] ?? 0}</td>
-                    <td>${Number(d.base_price).toLocaleString("es-AR")}</td>
-                    <td style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                      {(d.tags ?? []).join(", ")}
-                    </td>
-                    <td className="admin-actions">
-                      <button className="btn-small" onClick={() => openVariants(d)}>Variantes</button>
-                      <button className="btn-small" onClick={() => navigate(`/admin/designs/${d.id}/edit`)}>Editar</button>
-                      <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "design", id: d.id })}>Borrar</button>
-                    </td>
+                {estampadoSizes.map((s) => (
+                  <tr key={s.id}>
+                    <td>{s.name}</td>
+                    <td style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>{s.slug}</td>
+                    <td>{s.width_percent}%</td>
+                    <td>+${Number(s.price_increment).toLocaleString("es-AR")}</td>
+                    <td>{s.sort_order}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </section>
-        {variantDesign && (
-          <div className="modal-overlay" onClick={() => setVariantDesign(null)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="admin-section-header">
-                <h3>Variantes · {variantDesign.name}</h3>
-                <button className="btn-back" onClick={() => setVariantDesign(null)}>Cerrar</button>
-              </div>
 
-              {variantForm && (
-                <div className="admin-variant-form">
-                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
-                    <input className="admin-input" style={{ flex: 1 }} value={variantForm.name ?? ""}
-                      onChange={(e) => setVariantForm({ ...variantForm, name: e.target.value })} placeholder="Nombre" />
-                    <input className="admin-input" type="number" style={{ width: 120 }} value={variantForm.additional_price ?? 0}
-                      onChange={(e) => setVariantForm({ ...variantForm, additional_price: parseFloat(e.target.value) || 0 })} placeholder="$" />
-                  </div>
-                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.75rem" }}>
-                    <input type="file" accept=".svg" style={{ flex: 1 }}
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        setVariantForm({ ...variantForm, svg_content: await file.text() });
-                      }} />
-                    {variantForm.svg_content && (
-                      <button className="btn-small btn-small--danger" onClick={() => setVariantForm({ ...variantForm, svg_content: "" })}>Quitar</button>
-                    )}
-                  </div>
-                  <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem" }}>
-                    <button className="btn-primary" style={{ flex: 1 }} onClick={saveVariant}>
-                      {variantForm.id ? "Actualizar" : "Agregar"} variante
-                    </button>
-                    <button className="btn-small" onClick={() => setVariantForm(null)}>Cancelar</button>
-                  </div>
-                </div>
-              )}
-
-              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                {variants.map((v) => (
-                  <div key={v.id} className="variant-card">
-                    {v.svg_content && (
-                      <div className="variant-card__svg"
-                        dangerouslySetInnerHTML={{ __html: v.svg_content.replace(/currentColor/gi, "var(--accent)") }} />
-                    )}
-                    <div className="variant-card__info">
-                      <strong>{v.name}</strong>
-                      <span>+${Number(v.additional_price).toLocaleString("es-AR")}</span>
-                      <small>{(v.positions ?? []).join(", ")}</small>
-                    </div>
-                    <div className="variant-card__actions">
-                      <button className="btn-small" onClick={() => editVariant(v)}>Editar</button>
-                      <button className="btn-small btn-small--danger" onClick={() => deleteVariant(v.id)}>X</button>
-                    </div>
-                  </div>
-                ))}
-                {!variantForm && (
-                  <button className="btn-back" onClick={addVariant}>+ Agregar variante</button>
-                )}
-              </div>
+          <section className="admin-section">
+            <div className="admin-section-header">
+              <h2>Ubicaciones de estampado</h2>
             </div>
-          </div>
-        )}
-      </>
+            <table className="admin-table">
+              <thead>
+                <tr><th>Nombre</th><th>Slug</th><th>Position key</th><th>Incremento $</th><th>Orden</th></tr>
+              </thead>
+              <tbody>
+                {estampadoLocations.map((l) => (
+                  <tr key={l.id}>
+                    <td>{l.name}</td>
+                    <td style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>{l.slug}</td>
+                    <td style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>{l.position_key}</td>
+                    <td>+${Number(l.price_increment).toLocaleString("es-AR")}</td>
+                    <td>{l.sort_order}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        </>
       )}
-      {tab === "estampados" && (
+      {tab === "disenos" && (
         <>
           <section className="admin-section">
             <div className="admin-section-header">
-              <h2>Estampados</h2>
-              <button className="btn-back" onClick={() => setEstampadoForm({ name: "", description: "", svg_content: "", image_url: "", active: true, tags: [], sort_order: estampados.length })}>
-                + Nuevo
+              <h2>Clases de diseño</h2>
+              <button className="btn-back" onClick={() => { setEstampadoForm({ name: "", description: "", active: true, tags: [], sort_order: estampados.length }); setExpandedClase(null); setTipoForm(null); }}>
+                + Nueva clase
               </button>
             </div>
-            {estampadoForm ? (
+            {estampadoForm && !expandedClase && !tipoForm && (
               <div className="admin-form">
                 <label className="admin-label">Nombre</label>
                 <input className="admin-input" value={estampadoForm.name ?? ""} onChange={(e) => setEstampadoForm({ ...estampadoForm, name: e.target.value })} />
-
                 <label className="admin-label">Descripción</label>
                 <input className="admin-input" value={estampadoForm.description ?? ""} onChange={(e) => setEstampadoForm({ ...estampadoForm, description: e.target.value })} />
-
                 <label className="admin-label">Tags (separados por coma)</label>
                 <input className="admin-input" value={Array.isArray(estampadoForm.tags) ? estampadoForm.tags.join(", ") : ""} onChange={(e) => setEstampadoForm({ ...estampadoForm, tags: e.target.value.split(",").map((t: string) => t.trim()).filter(Boolean) })} />
-
-                <label className="admin-label">SVG</label>
-                <textarea className="admin-textarea" rows={8} value={estampadoForm.svg_content ?? ""} onChange={(e) => setEstampadoForm({ ...estampadoForm, svg_content: e.target.value })} />
-
-                <label className="admin-label">URL de imagen (opcional, reemplaza SVG)</label>
-                <input className="admin-input" value={estampadoForm.image_url ?? ""} onChange={(e) => setEstampadoForm({ ...estampadoForm, image_url: e.target.value })} />
-
                 <label className="admin-label">Orden</label>
                 <input className="admin-input" type="number" value={estampadoForm.sort_order ?? 0} onChange={(e) => setEstampadoForm({ ...estampadoForm, sort_order: parseInt(e.target.value) || 0 })} />
-
-                <label className="admin-label">
-                  <input type="checkbox" checked={estampadoForm.active ?? true} onChange={(e) => setEstampadoForm({ ...estampadoForm, active: e.target.checked })} />
-                  {" Activo"}
-                </label>
-
+                <label className="admin-label"><input type="checkbox" checked={estampadoForm.active ?? true} onChange={(e) => setEstampadoForm({ ...estampadoForm, active: e.target.checked })} />{" Activo"}</label>
                 <div className="admin-form-actions">
                   <button className="btn-back" onClick={() => setEstampadoForm(null)}>Cancelar</button>
-                  <button
-                    className="btn-primary"
-                    disabled={!estampadoForm.name || saving}
+                  <button className="btn-primary" disabled={!estampadoForm.name || saving}
                     onClick={async () => {
-                      if (!estampadoForm.name) return;
-                      setSaving(true);
-                      const payload = {
-                        name: estampadoForm.name,
-                        description: estampadoForm.description ?? "",
-                        svg_content: estampadoForm.svg_content ?? "",
-                        image_url: estampadoForm.image_url ?? "",
-                        active: estampadoForm.active ?? true,
-                        tags: estampadoForm.tags ?? [],
-                        sort_order: estampadoForm.sort_order ?? 0,
-                      };
-                      if (estampadoForm.id) {
-                        await supabase.from("estampados").update(payload).eq("id", estampadoForm.id);
-                      } else {
-                        await supabase.from("estampados").insert(payload);
-                      }
-                      setSaving(false);
-                      setEstampadoForm(null);
+                      if (!estampadoForm.name) return; setSaving(true);
+                      const p = { name: estampadoForm.name, description: estampadoForm.description ?? "", svg_content: "", image_url: "", active: estampadoForm.active ?? true, tags: estampadoForm.tags ?? [], sort_order: estampadoForm.sort_order ?? 0 };
+                      if (estampadoForm.id) { await supabase.from("estampados").update(p).eq("id", estampadoForm.id); } else { await supabase.from("estampados").insert(p); }
+                      setSaving(false); setEstampadoForm(null);
                       const { data } = await supabase.from("estampados").select("*").order("sort_order");
                       if (data) setEstampados(data);
                     }}
-                  >
-                    {estampadoForm.id ? "Guardar" : "Crear"}
-                  </button>
+                  >{estampadoForm.id ? "Guardar" : "Crear"}</button>
                 </div>
               </div>
-            ) : (
+            )}
+            {!estampadoForm && (
               <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Nombre</th>
-                    <th>Tags</th>
-                    <th>Activo</th>
-                    <th>Orden</th>
-                    <th></th>
-                  </tr>
-                </thead>
+                <thead><tr><th>Nombre</th><th>Tags</th><th>Activo</th><th>Tipos</th><th>Orden</th><th></th></tr></thead>
                 <tbody>
-                  {estampados.length === 0 && (
-                    <tr><td colSpan={5} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>No hay estampados</td></tr>
-                  )}
+                  {estampados.length === 0 && <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>No hay clases de diseño</td></tr>}
                   {estampados.map((e) => (
-                    <tr key={e.id}>
-                      <td>{e.name}</td>
-                      <td style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{(e.tags ?? []).join(", ")}</td>
-                      <td>{e.active ? "✓" : "✕"}</td>
-                      <td>{e.sort_order}</td>
-                      <td>
-                        <div className="admin-actions">
-                          <button className="btn-back" onClick={() => setEstampadoForm(e)}>Editar</button>
-                          <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "estampado", id: e.id })}>✕</button>
-                        </div>
-                      </td>
-                    </tr>
+                    <React.Fragment key={e.id}>
+                      <tr>
+                        <td>{e.name}</td>
+                        <td style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{(e.tags ?? []).join(", ")}</td>
+                        <td>{e.active ? "✓" : "✕"}</td>
+                        <td>{(tiposByClase[e.id] ?? []).length}</td>
+                        <td>{e.sort_order}</td>
+                        <td>
+                          <div className="admin-actions">
+                            <button className="btn-small" onClick={async () => {
+                              if (expandedClase === e.id) { setExpandedClase(null); setTipoForm(null); return; }
+                              setExpandedClase(e.id); setTipoForm(null);
+                              if (!tiposByClase[e.id]) await loadTipos(e.id);
+                            }}>{expandedClase === e.id ? "−" : "+"} Tipos</button>
+                            <button className="btn-small" onClick={() => { setEstampadoForm(e); setExpandedClase(null); setTipoForm(null); }}>Editar</button>
+                            <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "estampado", id: e.id })}>✕</button>
+                          </div>
+                        </td>
+                      </tr>
+                      {expandedClase === e.id && (
+                        <tr key={`tipos-${e.id}`}>
+                          <td colSpan={6} style={{ padding: "0.5rem 1rem 1rem", background: "var(--surface)" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                              <strong style={{ fontSize: "0.85rem" }}>Tipos de {e.name}</strong>
+                              <button className="btn-back" onClick={() => setTipoForm({ estampado_id: e.id, name: "", description: "", svg_content: "", image_url: "", sort_order: (tiposByClase[e.id] ?? []).length })}>
+                                + Nuevo tipo
+                              </button>
+                            </div>
+                            {tipoForm && tipoForm.estampado_id === e.id && (
+                              <div className="admin-form" style={{ marginBottom: "0.75rem" }}>
+                                <label className="admin-label">Nombre</label>
+                                <input className="admin-input" value={tipoForm.name ?? ""} onChange={(e2) => setTipoForm({ ...tipoForm, name: e2.target.value })} />
+                                <label className="admin-label">Descripción</label>
+                                <input className="admin-input" value={tipoForm.description ?? ""} onChange={(e2) => setTipoForm({ ...tipoForm, description: e2.target.value })} />
+                                <label className="admin-label">SVG</label>
+                                <textarea className="admin-textarea" rows={4} value={tipoForm.svg_content ?? ""} onChange={(e2) => setTipoForm({ ...tipoForm, svg_content: e2.target.value })} />
+                                <label className="admin-label">URL imagen (opcional)</label>
+                                <input className="admin-input" value={tipoForm.image_url ?? ""} onChange={(e2) => setTipoForm({ ...tipoForm, image_url: e2.target.value })} />
+                                <div className="admin-form-actions">
+                                  <button className="btn-back" onClick={() => setTipoForm(null)}>Cancelar</button>
+                                  <button className="btn-primary" disabled={!tipoForm.name || saving}
+                                    onClick={async () => {
+                                      if (!tipoForm.name) return; setSaving(true);
+                                      const p = { estampado_id: e.id, name: tipoForm.name, description: tipoForm.description ?? "", svg_content: tipoForm.svg_content ?? "", image_url: tipoForm.image_url ?? "", sort_order: tipoForm.sort_order ?? 0 };
+                                      if (tipoForm.id) { await supabase.from("diseno_tipos").update(p).eq("id", tipoForm.id); } else { await supabase.from("diseno_tipos").insert(p); }
+                                      setSaving(false); setTipoForm(null);
+                                      await loadTipos(e.id);
+                                    }}
+                                  >{tipoForm.id ? "Guardar" : "Crear"}</button>
+                                </div>
+                              </div>
+                            )}
+                            {(tiposByClase[e.id] ?? []).length === 0 && !tipoForm && (
+                              <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.85rem", padding: "0.5rem" }}>Esta clase no tiene tipos todavía</p>
+                            )}
+                            {(tiposByClase[e.id] ?? []).map((t) => (
+                              <div key={t.id} className="admin-row" style={{ marginBottom: "0.25rem" }}>
+                                <div style={{ flex: 1 }}>
+                                  <strong style={{ fontSize: "0.85rem" }}>{t.name}</strong>
+                                  {t.description && <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginLeft: "0.5rem" }}>{t.description}</span>}
+                                </div>
+                                {t.svg_content && (
+                                  <div style={{ width: 28, height: 28, color: "var(--accent)", marginRight: "0.5rem" }}
+                                    dangerouslySetInnerHTML={{ __html: t.svg_content.replace(/currentColor/gi, "var(--accent)") }} />
+                                )}
+                                <button className="btn-small" onClick={() => setTipoForm(t)}>Editar</button>
+                                <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "diseno_tipo", id: t.id, parentId: e.id })}>✕</button>
+                              </div>
+                            ))}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>

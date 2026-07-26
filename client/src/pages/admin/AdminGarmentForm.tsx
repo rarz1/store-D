@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { supabase } from "../../lib/supabase";
+import { supabase, type EstampadoSizeRow, type EstampadoLocationRow } from "../../lib/supabase";
 
 interface ColorEntry { name: string; hex: string; }
 interface SizeEntry { name: string; }
@@ -20,6 +20,10 @@ export default function AdminGarmentForm() {
   const [tags, setTags] = useState("");
   const [colors, setColors] = useState<ColorEntry[]>([{ name: "", hex: "#000000" }]);
   const [sizes, setSizes] = useState<SizeEntry[]>([{ name: "" }]);
+  const [allStampSizes, setAllStampSizes] = useState<EstampadoSizeRow[]>([]);
+  const [allStampLocations, setAllStampLocations] = useState<EstampadoLocationRow[]>([]);
+  const [selectedSizeIds, setSelectedSizeIds] = useState<number[]>([]);
+  const [selectedLocationIds, setSelectedLocationIds] = useState<number[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -45,6 +49,18 @@ export default function AdminGarmentForm() {
       if (error) { console.error("Error loading sizes:", error); return; }
       if (data?.length) setSizes(data.map((s) => ({ name: s.name })));
     });
+    supabase.from("estampado_sizes").select("*").order("sort_order").then(({ data }) => {
+      if (data) setAllStampSizes(data);
+    });
+    supabase.from("estampado_locations").select("*").order("sort_order").then(({ data }) => {
+      if (data) setAllStampLocations(data);
+    });
+    supabase.from("garment_estampado_sizes").select("estampado_size_id").eq("garment_id", numId).then(({ data }) => {
+      if (data) setSelectedSizeIds(data.map((r) => r.estampado_size_id));
+    });
+    supabase.from("garment_estampado_locations").select("estampado_location_id").eq("garment_id", numId).then(({ data }) => {
+      if (data) setSelectedLocationIds(data.map((r) => r.estampado_location_id));
+    });
   }, [id, isEdit]);
 
   const handleSave = async () => {
@@ -61,6 +77,10 @@ export default function AdminGarmentForm() {
         await supabase.from("garment_sizes").delete().eq("garment_id", numId);
         await supabase.from("garment_colors").insert(colors.filter((c) => c.name).map((c) => ({ garment_id: numId, name: c.name, hex: c.hex })));
         await supabase.from("garment_sizes").insert(sizes.filter((s) => s.name).map((s) => ({ garment_id: numId, name: s.name })));
+        await supabase.from("garment_estampado_sizes").delete().eq("garment_id", numId);
+        await supabase.from("garment_estampado_locations").delete().eq("garment_id", numId);
+        if (selectedSizeIds.length > 0) await supabase.from("garment_estampado_sizes").insert(selectedSizeIds.map((sid) => ({ garment_id: numId, estampado_size_id: sid })));
+        if (selectedLocationIds.length > 0) await supabase.from("garment_estampado_locations").insert(selectedLocationIds.map((lid) => ({ garment_id: numId, estampado_location_id: lid })));
       } else {
         const parsedTags = tags.split(",").map((t) => t.trim()).filter(Boolean);
         const { data, error } = await supabase.from("garments").insert({ name, slug, description, base_price: parseFloat(basePrice), svg_mock: svgMock, svg_mock_back: svgMockBack, tags: parsedTags }).select().single();
@@ -68,6 +88,8 @@ export default function AdminGarmentForm() {
         if (data) {
           await supabase.from("garment_colors").insert(colors.filter((c) => c.name).map((c) => ({ garment_id: data.id, name: c.name, hex: c.hex })));
           await supabase.from("garment_sizes").insert(sizes.filter((s) => s.name).map((s) => ({ garment_id: data.id, name: s.name })));
+          if (selectedSizeIds.length > 0) await supabase.from("garment_estampado_sizes").insert(selectedSizeIds.map((sid) => ({ garment_id: data.id, estampado_size_id: sid })));
+          if (selectedLocationIds.length > 0) await supabase.from("garment_estampado_locations").insert(selectedLocationIds.map((lid) => ({ garment_id: data.id, estampado_location_id: lid })));
         }
       }
       navigate("/admin");
@@ -176,6 +198,26 @@ export default function AdminGarmentForm() {
             <button className="btn-small btn-small--danger" onClick={() => setSizes(sizes.filter((_, j) => j !== i))}>X</button>
           </div>
         ))}
+
+        <label className="admin-label">Tamaños de estampado disponibles</label>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
+          {allStampSizes.map((s) => (
+            <label key={s.id} className={`tag-chip${selectedSizeIds.includes(s.id) ? " tag-chip--active" : ""}`} style={{ cursor: "pointer" }}>
+              <input type="checkbox" checked={selectedSizeIds.includes(s.id)} onChange={() => setSelectedSizeIds((prev) => prev.includes(s.id) ? prev.filter((x) => x !== s.id) : [...prev, s.id])} style={{ display: "none" }} />
+              {s.name}
+            </label>
+          ))}
+        </div>
+
+        <label className="admin-label">Ubicaciones de estampado disponibles</label>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
+          {allStampLocations.map((l) => (
+            <label key={l.id} className={`tag-chip${selectedLocationIds.includes(l.id) ? " tag-chip--active" : ""}`} style={{ cursor: "pointer" }}>
+              <input type="checkbox" checked={selectedLocationIds.includes(l.id)} onChange={() => setSelectedLocationIds((prev) => prev.includes(l.id) ? prev.filter((x) => x !== l.id) : [...prev, l.id])} style={{ display: "none" }} />
+              {l.name}
+            </label>
+          ))}
+        </div>
 
         <button className="btn-primary" onClick={handleSave} disabled={saving}>
           {saving ? "Guardando..." : "Guardar"}

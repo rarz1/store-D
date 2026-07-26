@@ -84,3 +84,24 @@ export type EstampadoLocationRow = {
   price_increment: number;
   sort_order: number;
 };
+
+export type DisenoTipoRow = {
+  id: number;
+  estampado_id: number;
+  name: string;
+  description: string;
+  svg_content: string;
+  image_url: string;
+  sort_order: number;
+  created_at: string;
+};
+
+export type GarmentEstampadoSizeRow = {
+  garment_id: number;
+  estampado_size_id: number;
+};
+
+export type GarmentEstampadoLocationRow = {
+  garment_id: number;
+  estampado_location_id: number;
+};

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "./supabase";
-import type { GarmentRow, GarmentColorRow, GarmentSizeRow, EstampadoRow, EstampadoSizeRow, EstampadoLocationRow } from "./supabase";
+import type { GarmentRow, GarmentColorRow, GarmentSizeRow, EstampadoRow, EstampadoSizeRow, EstampadoLocationRow, DisenoTipoRow } from "./supabase";
 
 export function useGarment(slug: string) {
   return useQuery({
@@ -62,5 +62,44 @@ export function useEstampadoLocations() {
       const { data } = await supabase.from("estampado_locations").select("*").order("sort_order");
       return (data ?? []) as EstampadoLocationRow[];
     },
+  });
+}
+
+export function useDisenoTipos(claseId: number) {
+  return useQuery({
+    queryKey: ["diseno-tipos", claseId],
+    queryFn: async () => {
+      const { data } = await supabase.from("diseno_tipos").select("*").eq("estampado_id", claseId).order("sort_order");
+      return (data ?? []) as DisenoTipoRow[];
+    },
+    enabled: claseId > 0,
+  });
+}
+
+export function useGarmentEstampadoSizes(garmentId: number) {
+  return useQuery({
+    queryKey: ["garment-estampado-sizes", garmentId],
+    queryFn: async () => {
+      const { data } = await supabase.from("garment_estampado_sizes").select("estampado_size_id").eq("garment_id", garmentId);
+      if (!data || data.length === 0) return [] as EstampadoSizeRow[];
+      const ids = data.map((r) => r.estampado_size_id);
+      const { data: sizes } = await supabase.from("estampado_sizes").select("*").in("id", ids).order("sort_order");
+      return (sizes ?? []) as EstampadoSizeRow[];
+    },
+    enabled: garmentId > 0,
+  });
+}
+
+export function useGarmentEstampadoLocations(garmentId: number) {
+  return useQuery({
+    queryKey: ["garment-estampado-locations", garmentId],
+    queryFn: async () => {
+      const { data } = await supabase.from("garment_estampado_locations").select("estampado_location_id").eq("garment_id", garmentId);
+      if (!data || data.length === 0) return [] as EstampadoLocationRow[];
+      const ids = data.map((r) => r.estampado_location_id);
+      const { data: locs } = await supabase.from("estampado_locations").select("*").in("id", ids).order("sort_order");
+      return (locs ?? []) as EstampadoLocationRow[];
+    },
+    enabled: garmentId > 0,
   });
 }
