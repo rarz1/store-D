@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./lib/auth";
 import { CartProvider } from "./lib/cart";
+import { ToastProvider } from "./lib/toast";
 import AuthGuard from "./components/AuthGuard";
 import HomePage from "./pages/HomePage";
 import ProductPage from "./pages/ProductPage";
@@ -36,6 +37,7 @@ export default function App() {
       <BrowserRouter>
         <AuthProvider>
           <CartProvider>
+            <ToastProvider>
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/producto/:garmentId" element={<ProductPage />} />
@@ -62,6 +64,7 @@ export default function App() {
                 element={<AuthGuard><AdminDesigns /></AuthGuard>}
               />
             </Routes>
+            </ToastProvider>
           </CartProvider>
         </AuthProvider>
       </BrowserRouter>

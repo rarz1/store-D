@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase, type GarmentRow, type DesignOptionRow, type DesignVariantRow } from "../../lib/supabase";
+import { supabase, type GarmentRow, type DesignOptionRow, type DesignVariantRow, type EstampadoRow } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import ConfirmModal from "../../components/ConfirmModal";
 import { getSettings, saveSettings, getSlides, saveSlide, uploadImage, applyColors, type SiteSettings, type CarouselSlide } from "../../lib/settings";
 
-type Tab = "products" | "store" | "carousel" | "colors";
+type Tab = "products" | "estampados" | "store" | "carousel" | "colors";
 
 export default function AdminDashboard() {
   const { logout } = useAuth();
@@ -14,13 +14,15 @@ export default function AdminDashboard() {
   const [garments, setGarments] = useState<GarmentRow[]>([]);
   const [designOptions, setDesignOptions] = useState<DesignOptionRow[]>([]);
   const [variantCounts, setVariantCounts] = useState<Record<number, number>>({});
-  const [confirmTarget, setConfirmTarget] = useState<{ type: "garment" | "design"; id: number } | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{ type: "garment" | "design" | "estampado"; id: number } | null>(null);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [slides, setSlides] = useState<CarouselSlide[]>([]);
   const [saving, setSaving] = useState(false);
   const [variantDesign, setVariantDesign] = useState<DesignOptionRow | null>(null);
   const [variants, setVariants] = useState<DesignVariantRow[]>([]);
   const [variantForm, setVariantForm] = useState<Partial<DesignVariantRow> | null>(null);
+  const [estampados, setEstampados] = useState<EstampadoRow[]>([]);
+  const [estampadoForm, setEstampadoForm] = useState<Partial<EstampadoRow> | null>(null);
 
   useEffect(() => {
     supabase.from("garments").select("*").order("id").then(({ data, error }) => {
@@ -41,6 +43,10 @@ export default function AdminDashboard() {
     });
     getSettings().then(setSettings);
     getSlides().then(setSlides);
+    supabase.from("estampados").select("*").order("sort_order").then(({ data, error }) => {
+      if (error) console.error("Error loading estampados:", error);
+      if (data) setEstampados(data);
+    });
   }, []);
 
   const deleteGarment = async (id: number) => {
@@ -56,6 +62,14 @@ export default function AdminDashboard() {
     if (error) { console.error("Error deleting design:", error); return; }
     setDesignOptions((prev) => prev.filter((d) => d.id !== id));
     setConfirmTarget(null);
+  };
+
+  const deleteEstampado = async (id: number) => {
+    const { error } = await supabase.from("estampados").delete().eq("id", id);
+    if (error) { console.error("Error deleting estampado:", error); return; }
+    setEstampados((prev) => prev.filter((e) => e.id !== id));
+    setConfirmTarget(null);
+    setEstampadoForm(null);
   };
 
   const openVariants = async (d: DesignOptionRow) => {
@@ -112,11 +126,12 @@ export default function AdminDashboard() {
     <div className="admin-page">
       <ConfirmModal
         open={confirmTarget !== null}
-        title={confirmTarget?.type === "garment" ? "Eliminar prenda" : "Eliminar diseño"}
-        message={confirmTarget?.type === "garment" ? "¿Eliminar esta prenda? Esta acción no se puede deshacer." : "¿Eliminar este diseño? Esta acción no se puede deshacer."}
+        title={confirmTarget?.type === "garment" ? "Eliminar prenda" : confirmTarget?.type === "estampado" ? "Eliminar estampado" : "Eliminar diseño"}
+        message={confirmTarget?.type === "garment" ? "¿Eliminar esta prenda? Esta acción no se puede deshacer." : confirmTarget?.type === "estampado" ? "¿Eliminar este estampado? Esta acción no se puede deshacer." : "¿Eliminar este diseño? Esta acción no se puede deshacer."}
         onConfirm={() => {
           if (!confirmTarget) return;
           if (confirmTarget.type === "garment") deleteGarment(confirmTarget.id);
+          else if (confirmTarget.type === "estampado") deleteEstampado(confirmTarget.id);
           else deleteDesign(confirmTarget.id);
         }}
         onCancel={() => setConfirmTarget(null)}
@@ -125,13 +140,13 @@ export default function AdminDashboard() {
       <div className="admin-topbar">
         <h1>Admin</h1>
         <nav className="admin-nav">
-          {(["products", "store", "carousel", "colors"] as const).map((t) => (
+          {(["products", "estampados", "store", "carousel", "colors"] as const).map((t) => (
             <button
               key={t}
               className={`admin-nav__tab${tab === t ? " admin-nav__tab--active" : ""}`}
               onClick={() => setTab(t)}
             >
-              {t === "products" ? "Productos" : t === "store" ? "Tienda" : t === "carousel" ? "Carrusel" : "Colores"}
+              {t === "products" ? "Productos" : t === "estampados" ? "Estampados" : t === "store" ? "Tienda" : t === "carousel" ? "Carrusel" : "Colores"}
             </button>
           ))}
         </nav>
@@ -274,6 +289,107 @@ export default function AdminDashboard() {
           </div>
         )}
       </>
+      )}
+      {tab === "estampados" && (
+        <>
+          <section className="admin-section">
+            <div className="admin-section-header">
+              <h2>Estampados</h2>
+              <button className="btn-back" onClick={() => setEstampadoForm({ name: "", description: "", svg_content: "", image_url: "", active: true, tags: [], sort_order: estampados.length })}>
+                + Nuevo
+              </button>
+            </div>
+            {estampadoForm ? (
+              <div className="admin-form">
+                <label className="admin-label">Nombre</label>
+                <input className="admin-input" value={estampadoForm.name ?? ""} onChange={(e) => setEstampadoForm({ ...estampadoForm, name: e.target.value })} />
+
+                <label className="admin-label">Descripción</label>
+                <input className="admin-input" value={estampadoForm.description ?? ""} onChange={(e) => setEstampadoForm({ ...estampadoForm, description: e.target.value })} />
+
+                <label className="admin-label">Tags (separados por coma)</label>
+                <input className="admin-input" value={Array.isArray(estampadoForm.tags) ? estampadoForm.tags.join(", ") : ""} onChange={(e) => setEstampadoForm({ ...estampadoForm, tags: e.target.value.split(",").map((t: string) => t.trim()).filter(Boolean) })} />
+
+                <label className="admin-label">SVG</label>
+                <textarea className="admin-textarea" rows={8} value={estampadoForm.svg_content ?? ""} onChange={(e) => setEstampadoForm({ ...estampadoForm, svg_content: e.target.value })} />
+
+                <label className="admin-label">URL de imagen (opcional, reemplaza SVG)</label>
+                <input className="admin-input" value={estampadoForm.image_url ?? ""} onChange={(e) => setEstampadoForm({ ...estampadoForm, image_url: e.target.value })} />
+
+                <label className="admin-label">Orden</label>
+                <input className="admin-input" type="number" value={estampadoForm.sort_order ?? 0} onChange={(e) => setEstampadoForm({ ...estampadoForm, sort_order: parseInt(e.target.value) || 0 })} />
+
+                <label className="admin-label">
+                  <input type="checkbox" checked={estampadoForm.active ?? true} onChange={(e) => setEstampadoForm({ ...estampadoForm, active: e.target.checked })} />
+                  {" Activo"}
+                </label>
+
+                <div className="admin-form-actions">
+                  <button className="btn-back" onClick={() => setEstampadoForm(null)}>Cancelar</button>
+                  <button
+                    className="btn-primary"
+                    disabled={!estampadoForm.name || saving}
+                    onClick={async () => {
+                      if (!estampadoForm.name) return;
+                      setSaving(true);
+                      const payload = {
+                        name: estampadoForm.name,
+                        description: estampadoForm.description ?? "",
+                        svg_content: estampadoForm.svg_content ?? "",
+                        image_url: estampadoForm.image_url ?? "",
+                        active: estampadoForm.active ?? true,
+                        tags: estampadoForm.tags ?? [],
+                        sort_order: estampadoForm.sort_order ?? 0,
+                      };
+                      if (estampadoForm.id) {
+                        await supabase.from("estampados").update(payload).eq("id", estampadoForm.id);
+                      } else {
+                        await supabase.from("estampados").insert(payload);
+                      }
+                      setSaving(false);
+                      setEstampadoForm(null);
+                      const { data } = await supabase.from("estampados").select("*").order("sort_order");
+                      if (data) setEstampados(data);
+                    }}
+                  >
+                    {estampadoForm.id ? "Guardar" : "Crear"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Tags</th>
+                    <th>Activo</th>
+                    <th>Orden</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {estampados.length === 0 && (
+                    <tr><td colSpan={5} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>No hay estampados</td></tr>
+                  )}
+                  {estampados.map((e) => (
+                    <tr key={e.id}>
+                      <td>{e.name}</td>
+                      <td style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{(e.tags ?? []).join(", ")}</td>
+                      <td>{e.active ? "✓" : "✕"}</td>
+                      <td>{e.sort_order}</td>
+                      <td>
+                        <div className="admin-actions">
+                          <button className="btn-back" onClick={() => setEstampadoForm(e)}>Editar</button>
+                          <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "estampado", id: e.id })}>✕</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </section>
+        </>
       )}
       {tab === "store" && settings && (
         <div className="admin-form">

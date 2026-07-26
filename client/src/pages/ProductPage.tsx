@@ -220,17 +220,6 @@ export default function ProductPage() {
           </div>
 
           <div className="control-group">
-            <div className="control-group__header">
-              <span className="control-label">PERSONALIZÁ TU PRENDA</span>
-              <button className="btn-small btn-small--help" onClick={() => setShowHelpModal(true)} title="¿Cómo funciona?">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M12 17h.01" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-
             {placedEstampados.length > 0 && (
               <div className="placed-estampados">
                 {placedEstampados.map((p, i) => (
@@ -252,6 +241,7 @@ export default function ProductPage() {
               estampados={estampados}
               stampSizes={stampSizes}
               stampLocations={stampLocations}
+              onOpenHelp={() => setShowHelpModal(true)}
               onAdd={(item) => {
                 const isDuplicate = placedEstampados.some((p) =>
                   p.estampado.id === item.estampado.id &&

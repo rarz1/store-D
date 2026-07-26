@@ -200,3 +200,90 @@ create policy "Public read" on design_variants for select using (true);
 create policy "Admin insert" on design_variants for insert with check (auth.role() = 'authenticated');
 create policy "Admin update" on design_variants for update using (auth.role() = 'authenticated');
 create policy "Admin delete" on design_variants for delete using (auth.role() = 'authenticated');
+
+-- ============================================
+-- ESTAMPADOS (standalone designs for clothing)
+-- ============================================
+
+create table if not exists estampados (
+  id bigint primary key generated always as identity,
+  name text not null,
+  description text not null default '',
+  svg_content text not null default '',
+  image_url text not null default '',
+  active boolean not null default true,
+  tags text[] not null default '{}',
+  sort_order int not null default 0,
+  created_at timestamptz default now()
+);
+
+create table if not exists estampado_sizes (
+  id bigint primary key generated always as identity,
+  name text not null,
+  slug text unique not null,
+  description text not null default '',
+  width_percent numeric(5,2) not null default 100,
+  price_increment numeric(10,2) not null default 0,
+  sort_order int not null default 0
+);
+
+create table if not exists estampado_locations (
+  id bigint primary key generated always as identity,
+  name text not null,
+  slug text unique not null,
+  description text not null default '',
+  position_key text not null,
+  price_increment numeric(10,2) not null default 0,
+  sort_order int not null default 0
+);
+
+alter table estampados enable row level security;
+alter table estampado_sizes enable row level security;
+alter table estampado_locations enable row level security;
+
+create policy "Public read" on estampados for select using (true);
+create policy "Admin insert" on estampados for insert with check (auth.role() = 'authenticated');
+create policy "Admin update" on estampados for update using (auth.role() = 'authenticated');
+create policy "Admin delete" on estampados for delete using (auth.role() = 'authenticated');
+
+create policy "Public read" on estampado_sizes for select using (true);
+create policy "Admin insert" on estampado_sizes for insert with check (auth.role() = 'authenticated');
+create policy "Admin update" on estampado_sizes for update using (auth.role() = 'authenticated');
+create policy "Admin delete" on estampado_sizes for delete using (auth.role() = 'authenticated');
+
+create policy "Public read" on estampado_locations for select using (true);
+create policy "Admin insert" on estampado_locations for insert with check (auth.role() = 'authenticated');
+create policy "Admin update" on estampado_locations for update using (auth.role() = 'authenticated');
+create policy "Admin delete" on estampado_locations for delete using (auth.role() = 'authenticated');
+
+-- ============================================
+-- ESTAMPADOS - SEED DATA
+-- ============================================
+
+-- Sizes (level + price increment scale)
+insert into estampado_sizes (name, slug, description, width_percent, price_increment, sort_order) values
+  ('Pequeño', 'pequeno', 'Diseño pequeño, discreto', 20, 0, 1),
+  ('Mediano', 'mediano', 'Tamaño equilibrado', 35, 500, 2),
+  ('Grande', 'grande', 'Diseño que se nota', 50, 1000, 3),
+  ('XL', 'xl', 'Cubre buena parte de la prenda', 70, 2000, 4),
+  ('Full', 'full', 'Diseño que cubre toda la superficie', 95, 3500, 5)
+on conflict (slug) do nothing;
+
+-- Locations
+insert into estampado_locations (name, slug, description, position_key, price_increment, sort_order) values
+  ('Pecho Izquierdo', 'pecho-izq', 'Sobre el lado izquierdo del pecho', 'small_front', 0, 1),
+  ('Pecho Derecho', 'pecho-der', 'Sobre el lado derecho del pecho', 'small_front_right', 0, 2),
+  ('Centro Pecho', 'centro-pecho', 'Al centro del pecho, tamaño completo', 'large_front', 500, 3),
+  ('Centro Espalda', 'centro-espalda', 'Al centro de la espalda, tamaño completo', 'large_back', 500, 4),
+  ('Manga', 'manga', 'Sobre la manga izquierda', 'sleeve', 300, 5)
+on conflict (slug) do nothing;
+
+-- Designs (estampados)
+insert into estampados (name, description, svg_content, tags, sort_order) values
+  ('Geométrico', 'Triángulos superpuestos en degradado', '<svg viewBox="0 0 200 220" fill="none"><polygon points="100,10 190,80 150,200 50,200 10,80" fill="currentColor" opacity="0.9"/><polygon points="100,40 155,85 130,160 70,160 45,85" fill="currentColor" opacity="0.6"/><polygon points="100,65 130,92 115,130 85,130 70,92" fill="currentColor" opacity="0.4"/><line x1="100" y1="10" x2="100" y2="200" stroke="currentColor" stroke-width="1.5" opacity="0.3"/><line x1="10" y1="80" x2="190" y2="80" stroke="currentColor" stroke-width="1.5" opacity="0.3"/></svg>', ARRAY['geométrico','abstracto'], 1),
+  ('Floral', 'Pétalos concéntricos con centro sólido', '<svg viewBox="0 0 200 220" fill="none"><circle cx="100" cy="110" r="60" fill="currentColor" opacity="0.15"/><circle cx="100" cy="110" r="40" fill="currentColor" opacity="0.25"/><circle cx="100" cy="110" r="20" fill="currentColor" opacity="0.5"/><ellipse cx="60" cy="70" rx="25" ry="15" fill="currentColor" opacity="0.2" transform="rotate(-30 60 70)"/><ellipse cx="140" cy="70" rx="25" ry="15" fill="currentColor" opacity="0.2" transform="rotate(30 140 70)"/><ellipse cx="60" cy="150" rx="25" ry="15" fill="currentColor" opacity="0.2" transform="rotate(30 60 150)"/><ellipse cx="140" cy="150" rx="25" ry="15" fill="currentColor" opacity="0.2" transform="rotate(-30 140 150)"/><circle cx="100" cy="110" r="6" fill="currentColor" opacity="0.7"/></svg>', ARRAY['floral','naturaleza'], 2),
+  ('Olas', 'Líneas onduladas paralelas', '<svg viewBox="0 0 200 220" fill="none"><path d="M10 160Q30 120 50 140Q70 160 90 130Q110 100 130 120Q150 140 170 110Q190 80 190 80" stroke="currentColor" stroke-width="3" opacity="0.6" fill="none" stroke-linecap="round"/><path d="M10 140Q30 100 50 120Q70 140 90 110Q110 80 130 100Q150 120 170 90Q190 60 190 60" stroke="currentColor" stroke-width="2" opacity="0.3" fill="none" stroke-linecap="round"/><path d="M10 180Q30 140 50 160Q70 180 90 150Q110 120 130 140Q150 160 170 130Q190 100 190 100" stroke="currentColor" stroke-width="1.5" opacity="0.2" fill="none" stroke-linecap="round"/></svg>', ARRAY['ondas','abstracto','minimalista'], 3),
+  ('Tipográfico', 'Letras bold con línea divisoria', '<svg viewBox="0 0 200 220" fill="none"><text x="100" y="100" text-anchor="middle" dominant-baseline="central" fill="currentColor" opacity="0.9" font-family="''Bebas Neue'',Impact,sans-serif" font-size="90" letter-spacing="8">RAW</text><text x="100" y="145" text-anchor="middle" dominant-baseline="central" fill="currentColor" opacity="0.4" font-family="system-ui,sans-serif" font-size="13" letter-spacing="6">EST. 2026</text><line x1="40" y1="162" x2="160" y2="162" stroke="currentColor" stroke-width="1" opacity="0.3"/></svg>', ARRAY['tipográfico','texto'], 4),
+  ('Silueta', 'Montañas y astro en capas', '<svg viewBox="0 0 200 220" fill="none"><path d="M0 200L40 120L80 160L120 90L160 140L200 100L200 220L0 220Z" fill="currentColor" opacity="0.4"/><path d="M0 200L30 150L70 180L110 120L150 160L200 130L200 220L0 220Z" fill="currentColor" opacity="0.2"/><circle cx="160" cy="80" r="22" fill="currentColor" opacity="0.5"/><circle cx="160" cy="80" r="14" fill="currentColor" opacity="0.7"/><circle cx="160" cy="80" r="6" fill="currentColor" opacity="0.9"/></svg>', ARRAY['silueta','naturaleza'], 5),
+  ('Mandala', 'Círculos concéntricos punteados', '<svg viewBox="0 0 200 220" fill="none"><circle cx="100" cy="110" r="85" stroke="currentColor" stroke-width="1" opacity="0.2"/><circle cx="100" cy="110" r="65" stroke="currentColor" stroke-width="1" opacity="0.25"/><circle cx="100" cy="110" r="45" stroke="currentColor" stroke-width="1" opacity="0.3"/><circle cx="100" cy="110" r="25" stroke="currentColor" stroke-width="1" opacity="0.35"/><circle cx="100" cy="110" r="10" fill="currentColor" opacity="0.15"/><circle cx="100" cy="110" r="4" fill="currentColor" opacity="0.4"/></svg>', ARRAY['mandala','abstracto'], 6)
+on conflict (name) do nothing;
