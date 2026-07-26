@@ -120,3 +120,19 @@ Archivo: `client/src/lib/settings.ts`
 - AdminDashboard unificado con 4 tabs premium: Productos (default), Tienda, Carrusel, Colores
 - Ruta `/admin/settings` eliminada (todo en dashboard)
 - Tabs con underline animado + hover/active states premium
+
+### Sesión 3 - 2026-07-25
+- Sistema de carrito completo: CartContext + CartProvider + CartDrawer + useCart con persistencia localStorage
+- Toast system: ToastProvider + useToast hook
+- React Query hooks: 6 hooks (garment, colors, sizes, estampados, sizes, locations)
+- Estampado system: tablas `estampados`, `estampado_sizes`, `estampado_locations`, `diseno_tipos`, `garment_estampado_sizes`, `garment_estampado_locations`
+- Two-level selection en frontend: clase → tipo → size → location
+- Admin Diseños tab: CRUD de clases + tipos expandibles por clase
+- Admin Productos tab: sizes/locations editables inline con botones +Agregar
+- Admin tipos form: tags + active checkbox + error visible en UI
+- Garment list: columna Etiquetas eliminada
+- AdminGarmentForm: estampado size/location chip selector + guardado en junction tables
+- CartItem incluye `tipo: DisenoTipoRow`
+- Fix: build errors (CSS custom property cast, unused vars, missing type)
+- Fix: saving now checks `{error}` and shows user-visible message
+- Pendientes: probar admin en producción (correr SQL en Supabase SQL Editor)
