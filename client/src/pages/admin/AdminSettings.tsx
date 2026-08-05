@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../../lib/toast";
 import { getSettings, saveSettings, getSlides, saveSlide, uploadImage, applyColors, type SiteSettings, type CarouselSlide } from "../../lib/settings";
 
 type Tab = "store" | "carousel" | "colors";
 
 export default function AdminSettings() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [tab, setTab] = useState<Tab>("store");
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [slides, setSlides] = useState<CarouselSlide[]>([]);
@@ -19,9 +21,14 @@ export default function AdminSettings() {
   const handleSaveSettings = async () => {
     if (!settings) return;
     setSaving(true);
-    await saveSettings(settings);
+    const ok = await saveSettings(settings);
     applyColors(settings);
     setSaving(false);
+    if (ok) {
+      toast.success("Configuración guardada");
+    } else {
+      toast.error("Error al guardar", "No se pudo guardar la configuración.");
+    }
   };
 
   return (

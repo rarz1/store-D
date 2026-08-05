@@ -4,6 +4,7 @@ import { supabase, type EstampadoSizeRow, type EstampadoLocationRow } from "../.
 
 interface ColorEntry { name: string; hex: string; }
 interface SizeEntry { name: string; }
+interface FormErrors { name?: string; slug?: string; basePrice?: string; colors?: string; sizes?: string; }
 
 export default function AdminGarmentForm() {
   const { id } = useParams();
@@ -25,6 +26,7 @@ export default function AdminGarmentForm() {
   const [selectedSizeIds, setSelectedSizeIds] = useState<number[]>([]);
   const [selectedLocationIds, setSelectedLocationIds] = useState<number[]>([]);
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
 
   useEffect(() => {
     if (!isEdit) return;
@@ -63,8 +65,21 @@ export default function AdminGarmentForm() {
     });
   }, [id, isEdit]);
 
+  const validate = (): boolean => {
+    const e: FormErrors = {};
+    if (!name.trim()) e.name = "El nombre es obligatorio";
+    if (!slug.trim()) e.slug = "El slug es obligatorio";
+    if (!basePrice || Number(basePrice) <= 0) e.basePrice = "El precio debe ser mayor a 0";
+    const validColors = colors.filter((c) => c.name.trim() && c.hex.trim());
+    if (validColors.length === 0) e.colors = "Debe haber al menos un color";
+    const validSizes = sizes.filter((s) => s.name.trim());
+    if (validSizes.length === 0) e.sizes = "Debe haber al menos un talle";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const handleSave = async () => {
-    if (!name || !slug || !basePrice) return;
+    if (!validate()) return;
     setSaving(true);
 
     try {
@@ -106,23 +121,26 @@ export default function AdminGarmentForm() {
         <button className="btn-back" onClick={() => navigate("/admin")}>Volver</button>
       </div>
 
-      <div className="admin-form">
-        <label className="admin-label">Nombre</label>
-        <input className="admin-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: Remeras" />
+       <div className="admin-form">
+         <label className="admin-label">Nombre</label>
+         <input className="admin-input" style={errors.name ? { borderColor: "#ef4444" } : {}} value={name} onChange={(e) => { setName(e.target.value); if (errors.name) setErrors((p) => ({ ...p, name: undefined })); }} placeholder="Ej: Remeras" />
+         {errors.name && <p className="admin-error">{errors.name}</p>}
 
-        <label className="admin-label">Slug</label>
-        <input className="admin-input" value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="Ej: remeras" style={{ fontSize: "0.8rem" }} />
-        {isEdit && originalSlug && slug !== originalSlug && (
-          <p style={{ fontSize: "0.75rem", color: "#f97316", margin: 0 }}>
-            ⚠ Cambiar el slug rompe los links existentes a esta prenda
-          </p>
-        )}
+         <label className="admin-label">Slug</label>
+         <input className="admin-input" style={{ ...(errors.slug ? { borderColor: "#ef4444" } : {}), fontSize: "0.8rem" }} value={slug} onChange={(e) => { setSlug(e.target.value); if (errors.slug) setErrors((p) => ({ ...p, slug: undefined })); }} placeholder="Ej: remeras" />
+         {errors.slug && <p className="admin-error">{errors.slug}</p>}
+         {isEdit && originalSlug && slug !== originalSlug && (
+           <p style={{ fontSize: "0.75rem", color: "#f97316", margin: 0 }}>
+             ⚠ Cambiar el slug rompe los links existentes a esta prenda
+           </p>
+         )}
 
-        <label className="admin-label">Descripción</label>
-        <textarea className="admin-input admin-textarea" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción corta" />
+         <label className="admin-label">Descripción</label>
+         <textarea className="admin-input admin-textarea" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción corta" />
 
-        <label className="admin-label">Precio base ($)</label>
-        <input className="admin-input" type="number" value={basePrice} onChange={(e) => setBasePrice(e.target.value)} placeholder="8500" />
+         <label className="admin-label">Precio base ($)</label>
+         <input className="admin-input" style={errors.basePrice ? { borderColor: "#ef4444" } : {}} type="number" value={basePrice} onChange={(e) => { setBasePrice(e.target.value); if (errors.basePrice) setErrors((p) => ({ ...p, basePrice: undefined })); }} placeholder="8500" />
+         {errors.basePrice && <p className="admin-error">{errors.basePrice}</p>}
 
         <label className="admin-label">Mock SVG</label>
         <input className="admin-input" type="file" accept=".svg" onChange={async (e) => {
@@ -176,28 +194,30 @@ export default function AdminGarmentForm() {
         </label>
         <input className="admin-input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="hombre, mujer, unisex, urbano" />
 
-        <label className="admin-label">
-          Colores
-          <button className="btn-small" style={{ marginLeft: 8 }} onClick={() => setColors([...colors, { name: "", hex: "#000000" }])}>+</button>
-        </label>
-        {colors.map((c, i) => (
-          <div key={i} className="admin-row">
-            <input className="admin-input" value={c.name} onChange={(e) => { const copy = [...colors]; copy[i].name = e.target.value; setColors(copy); }} placeholder="Negro" />
-            <input className="admin-input admin-input--color" type="color" value={c.hex} onChange={(e) => { const copy = [...colors]; copy[i].hex = e.target.value; setColors(copy); }} />
-            <button className="btn-small btn-small--danger" onClick={() => setColors(colors.filter((_, j) => j !== i))}>X</button>
-          </div>
-        ))}
+         <label className="admin-label">
+           Colores
+           <button className="btn-small" style={{ marginLeft: 8 }} onClick={() => setColors([...colors, { name: "", hex: "#000000" }])}>+</button>
+         </label>
+         {errors.colors && <p className="admin-error">{errors.colors}</p>}
+         {colors.map((c, i) => (
+           <div key={i} className="admin-row">
+             <input className="admin-input" style={!c.name && i === colors.length - 1 ? { borderColor: "#ef4444" } : {}} value={c.name} onChange={(e) => { const copy = [...colors]; copy[i].name = e.target.value; setColors(copy); }} placeholder="Negro" />
+             <input className="admin-input admin-input--color" type="color" value={c.hex} onChange={(e) => { const copy = [...colors]; copy[i].hex = e.target.value; setColors(copy); }} />
+             <button className="btn-small btn-small--danger" onClick={() => setColors(colors.filter((_, j) => j !== i))}>X</button>
+           </div>
+         ))}
 
-        <label className="admin-label">
-          Talles
-          <button className="btn-small" style={{ marginLeft: 8 }} onClick={() => setSizes([...sizes, { name: "" }])}>+</button>
-        </label>
-        {sizes.map((s, i) => (
-          <div key={i} className="admin-row">
-            <input className="admin-input" value={s.name} onChange={(e) => { const copy = [...sizes]; copy[i].name = e.target.value; setSizes(copy); }} placeholder="S" />
-            <button className="btn-small btn-small--danger" onClick={() => setSizes(sizes.filter((_, j) => j !== i))}>X</button>
-          </div>
-        ))}
+         <label className="admin-label">
+           Talles
+           <button className="btn-small" style={{ marginLeft: 8 }} onClick={() => setSizes([...sizes, { name: "" }])}>+</button>
+         </label>
+         {errors.sizes && <p className="admin-error">{errors.sizes}</p>}
+         {sizes.map((s, i) => (
+           <div key={i} className="admin-row">
+             <input className="admin-input" style={!s.name && i === sizes.length - 1 ? { borderColor: "#ef4444" } : {}} value={s.name} onChange={(e) => { const copy = [...sizes]; copy[i].name = e.target.value; setSizes(copy); }} placeholder="S" />
+             <button className="btn-small btn-small--danger" onClick={() => setSizes(sizes.filter((_, j) => j !== i))}>X</button>
+           </div>
+         ))}
 
         <label className="admin-label">Tamaños de estampado disponibles</label>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>

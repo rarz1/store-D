@@ -50,7 +50,7 @@ export default function EstampadoSelector({ estampados, selectedId, onSelect }: 
           >
             <div className="estampado-card__preview">
               {e.image_url ? (
-                <img src={e.image_url} alt={e.name} />
+                <img src={e.image_url} alt={e.name} loading="lazy" decoding="async" />
               ) : (
                 <div
                   className="estampado-card__svg"

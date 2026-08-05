@@ -109,10 +109,16 @@ const typeColors: Record<ToastType, { bg: string; border: string; icon: string }
 function Toast({ toast, onHide }: { toast: Toast; onHide: (id: string) => void }) {
   const { bg, border, icon: iconColor } = typeColors[toast.type];
   const Icon = typeIcons[toast.type];
+  const [isExiting, setIsExiting] = useState(false);
+
+  const handleClose = () => {
+    setIsExiting(true);
+    setTimeout(() => onHide(toast.id), 250);
+  };
 
   return (
     <div
-      className="toast"
+      className={`toast${isExiting ? " toast-exit" : ""}`}
       style={{
         background: bg,
         borderLeftColor: border,
@@ -130,7 +136,7 @@ function Toast({ toast, onHide }: { toast: Toast; onHide: (id: string) => void }
       </div>
       <button
         className="toast__close"
-        onClick={() => onHide(toast.id)}
+        onClick={handleClose}
         aria-label="Cerrar notificación"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">

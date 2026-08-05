@@ -17,15 +17,15 @@
 ### Rutas públicas
 | Ruta | Descripción |
 |------|-------------|
-| `/` | Home con carrusel (slides desde DB) + StoreBanner con logo/título + grilla de categorías |
-| `/producto/:garmentId` | Configurador interactivo (color/talle/diseño) con mock SVG |
+| `/` | Home con carrusel (slides desde DB) + StoreBanner con logo/título + grilla de categorías + Quick View |
+| `/producto/:garmentId` | Configurador interactivo (color/talle/diseño) con mock SVG + breadcrumb |
 
 ### Rutas admin
 | Ruta | Descripción |
 |------|-------------|
 | `/admin/login` | Login con Supabase Auth |
-| `/admin` | Dashboard unificado con 4 tabs: Productos, Tienda, Carrusel, Colores |
-| `/admin/garments/:id` | Crear/editar prenda (colores, talles, precio) |
+| `/admin` | Dashboard unificado con 5 tabs: Productos, Diseños, Tienda, Carrusel, Colores |
+| `/admin/garments/:id` | Crear/editar prenda (colores, talles, precio) con validación inline |
 | `/admin/designs/:id` | Crear/editar diseño SVG |
 
 ### Características
@@ -36,8 +36,20 @@
 - StoreBanner: barra superior con glass effect sobre el carrusel, muestra logo + título + subtítulo
 - Colores aplicados como CSS variables desde `site_settings`, editables con live preview
 - Consulta por WhatsApp con resumen del producto configurado
-- Admin con 4 tabs: Productos (prendas + tamaños/ubicaciones editables), Diseños (clases + tipos), Tienda (info + logo), Carrusel (slides), Colores (pick + preview)
+- Admin con 5 tabs: Productos, Diseños, Tienda, Carrusel, Colores
 - Mobile-first, responsive, safe areas
+- Quick View modal en tarjetas de categoría del homepage
+- Onboarding modal para primeros visitantes (una vez, con localStorage)
+- FAB flotante del carrito en móvil con badge dinámico
+- Breadcrumb de navegación en página de producto
+- Validación inline en formularios admin con errores visuales
+- Notificaciones toast en acciones de admin (guardar, eliminar)
+- Animaciones de entrada en tarjetas de categoría (stagger)
+- Micro-animaciones en botones (scale on active, hover lift)
+- Skeleton shimmer animation (reemplaza pulse básico)
+- Sistema de sombras y profundidad (shadow scale)
+- Escala de espaciado y border-radius consistente
+- Glass utility class para efectos de vidrio unificados
 
 ## Estampado system
 
@@ -83,6 +95,17 @@ Archivo: `client/src/lib/settings.ts`
 |------------|------|-------------|
 | `Carousel` | `components/Carousel.tsx` | Carrusel full-viewport, slides desde `carousel_slides` |
 | `StoreBanner` | `components/StoreBanner.tsx` | Header con glass effect sobre carrusel, logo + título + subtítulo |
+| `AppHeader` | `components/AppHeader.tsx` | Header persistente con logo, badge de carrito, FAB flotante en móvil |
+| `QuickViewModal` | `components/QuickViewModal.tsx` | Modal de vista rápida de productos desde el homepage |
+| `OnboardingModal` | `components/OnboardingModal.tsx` | Modal de bienvenida para primeros visitantes |
+| `GarmentMock` | `components/GarmentMock.tsx` | Mock SVG de prenda con color dinámico, flip front/back, placement de diseños |
+| `DesignFlow` | `components/DesignFlow.tsx` | Configurador de estampados con stepper de 4 pasos y preview en tiempo real |
+| `EstampadoSelector` | `components/EstampadoSelector.tsx` | Selector de clase de estampado con filtro por tags |
+| `SizeSelector` | `components/SizeSelector.tsx` | Selector de tamaño de estampado |
+| `LocationSelector` | `components/LocationSelector.tsx` | Selector de ubicación del estampado en la prenda |
+| `SizeGuideModal` | `components/SizeGuideModal.tsx` | Guía de talles con medidas reales en cm por tipo de prenda |
+| `ConfirmModal` | `components/ConfirmModal.tsx` | Modal de confirmación reutilizable |
+| `HelpModal` | `components/HelpModal.tsx` | Modal de ayuda con pasos de personalización |
 
 ## Notas
 
@@ -136,3 +159,87 @@ Archivo: `client/src/lib/settings.ts`
 - Fix: build errors (CSS custom property cast, unused vars, missing type)
 - Fix: saving now checks `{error}` and shows user-visible message
 - Pendientes: probar admin en producción (correr SQL en Supabase SQL Editor)
+
+### Sesión 4 - 2026-08-04 / 2026-08-05
+- **M4 — Validación de talle**: Se requiere talle para agregar al carrito; de lo contrario abre modal/advierte vía Toast.
+- **M13 — Botones y colores semánticos**: `btn-primary` usa `var(--accent)`, `btn-whatsapp` usa verde específico (`#25d366`), `btn-danger` usa rojo (`#ef4444`). `CartDrawer` botón "Vaciar carrito" pasa a `btn-danger`.
+- **M9 — Header persistente (`AppHeader`)**: Creado componente `AppHeader.tsx` unificado con logo/título, badge dinámico de carrito en tiempo real, y soporte para navegación contextual (`showBack` / `title`). Reemplazó `StoreBanner` en HomePage y el header manual en ProductPage.
+- **M5 — SVG real en categorías**: HomePage reemplazó los paths SVG hardcodeados por la renderización dinámica del `svg_mock` real almacenado en Supabase para cada prenda.
+- **M14 — Estado vacío en HomePage**: Si no hay prendas cargadas, muestra pantalla minimalista de "PRÓXIMAMENTE" en lugar de un área vacía o rota.
+- **M11 — Ancho máximo en Desktop**: Ampliado `.categories` de 640px a 960px para aprovechar mejor pantallas grandes.
+- **M2 — Stepper de progreso en DesignFlow**: Agregado Stepper interactivo (`Categoría` ➔ `Diseño` ➔ `Escala` ➔ `Ubicación`) en la parte superior del configurador de estampados, permitiendo volver a pasos completados.
+- **M3 — Preview de estampado en tiempo real**: Transmisión dinámica del estampado seleccionado a `GarmentMock` con animación `preview-pulse` y resplandor `accent-glow` antes de confirmar la ubicación.
+- **M6 — Controles de Color y Talle Inline**: Reemplazados los botones que abrían modales obligatorios por swatches de color y chips de talle directos en `ProductPage`, mejorando la usabilidad.
+- **M10 — Microanimaciones y Estilos**: Transición `step-slide-in` para los pasos de `DesignFlow` y rebote sutil `btn-enable` en el botón de confirmación.
+- **M8 — Carrito con gestión de cantidades y WhatsApp multi-ítem**:
+  - `CartItem` soporta propiedad `quantity`. Si se vuelve a agregar el mismo ítem con idéntica configuración (prenda + color + talle + estampados), incrementa la cantidad automáticamente.
+  - El `CartDrawer` incluye controles de incremento/decrecimiento (`−` / `+`) por ítem.
+  - Al presionar "Consultar carrito por WhatsApp" en el `CartDrawer`, genera un mensaje formateado con todos los productos del carrito, sus opciones, precios unitarios, subtotales y total general.
+- **M7 — Guía de Talles y Medidas Interactiva (`SizeGuideModal`)**:
+  - Creado modal dedicado `<SizeGuideModal>` con solapas interactivas por prenda (`Remeras`, `Buzos`, `Pantalones`).
+  - Muestra medidas reales expresadas en centímetros sobre prenda plana (Pecho/Sisa, Largo, Hombros/Manga/Cadera) para talles S al XXL, con recomendación de calce *oversize*.
+  - Detecta automáticamente el tipo de prenda actual (`garmentSlug`) para abrir la solapa correspondiente al hacer clic en "Guía de talles".
+- **Verificación**: `npx tsc --noEmit` verificado sin errores.
+
+### Sesión 5 — 2026-08-04 (Premium Upgrade)
+
+#### Fase 1 — Quick Wins (Visual Polish)
+- **Sistema de diseño CSS**: Escala de espaciado (`--space-1` a `--space-8`), sistema de sombras (`--shadow-sm` a `--shadow-xl`), escala de border-radius (`--radius-xs` a `--radius-xl`)
+- **Skeleton shimmer**: Reemplazó la animación `pulse` básica por un shimmer con gradiente moviente
+- **Micro-animaciones en botones**: Scale down on `:active`, lift on hover con shadow
+- **Cart drawer backdrop blur**: Overlay del carrito ahora tiene `backdrop-filter: blur(4px)` y drawer tiene `box-shadow: var(--shadow-xl)`
+- **Toast exit animation**: Toasts ahora tienen animación de salida `toast-out` al cerrarse
+- **Category card stagger**: Tarjetas de categoría entran con animación escalonada (`card-fade-in`)
+- **Garment mock hover glow**: Mock de prenda tiene glow sutil con `var(--accent-glow)` al hacer hover
+- **FAB flotante del carrito**: Botón flotante fijo en bottom-right en móvil, aparece solo cuando hay items en el carrito
+- **Glass utility class**: Clase `.glass` unificada para efectos de vidrio con backdrop-filter
+- **Page transition**: Clase `.page-enter` con animación `fade-in` en todas las páginas
+- **Header glass**: `AppHeader` ahora usa la clase `.glass` para efecto de vidrio consistente
+- **Admin toast notifications**: `AdminDashboard` y `AdminSettings` muestran toasts de éxito/error al guardar/eliminar
+- **Empty state mejorado**: Carrito vacío muestra icono 🛒 + mensaje descriptivo + CTA
+- **Empty state con CTA**: Homepage "PRÓXIMAMENTE" ahora tiene botón "Volver al inicio"
+
+#### Fase 2 — Usability
+- **Quick View modal**: Nuevo componente `QuickViewModal` que muestra preview de productos desde el homepage sin navegar
+- **Onboarding modal**: Nuevo componente `OnboardingModal` para primeros visitantes (3 pasos: personalizar, preview, WhatsApp), se muestra una vez con localStorage
+- **Breadcrumb navigation**: Página de producto ahora muestra `Inicio > Nombre de prenda`
+- **Validación inline en AdminGarmentForm**: Campos con errores visuales (borde rojo) + mensajes de error debajo de cada campo
+- **Validación de formulario**: Se validan nombre, slug, precio, colores y talles antes de guardar
+- **Touch targets**: Todos los elementos interactivos tienen `min-height: 44px` para cumplir con estándares de accesibilidad móvil
+- **Focus rings visibles**: Todos los elementos interactivos tienen `outline: 2px solid var(--accent)` en `:focus-visible`
+- **Quick View en tarjetas de categoría**: Clic en tarjeta abre Quick View en lugar de navegar directamente
+- **Animación de entrada en tarjetas**: `animationDelay` escalonado para cada tarjeta de categoría
+
+#### Nuevos archivos
+- `client/src/components/QuickViewModal.tsx` — Modal de vista rápida de productos
+- `client/src/components/OnboardingModal.tsx` — Modal de bienvenida para primeros visitantes
+
+#### Plan de mejora premium
+- Plan completo documentado en `docs/superpowers/plans/2026-08-04-premium-app-improvement-plan.md`
+- 38 mejoras divididas en 4 fases: Quick Wins, Usability, Premium Features, Polish & Scale
+- Fases 3 y 4 pendientes de implementación
+
+### Sesión 6 — 2026-08-05 (Fases 3 y 4 completadas)
+
+#### Fase 3 — Premium Features
+- **UI de historial de pedidos (4.2)**: `CartDrawer` ahora muestra "Pedidos recientes" colapsable (últimos 10 en localStorage) con total, fecha e ítems, y botón "Repetir pedido" que re-agrega al carrito vía `reorder` (respeta dedupe por configuración y suma cantidades). Contexto nuevo: `orders`, `reorder`, `placeOrder`.
+- **Bulk actions (5.3)**: Checkboxes en tablas de Prendas y Clases de diseño + toolbar `admin-bulk-bar` con "Eliminar seleccionadas" y "Activar/Desactivar" (solo clases). `confirmTarget` ampliado con tipos `bulk-garments`/`bulk-estampados`.
+- **Drag-and-drop reordering (5.2)**: Tablas de Tamaños y Ubicaciones de estampado ahora son draggable (HTML5 Drag API) con handle `⋮⋮`; al soltar reordena la lista, reasigna `sort_order` 0-based y persiste por fila en Supabase.
+
+#### Fase 4 — Polish & Scale
+- **ErrorBoundary (6.3)**: Nuevo `components/ErrorBoundary.tsx` (class component) envolviendo las rutas en `App.tsx`, con fallback + "Reintentar" y "Volver al inicio".
+- **Gradient animado de fondo (1.5)**: Pseudo-elemento fixed detrás de `.categories` con dos radial-gradients de `var(--accent-glow)` animados lentamente (`bg-mesh`).
+- **Recomendaciones (4.4)**: Sección "QUIZÁS TAMBIÉN TE GUSTE" en ProductPage con hasta 3 prendas (ranked por tags compartidos), cards con mock SVG que navegan al producto.
+- **SEO dinámico por producto (6.5)**: `seo.ts` ganó `setCanonical`, `setJsonLd`, `clearJsonLd`; ProductPage emite canonical + JSON-LD `Product` con Offer (ARS) y lo limpia al desmontar.
+- **Lazy-loading (4.8)**: `loading="lazy" decoding="async"` en `<img>` de catálogo (DesignFlow, EstampadoSelector).
+
+#### Descartado por redundancia
+- **Theme toggle light/dark (4.6)**: El editor de colores del admin (bg/surface/text/accent) ya permite cualquier paleta; un toggle duplicaría esa función sin valor.
+
+#### Bugfixes críticos (bloqueaban build de producción en Vercel)
+- `tsc --noEmit` es NO-OP con tsconfig de solución (files vacíos + references): no chequeaba nada. El chequeo real es `npx tsc -b` o `npm run build`. **Regla: siempre validar con `npm run build`.**
+- `client/src/lib/cart.tsx`: `whatsappUrl` estaba indefinido (ReferenceError en runtime al renderizar el botón WhatsApp del drawer). Ahora usa `buildWhatsAppCartMessage()`.
+- `App.css`: se había perdido el selector de `.toast-container` (CSS inválido → vite/lightningcss fallaba). Restaurado.
+- `favorites.tsx`: `addFavorite` pedía `addedAt` al caller; ahora `Omit<FavoriteItem, "addedAt">` (lo setea el provider).
+- Limpieza de vars sin uso: `isFavorite`/`removeFavorite` (AppHeader), `useRef`/`toast` (AdminDashboard), `favorites` (ProductPage), prop `style` duplicado (AdminGarmentForm).
+- **Verificación**: `npm run build` (tsc -b + vite) pasa sin errores. Oxlint: solo warnings preexistentes (fast-refresh, exhaustive-deps, vars en settings.ts/sw.js).

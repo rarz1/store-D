@@ -22,6 +22,7 @@ interface PlacedDesign {
   svgContent: string;
   position: Position;
   name: string;
+  isPreview?: boolean;
 }
 
 interface Props {
@@ -79,7 +80,7 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
         return (
           <div
             key={`${d.variantId}-${d.position}`}
-            className="garment-mock__design"
+            className={`garment-mock__design${d.isPreview ? " garment-mock__design--preview" : ""}`}
             style={positionStyles[d.position]}
             dangerouslySetInnerHTML={{ __html: colored }}
           />

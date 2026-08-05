@@ -1,22 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Carousel from "../components/Carousel";
-import StoreBanner from "../components/StoreBanner";
+import AppHeader from "../components/AppHeader";
+import QuickViewModal from "../components/QuickViewModal";
+import OnboardingModal from "../components/OnboardingModal";
 import { supabase, type GarmentRow } from "../lib/supabase";
 import { setMeta } from "../lib/seo";
 import { getSettings, type SiteSettings } from "../lib/settings";
-
-const iconPaths: Record<string, string> = {
-  remeras: "M55 120L145 38L195 38L285 120L310 410L260 430L80 430L30 410Z",
-  pantalones: "M65 18L275 18L310 360L260 380L80 380L30 360Z",
-  buzos: "M50 80L140 20L200 20L290 80L315 430L265 455L75 455L25 430Z",
-};
+import { useFavorites } from "../lib/favorites";
 
 export default function HomePage() {
   const navigate = useNavigate();
   const [garments, setGarments] = useState<GarmentRow[]>([]);
   const [settings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [quickViewId, setQuickViewId] = useState<number | null>(null);
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
 
   useEffect(() => {
     getSettings().then(setSiteSettings);
@@ -26,13 +27,23 @@ export default function HomePage() {
       if (data) setGarments(data);
       setLoading(false);
     });
+
+    const seen = localStorage.getItem("onboarding_seen");
+    if (!seen) {
+      setTimeout(() => setOnboardingOpen(true), 800);
+    }
   }, []);
 
+  const handleQuickView = (id: number) => {
+    setQuickViewId(id);
+    setQuickViewOpen(true);
+  };
+
   return (
-    <div className="home">
+    <div className="home page-enter">
       <div className="home__hero">
         <Carousel />
-        {settings && <StoreBanner settings={settings} />}
+        <AppHeader settings={settings} />
       </div>
 
       <section className="categories">
@@ -44,7 +55,7 @@ export default function HomePage() {
         {loading ? (
           <div className="categories__grid">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="category-card" style={{ pointerEvents: "none" }}>
+              <div key={i} className="category-card" style={{ pointerEvents: "none", animationDelay: `${i * 100}ms` }}>
                 <div className="skeleton" style={{ width: 80, height: 104, borderRadius: "var(--radius-sm)" }} />
                 <div className="category-card__info">
                   <div className="skeleton skeleton--text" style={{ width: "60%" }} />
@@ -54,22 +65,36 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+        ) : garments.length === 0 ? (
+          <div className="categories__empty">
+            <div className="categories__empty__icon">🧵</div>
+            <p className="categories__empty__title">PRÓXIMAMENTE</p>
+            <p className="categories__empty__subtitle">Estamos preparando la colección. Volvé pronto.</p>
+            <button className="btn-back" onClick={() => navigate("/")} style={{ marginTop: "1.5rem" }}>
+              Volver al inicio
+            </button>
+          </div>
         ) : (
           <div className="categories__grid">
-            {garments.map((g) => {
-              const path = iconPaths[g.slug];
+            {garments.map((g, i) => {
+              const coloredMock = g.svg_mock
+                ? g.svg_mock
+                    .replace(/\s(width|height)="[^"]*"/g, "")
+                    .replace(/currentColor/gi, "var(--accent)")
+                : null;
               return (
                 <button
                   key={g.id}
                   className="category-card"
-                  onClick={() => navigate(`/producto/${g.slug}`)}
+                  style={{ animationDelay: `${(i + 3) * 80}ms` }}
+                  onClick={() => handleQuickView(g.id)}
                 >
                   <div className="category-card__icon">
-                    {path ? (
-                      <svg viewBox="0 0 340 440" fill="none" width="100" height="130">
-                        <path d={path} fill="var(--accent)" opacity="0.85" />
-                        <path d={path} fill="none" stroke="var(--accent)" strokeWidth="1" opacity="0.3" />
-                      </svg>
+                    {coloredMock ? (
+                      <div
+                        className="category-card__mock-svg"
+                        dangerouslySetInnerHTML={{ __html: coloredMock }}
+                      />
                     ) : (
                       <span style={{ fontSize: "2rem", color: "var(--accent)" }}>{g.name[0]}</span>
                     )}
@@ -80,12 +105,49 @@ export default function HomePage() {
                         Desde ${Number(g.base_price).toLocaleString("es-AR")}
                       </span>
                     </div>
+                  <button
+                    className="btn-icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const isFav = isFavorite(g.id, "", "");
+                      if (isFav) {
+                        removeFavorite(g.id, "", "");
+                      } else {
+                        addFavorite({
+                          garmentId: g.id,
+                          garmentName: g.name,
+                          garmentSlug: g.slug,
+                          basePrice: g.base_price,
+                          colorHex: "",
+                          colorName: "",
+                          size: "",
+                        });
+                      }
+                    }}
+                    aria-label={isFavorite(g.id, "", "") ? "Quitar de favoritos" : "Agregar a favoritos"}
+                    style={{ position: "absolute", top: "0.5rem", right: "0.5rem", zIndex: 5 }}
+                  >
+                    <svg viewBox="0 0 24 24" fill={isFavorite(g.id, "", "") ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" width="18" height="18">
+                      <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
                 </button>
               );
             })}
           </div>
         )}
       </section>
+
+      <QuickViewModal
+        open={quickViewOpen}
+        onClose={() => setQuickViewOpen(false)}
+        garmentId={quickViewId}
+      />
+
+      <OnboardingModal
+        open={onboardingOpen}
+        onClose={() => setOnboardingOpen(false)}
+      />
     </div>
   );
 }

@@ -8,4 +8,5 @@ dist/
 backend/dist/
 .DS_Store
 .superpowers/
+.codegraph/
 

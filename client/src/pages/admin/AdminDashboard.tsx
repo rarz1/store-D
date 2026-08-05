@@ -12,10 +12,14 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("products");
   const [garments, setGarments] = useState<GarmentRow[]>([]);
-  const [confirmTarget, setConfirmTarget] = useState<{ type: "garment" | "estampado" | "diseno_tipo"; id: number; parentId?: number } | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{ type: "garment" | "estampado" | "diseno_tipo" | "bulk-garments" | "bulk-estampados"; id?: number; parentId?: number; ids?: number[] } | null>(null);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [slides, setSlides] = useState<CarouselSlide[]>([]);
   const [saving, setSaving] = useState(false);
+  const [selectedGarments, setSelectedGarments] = useState<Set<number>>(new Set());
+  const [selectedDesigns, setSelectedDesigns] = useState<Set<number>>(new Set());
+  const [draggedSizeId, setDraggedSizeId] = useState<number | null>(null);
+  const [draggedLocationId, setDraggedLocationId] = useState<number | null>(null);
 
   const [estampados, setEstampados] = useState<EstampadoRow[]>([]);
   const [estampadoForm, setEstampadoForm] = useState<Partial<EstampadoRow> | null>(null);
@@ -90,6 +94,54 @@ export default function AdminDashboard() {
     setConfirmTarget(null);
   };
 
+  const toggleGarmentSelection = (id: number) => {
+    setSelectedGarments((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleDesignSelection = (id: number) => {
+    setSelectedDesigns((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const deleteBulkGarments = async () => {
+    const ids = [...selectedGarments];
+    if (ids.length === 0) return;
+    const { error } = await supabase.from("garments").delete().in("id", ids);
+    if (error) { console.error("Error deleting garments:", error); return; }
+    setGarments((prev) => prev.filter((g) => !ids.includes(g.id)));
+    setSelectedGarments(new Set());
+    setConfirmTarget(null);
+  };
+
+  const deleteBulkEstampados = async () => {
+    const ids = [...selectedDesigns];
+    if (ids.length === 0) return;
+    const { error } = await supabase.from("estampados").delete().in("id", ids);
+    if (error) { console.error("Error deleting estampados:", error); return; }
+    setEstampados((prev) => prev.filter((e) => !ids.includes(e.id)));
+    setSelectedDesigns(new Set());
+    setConfirmTarget(null);
+  };
+
+  const toggleBulkEstampadoActive = async () => {
+    const ids = [...selectedDesigns];
+    if (ids.length === 0) return;
+    const targetActive = !estampados.some((e) => ids.includes(e.id) && e.active);
+    const { error } = await supabase.from("estampados").update({ active: targetActive }).in("id", ids);
+    if (error) { console.error("Error updating estampados:", error); return; }
+    setEstampados((prev) => prev.map((e) => ids.includes(e.id) ? { ...e, active: targetActive } : e));
+    setSelectedDesigns(new Set());
+  };
+
   const startEditSize = (s: EstampadoSizeRow) => {
     setEditingSizeId(s.id);
     setEditingSizeData({ name: s.name, width_percent: s.width_percent, price_increment: s.price_increment, sort_order: s.sort_order });
@@ -144,22 +196,74 @@ export default function AdminDashboard() {
     setSaving(false);
   };
 
+  const reorderList = <T extends { id: number; sort_order: number }>(list: T[], fromId: number, toId: number): T[] => {
+    const from = list.findIndex((x) => x.id === fromId);
+    const to = list.findIndex((x) => x.id === toId);
+    if (from < 0 || to < 0 || from === to) return list;
+    const next = [...list];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    return next.map((x, i) => ({ ...x, sort_order: i }));
+  };
+
+  const handleSizeDrop = async (toId: number) => {
+    if (draggedSizeId === null || draggedSizeId === toId) return;
+    const next = reorderList(estampadoSizes, draggedSizeId, toId);
+    setDraggedSizeId(null);
+    setEstampadoSizes(next);
+    for (const s of next) {
+      await supabase.from("estampado_sizes").update({ sort_order: s.sort_order }).eq("id", s.id);
+    }
+  };
+
+  const handleLocationDrop = async (toId: number) => {
+    if (draggedLocationId === null || draggedLocationId === toId) return;
+    const next = reorderList(estampadoLocations, draggedLocationId, toId);
+    setDraggedLocationId(null);
+    setEstampadoLocations(next);
+    for (const l of next) {
+      await supabase.from("estampado_locations").update({ sort_order: l.sort_order }).eq("id", l.id);
+    }
+  };
+
   return (
     <div className="admin-page">
-      <ConfirmModal
-        open={confirmTarget !== null}
-        title={confirmTarget?.type === "garment" ? "Eliminar prenda" : confirmTarget?.type === "estampado" ? "Eliminar clase" : "Eliminar tipo"}
-        message={confirmTarget?.type === "garment" ? "¿Eliminar esta prenda? Esta acción no se puede deshacer." : confirmTarget?.type === "estampado" ? "¿Eliminar esta clase de diseño? También se eliminarán sus tipos." : "¿Eliminar este tipo de diseño?"}
-        onConfirm={() => {
-          if (!confirmTarget) return;
-          if (confirmTarget.type === "garment") deleteGarment(confirmTarget.id);
-          else if (confirmTarget.type === "estampado") deleteEstampado(confirmTarget.id);
-          else if (confirmTarget.type === "diseno_tipo") deleteTipo(confirmTarget.id, confirmTarget.parentId!);
-        }}
-        onCancel={() => setConfirmTarget(null)}
-      />
+       <ConfirmModal
+         open={confirmTarget !== null}
+         title={confirmTarget?.type === "garment" ? "Eliminar prenda" : confirmTarget?.type === "estampado" ? "Eliminar clase" : confirmTarget?.type === "bulk-garments" ? "Eliminar prendas" : confirmTarget?.type === "bulk-estampados" ? "Eliminar clases" : "Eliminar tipo"}
+         message={confirmTarget?.type === "garment" ? "¿Eliminar esta prenda? Esta acción no se puede deshacer." : confirmTarget?.type === "estampado" ? "¿Eliminar esta clase de diseño? También se eliminarán sus tipos." : confirmTarget?.type === "bulk-garments" ? `¿Eliminar ${confirmTarget.ids?.length ?? 0} prendas seleccionadas? Esta acción no se puede deshacer.` : confirmTarget?.type === "bulk-estampados" ? `¿Eliminar ${confirmTarget.ids?.length ?? 0} clases seleccionadas? También se eliminarán sus tipos.` : "¿Eliminar este tipo de diseño?"}
+         onConfirm={() => {
+           if (!confirmTarget) return;
+           if (confirmTarget.type === "garment") deleteGarment(confirmTarget.id!);
+           else if (confirmTarget.type === "estampado") deleteEstampado(confirmTarget.id!);
+           else if (confirmTarget.type === "diseno_tipo") deleteTipo(confirmTarget.id!, confirmTarget.parentId!);
+           else if (confirmTarget.type === "bulk-garments") deleteBulkGarments();
+           else if (confirmTarget.type === "bulk-estampados") deleteBulkEstampados();
+         }}
+         onCancel={() => setConfirmTarget(null)}
+       />
 
-      <div className="admin-topbar">
+       {/* Metrics Overview */}
+       <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
+         <div style={{ flex: 1, minWidth: 120, padding: "1rem", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", boxShadow: "var(--shadow-sm)" }}>
+           <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase" }}>Productos</span>
+           <p style={{ fontFamily: "var(--font-display)", fontSize: "2rem", color: "var(--accent)", margin: "0.25rem 0 0", letterSpacing: "0.04em" }}>{garments.length}</p>
+         </div>
+         <div style={{ flex: 1, minWidth: 120, padding: "1rem", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", boxShadow: "var(--shadow-sm)" }}>
+           <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase" }}>Diseños</span>
+           <p style={{ fontFamily: "var(--font-display)", fontSize: "2rem", color: "var(--accent)", margin: "0.25rem 0 0", letterSpacing: "0.04em" }}>{estampados.length}</p>
+         </div>
+         <div style={{ flex: 1, minWidth: 120, padding: "1rem", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", boxShadow: "var(--shadow-sm)" }}>
+           <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase" }}>Talles</span>
+           <p style={{ fontFamily: "var(--font-display)", fontSize: "2rem", color: "var(--accent)", margin: "0.25rem 0 0", letterSpacing: "0.04em" }}>{estampadoSizes.length}</p>
+         </div>
+         <div style={{ flex: 1, minWidth: 120, padding: "1rem", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", boxShadow: "var(--shadow-sm)" }}>
+           <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase" }}>Ubicaciones</span>
+           <p style={{ fontFamily: "var(--font-display)", fontSize: "2rem", color: "var(--accent)", margin: "0.25rem 0 0", letterSpacing: "0.04em" }}>{estampadoLocations.length}</p>
+         </div>
+       </div>
+
+       <div className="admin-topbar">
         <h1>Admin</h1>
         <nav className="admin-nav">
           {(["products", "disenos", "store", "carousel", "colors"] as const).map((t) => (
@@ -187,6 +291,14 @@ export default function AdminDashboard() {
             <table className="admin-table">
               <thead>
                 <tr>
+                  <th style={{ width: 36 }}>
+                    <input
+                      type="checkbox"
+                      aria-label="Seleccionar todas las prendas"
+                      checked={garments.length > 0 && selectedGarments.size === garments.length}
+                      onChange={(e) => setSelectedGarments(e.target.checked ? new Set(garments.map((g) => g.id)) : new Set())}
+                    />
+                  </th>
                   <th>Nombre</th>
                   <th>Slug</th>
                   <th>Precio</th>
@@ -196,6 +308,14 @@ export default function AdminDashboard() {
               <tbody>
                 {garments.map((g) => (
                   <tr key={g.id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        aria-label={`Seleccionar ${g.name}`}
+                        checked={selectedGarments.has(g.id)}
+                        onChange={() => toggleGarmentSelection(g.id)}
+                      />
+                    </td>
                     <td>{g.name}</td>
                     <td style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>{g.slug}</td>
                     <td>${Number(g.base_price).toLocaleString("es-AR")}</td>
@@ -207,6 +327,14 @@ export default function AdminDashboard() {
                 ))}
               </tbody>
             </table>
+            {selectedGarments.size > 0 && (
+              <div className="admin-bulk-bar">
+                <span className="admin-bulk-bar__count">{selectedGarments.size} seleccionadas</span>
+                <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "bulk-garments", ids: [...selectedGarments] })}>
+                  Eliminar seleccionadas
+                </button>
+              </div>
+            )}
           </section>
 
           <section className="admin-section">
@@ -218,11 +346,20 @@ export default function AdminDashboard() {
             </div>
             <table className="admin-table">
               <thead>
-                <tr><th>Nombre</th><th>Tamaño %</th><th>Incremento $</th><th>Orden</th><th></th></tr>
+                <tr><th style={{ width: 32 }}></th><th>Nombre</th><th>Tamaño %</th><th>Incremento $</th><th>Orden</th><th></th></tr>
               </thead>
               <tbody>
                 {estampadoSizes.map((s) => (
-                  <tr key={s.id}>
+                  <tr
+                    key={s.id}
+                    draggable={editingSizeId !== s.id}
+                    className={draggedSizeId === s.id ? "admin-row--dragging" : ""}
+                    onDragStart={() => setDraggedSizeId(s.id)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => handleSizeDrop(s.id)}
+                    onDragEnd={() => setDraggedSizeId(null)}
+                  >
+                    <td className="admin-row__handle" aria-hidden="true">⋮⋮</td>
                     {editingSizeId === s.id && editingSizeData ? (
                       <>
                         <td><input className="admin-input" value={editingSizeData.name ?? ""} onChange={(e) => setEditingSizeData({ ...editingSizeData, name: e.target.value })} /></td>
@@ -274,11 +411,20 @@ export default function AdminDashboard() {
             </div>
             <table className="admin-table">
               <thead>
-                <tr><th>Nombre</th><th>Position key</th><th>Incremento $</th><th>Orden</th><th></th></tr>
+                <tr><th style={{ width: 32 }}></th><th>Nombre</th><th>Position key</th><th>Incremento $</th><th>Orden</th><th></th></tr>
               </thead>
               <tbody>
                 {estampadoLocations.map((l) => (
-                  <tr key={l.id}>
+                  <tr
+                    key={l.id}
+                    draggable={editingLocationId !== l.id}
+                    className={draggedLocationId === l.id ? "admin-row--dragging" : ""}
+                    onDragStart={() => setDraggedLocationId(l.id)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => handleLocationDrop(l.id)}
+                    onDragEnd={() => setDraggedLocationId(null)}
+                  >
+                    <td className="admin-row__handle" aria-hidden="true">⋮⋮</td>
                     {editingLocationId === l.id && editingLocationData ? (
                       <>
                         <td><input className="admin-input" value={editingLocationData.name ?? ""} onChange={(e) => setEditingLocationData({ ...editingLocationData, name: e.target.value })} /></td>
@@ -367,12 +513,30 @@ export default function AdminDashboard() {
             )}
             {!estampadoForm && (
               <table className="admin-table">
-                <thead><tr><th>Nombre</th><th>Tags</th><th>Activo</th><th>Tipos</th><th>Orden</th><th></th></tr></thead>
+                <thead><tr>
+                  <th style={{ width: 36 }}>
+                    <input
+                      type="checkbox"
+                      aria-label="Seleccionar todas las clases"
+                      checked={estampados.length > 0 && selectedDesigns.size === estampados.length}
+                      onChange={(e) => setSelectedDesigns(e.target.checked ? new Set(estampados.map((x) => x.id)) : new Set())}
+                    />
+                  </th>
+                  <th>Nombre</th><th>Tags</th><th>Activo</th><th>Tipos</th><th>Orden</th><th></th>
+                </tr></thead>
                 <tbody>
-                  {estampados.length === 0 && <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>No hay clases de diseño</td></tr>}
+                  {estampados.length === 0 && <tr><td colSpan={7} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>No hay clases de diseño</td></tr>}
                   {estampados.map((e) => (
                     <React.Fragment key={e.id}>
                       <tr>
+                        <td>
+                          <input
+                            type="checkbox"
+                            aria-label={`Seleccionar ${e.name}`}
+                            checked={selectedDesigns.has(e.id)}
+                            onChange={() => toggleDesignSelection(e.id)}
+                          />
+                        </td>
                         <td>{e.name}</td>
                         <td style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{(e.tags ?? []).join(", ")}</td>
                         <td>{e.active ? "✓" : "✕"}</td>
@@ -392,7 +556,7 @@ export default function AdminDashboard() {
                       </tr>
                       {expandedClase === e.id && (
                         <tr key={`tipos-${e.id}`}>
-                          <td colSpan={6} style={{ padding: "0.5rem 1rem 1rem", background: "var(--surface)" }}>
+                          <td colSpan={7} style={{ padding: "0.5rem 1rem 1rem", background: "var(--surface)" }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
                               <strong style={{ fontSize: "0.85rem" }}>Tipos de {e.name}</strong>
                               <button className="btn-back" onClick={() => setTipoForm({ estampado_id: e.id, name: "", description: "", svg_content: "", image_url: "", tags: [], active: true, sort_order: (tiposByClase[e.id] ?? []).length })}>
@@ -461,6 +625,17 @@ export default function AdminDashboard() {
                   ))}
                 </tbody>
               </table>
+            )}
+            {selectedDesigns.size > 0 && (
+              <div className="admin-bulk-bar">
+                <span className="admin-bulk-bar__count">{selectedDesigns.size} seleccionadas</span>
+                <button className="btn-small" onClick={toggleBulkEstampadoActive}>
+                  Activar/Desactivar
+                </button>
+                <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "bulk-estampados", ids: [...selectedDesigns] })}>
+                  Eliminar seleccionadas
+                </button>
+              </div>
             )}
           </section>
         </>

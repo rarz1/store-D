@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { EstampadoRow, DisenoTipoRow, EstampadoSizeRow, EstampadoLocationRow } from "../lib/supabase";
 import EstampadoSelector from "./EstampadoSelector";
 import SizeSelector from "./SizeSelector";
@@ -11,6 +11,12 @@ interface PlacedEstampado {
   locations: EstampadoLocationRow[];
 }
 
+export interface PreviewEstampado {
+  svgContent: string;
+  locations: EstampadoLocationRow[];
+  name: string;
+}
+
 interface Props {
   estampados: EstampadoRow[];
   tiposByClase: Record<number, DisenoTipoRow[]>;
@@ -19,11 +25,28 @@ interface Props {
   onAdd: (item: PlacedEstampado) => void;
   onOpenHelp: () => void;
   onSelectClase: (claseId: number) => void;
+  onPreviewChange?: (preview: PreviewEstampado | null) => void;
 }
 
 type Step = "closed" | "clase" | "tipo" | "size" | "location";
 
-export default function DesignFlow({ estampados, tiposByClase, stampSizes, stampLocations, onAdd, onOpenHelp, onSelectClase }: Props) {
+const STEPS: { id: Step; label: string }[] = [
+  { id: "clase", label: "Categoría" },
+  { id: "tipo", label: "Diseño" },
+  { id: "size", label: "Escala" },
+  { id: "location", label: "Ubicación" },
+];
+
+export default function DesignFlow({
+  estampados,
+  tiposByClase,
+  stampSizes,
+  stampLocations,
+  onAdd,
+  onOpenHelp,
+  onSelectClase,
+  onPreviewChange,
+}: Props) {
   const [step, setStep] = useState<Step>("closed");
   const [selectedClaseId, setSelectedClaseId] = useState<number | null>(null);
   const [selectedTipoId, setSelectedTipoId] = useState<number | null>(null);
@@ -35,6 +58,19 @@ export default function DesignFlow({ estampados, tiposByClase, stampSizes, stamp
   const selectedTipo = tipos.find((t) => t.id === selectedTipoId) ?? null;
   const selectedSizeObj = stampSizes.find((s) => s.id === selectedSizeId) ?? null;
   const selectedLocations = stampLocations.filter((l) => selectedLocationIds.includes(l.id));
+
+  // M3: Emit preview of currently selected but unconfirmed stamp design
+  useEffect(() => {
+    if (step !== "closed" && selectedTipo && selectedLocations.length > 0) {
+      onPreviewChange?.({
+        svgContent: selectedTipo.svg_content || selectedClase?.svg_content || "",
+        locations: selectedLocations,
+        name: `${selectedClase?.name ?? ""} · ${selectedTipo.name}`,
+      });
+    } else {
+      onPreviewChange?.(null);
+    }
+  }, [step, selectedTipo, selectedLocations, selectedClase, onPreviewChange]);
 
   const handleSelectClase = (id: number) => {
     setSelectedClaseId(id);
@@ -72,9 +108,21 @@ export default function DesignFlow({ estampados, tiposByClase, stampSizes, stamp
     setSelectedSizeId(null);
     setSelectedLocationIds([]);
     setStep("closed");
+    onPreviewChange?.(null);
   };
 
   const toggleOpen = () => setStep(step === "closed" ? "clase" : "closed");
+
+  const getStepIndex = (s: Step) => STEPS.findIndex((item) => item.id === s);
+  const currentStepIdx = getStepIndex(step);
+
+  const canGoToStep = (targetStep: Step) => {
+    if (targetStep === "clase") return true;
+    if (targetStep === "tipo") return selectedClaseId !== null;
+    if (targetStep === "size") return selectedTipoId !== null;
+    if (targetStep === "location") return selectedSizeId !== null;
+    return false;
+  };
 
   return (
     <div className="design-flow">
@@ -96,7 +144,7 @@ export default function DesignFlow({ estampados, tiposByClase, stampSizes, stamp
 
         {step !== "closed" && estampados.length > 0 && (
           <>
-            <button className="choice-btn" onClick={toggleOpen} style={{ marginBottom: "0.5rem" }}>
+            <button className="choice-btn" onClick={toggleOpen} style={{ marginBottom: "0.75rem" }}>
               <span className="choice-btn__label">Diseño</span>
               <span className="choice-btn__value">
                 {selectedClase ? `${selectedClase.name}${selectedTipo ? ` · ${selectedTipo.name}` : ""}${selectedSizeObj ? ` (${selectedSizeObj.name})` : ""}` : "Elegir diseño"}
@@ -105,6 +153,31 @@ export default function DesignFlow({ estampados, tiposByClase, stampSizes, stamp
                 <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
+
+            {/* M2: Stepper UI */}
+            <div className="design-flow__stepper">
+              {STEPS.map((s, idx) => {
+                const isDone = idx < currentStepIdx;
+                const isActive = step === s.id;
+                const enabled = canGoToStep(s.id);
+                return (
+                  <div key={s.id} style={{ display: "flex", alignItems: "center", flex: idx < STEPS.length - 1 ? 1 : "initial" }}>
+                    <button
+                      className={`stepper-step${isDone ? " stepper-step--done" : ""}${isActive ? " stepper-step--active" : ""}`}
+                      onClick={() => enabled && setStep(s.id)}
+                      disabled={!enabled}
+                      type="button"
+                    >
+                      <span className="stepper-step__dot">{isDone ? "✓" : idx + 1}</span>
+                      <span className="stepper-step__label">{s.label}</span>
+                    </button>
+                    {idx < STEPS.length - 1 && (
+                      <div className={`stepper-connector${idx < currentStepIdx ? " stepper-connector--done" : ""}`} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
 
             <div className="design-flow__body">
               {step === "clase" && (
@@ -124,10 +197,11 @@ export default function DesignFlow({ estampados, tiposByClase, stampSizes, stamp
                         key={t.id}
                         className={`estampado-card${selectedTipoId === t.id ? " estampado-card--active" : ""}`}
                         onClick={() => handleSelectTipo(t.id)}
+                        type="button"
                       >
                         <div className="estampado-card__preview">
                           {t.image_url ? (
-                            <img src={t.image_url} alt={t.name} />
+                            <img src={t.image_url} alt={t.name} loading="lazy" decoding="async" />
                           ) : t.svg_content ? (
                             <div className="estampado-card__svg"
                               dangerouslySetInnerHTML={{ __html: t.svg_content.replace(/currentColor/gi, "var(--accent)") }}
@@ -166,6 +240,7 @@ export default function DesignFlow({ estampados, tiposByClase, stampSizes, stamp
                     style={{ width: "100%", marginTop: "0.75rem" }}
                     onClick={handleConfirm}
                     disabled={selectedLocationIds.length === 0}
+                    type="button"
                   >
                     Confirmar estampado
                   </button>

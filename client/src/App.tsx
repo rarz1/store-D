@@ -3,8 +3,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./lib/auth";
 import { CartProvider } from "./lib/cart";
+import { FavoritesProvider } from "./lib/favorites";
 import { ToastProvider } from "./lib/toast";
 import AuthGuard from "./components/AuthGuard";
+import ErrorBoundary from "./components/ErrorBoundary";
 import HomePage from "./pages/HomePage";
 import ProductPage from "./pages/ProductPage";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -30,6 +32,9 @@ export default function App() {
         applyColors(s);
       }
     });
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
   }, []);
 
   return (
@@ -37,34 +42,38 @@ export default function App() {
       <BrowserRouter>
         <AuthProvider>
           <CartProvider>
-            <ToastProvider>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/producto/:garmentId" element={<ProductPage />} />
+            <FavoritesProvider>
+              <ToastProvider>
+              <ErrorBoundary>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/producto/:garmentId" element={<ProductPage />} />
 
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route
-                path="/admin"
-                element={<AuthGuard><AdminDashboard /></AuthGuard>}
-              />
-              <Route
-                path="/admin/garments/:id/edit"
-                element={<AuthGuard><AdminGarmentForm /></AuthGuard>}
-              />
-              <Route
-                path="/admin/garments/:id"
-                element={<AuthGuard><AdminGarmentForm /></AuthGuard>}
-              />
-              <Route
-                path="/admin/designs/:id/edit"
-                element={<AuthGuard><AdminDesigns /></AuthGuard>}
-              />
-              <Route
-                path="/admin/designs/:id"
-                element={<AuthGuard><AdminDesigns /></AuthGuard>}
-              />
-            </Routes>
-            </ToastProvider>
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route
+                  path="/admin"
+                  element={<AuthGuard><AdminDashboard /></AuthGuard>}
+                />
+                <Route
+                  path="/admin/garments/:id/edit"
+                  element={<AuthGuard><AdminGarmentForm /></AuthGuard>}
+                />
+                <Route
+                  path="/admin/garments/:id"
+                  element={<AuthGuard><AdminGarmentForm /></AuthGuard>}
+                />
+                <Route
+                  path="/admin/designs/:id/edit"
+                  element={<AuthGuard><AdminDesigns /></AuthGuard>}
+                />
+                <Route
+                  path="/admin/designs/:id"
+                  element={<AuthGuard><AdminDesigns /></AuthGuard>}
+                />
+              </Routes>
+              </ErrorBoundary>
+              </ToastProvider>
+            </FavoritesProvider>
           </CartProvider>
         </AuthProvider>
       </BrowserRouter>
