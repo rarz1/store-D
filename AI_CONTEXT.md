@@ -243,3 +243,9 @@ Archivo: `client/src/lib/settings.ts`
 - `favorites.tsx`: `addFavorite` pedía `addedAt` al caller; ahora `Omit<FavoriteItem, "addedAt">` (lo setea el provider).
 - Limpieza de vars sin uso: `isFavorite`/`removeFavorite` (AppHeader), `useRef`/`toast` (AdminDashboard), `favorites` (ProductPage), prop `style` duplicado (AdminGarmentForm).
 - **Verificación**: `npm run build` (tsc -b + vite) pasa sin errores. Oxlint: solo warnings preexistentes (fast-refresh, exhaustive-deps, vars en settings.ts/sw.js).
+
+#### Deploy
+- Commit `ad3a55c` (27 archivos, +3078/−225) pusheado a `main` → Vercel auto-deploy en `store-d-psi.vercel.app`.
+- **Sin cambios en Supabase**: todo el upgrade es frontend; pedidos/wishlist usan localStorage, el resto lee/escribe tablas ya existentes.
+- Limpieza previa al commit: 5 scaffolds vacíos `Admin*Tab.tsx` eliminados (código muerto de la refactor de admin) y `.codegraph/` agregado a `.gitignore`.
+- Regla de caché PWA: `sw.js` es stale-while-revalidate; para invalidar caché en futuros releases, cambiar `CACHE_NAME` (ej: `store-v2`).
