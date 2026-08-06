@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase, type GarmentRow, type EstampadoRow, type DisenoTipoRow, type EstampadoSizeRow, type EstampadoLocationRow } from "../../lib/supabase";
+import { supabase, type GarmentRow, type EstampadoRow, type EstampadoSizeRow, type EstampadoLocationRow } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import ConfirmModal from "../../components/ConfirmModal";
+import AdminDesignsTab from "./AdminDesignsTab";
 import { getSettings, saveSettings, getSlides, saveSlide, uploadImage, applyColors, type SiteSettings, type CarouselSlide } from "../../lib/settings";
 
 type Tab = "products" | "disenos" | "store" | "carousel" | "colors";
@@ -12,21 +13,15 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("products");
   const [garments, setGarments] = useState<GarmentRow[]>([]);
-  const [confirmTarget, setConfirmTarget] = useState<{ type: "garment" | "estampado" | "diseno_tipo" | "bulk-garments" | "bulk-estampados"; id?: number; parentId?: number; ids?: number[] } | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{ type: "garment" | "bulk-garments"; id?: number; ids?: number[] } | null>(null);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [slides, setSlides] = useState<CarouselSlide[]>([]);
   const [saving, setSaving] = useState(false);
   const [selectedGarments, setSelectedGarments] = useState<Set<number>>(new Set());
-  const [selectedDesigns, setSelectedDesigns] = useState<Set<number>>(new Set());
   const [draggedSizeId, setDraggedSizeId] = useState<number | null>(null);
   const [draggedLocationId, setDraggedLocationId] = useState<number | null>(null);
 
   const [estampados, setEstampados] = useState<EstampadoRow[]>([]);
-  const [estampadoForm, setEstampadoForm] = useState<Partial<EstampadoRow> | null>(null);
-
-  const [tiposByClase, setTiposByClase] = useState<Record<number, DisenoTipoRow[]>>({});
-  const [expandedClase, setExpandedClase] = useState<number | null>(null);
-  const [tipoForm, setTipoForm] = useState<Partial<DisenoTipoRow> | null>(null);
 
   const [estampadoSizes, setEstampadoSizes] = useState<EstampadoSizeRow[]>([]);
   const [estampadoLocations, setEstampadoLocations] = useState<EstampadoLocationRow[]>([]);
@@ -40,8 +35,6 @@ export default function AdminDashboard() {
   const [newLocationForm, setNewLocationForm] = useState<Partial<EstampadoLocationRow> | null>(null);
 
   const [newSizeForm, setNewSizeForm] = useState<Partial<EstampadoSizeRow> | null>(null);
-
-  const [tipoError, setTipoError] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.from("garments").select("*").order("id").then(({ data, error }) => {
@@ -64,11 +57,6 @@ export default function AdminDashboard() {
     });
   }, []);
 
-  const loadTipos = async (claseId: number) => {
-    const { data } = await supabase.from("diseno_tipos").select("*").eq("estampado_id", claseId).order("sort_order");
-    if (data) setTiposByClase((prev) => ({ ...prev, [claseId]: data }));
-  };
-
   const deleteGarment = async (id: number) => {
     const { error } = await supabase.from("garments").delete().eq("id", id);
     if (error) { console.error("Error deleting garment:", error); return; }
@@ -76,35 +64,8 @@ export default function AdminDashboard() {
     setConfirmTarget(null);
   };
 
-  const deleteEstampado = async (id: number) => {
-    const { error } = await supabase.from("estampados").delete().eq("id", id);
-    if (error) { console.error("Error deleting estampado:", error); return; }
-    setEstampados((prev) => prev.filter((e) => e.id !== id));
-    setConfirmTarget(null);
-    setEstampadoForm(null);
-    setExpandedClase(null);
-  };
-
-  const deleteTipo = async (id: number, claseId: number) => {
-    await supabase.from("diseno_tipos").delete().eq("id", id);
-    setTiposByClase((prev) => ({
-      ...prev,
-      [claseId]: (prev[claseId] ?? []).filter((t) => t.id !== id),
-    }));
-    setConfirmTarget(null);
-  };
-
   const toggleGarmentSelection = (id: number) => {
     setSelectedGarments((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const toggleDesignSelection = (id: number) => {
-    setSelectedDesigns((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -120,26 +81,6 @@ export default function AdminDashboard() {
     setGarments((prev) => prev.filter((g) => !ids.includes(g.id)));
     setSelectedGarments(new Set());
     setConfirmTarget(null);
-  };
-
-  const deleteBulkEstampados = async () => {
-    const ids = [...selectedDesigns];
-    if (ids.length === 0) return;
-    const { error } = await supabase.from("estampados").delete().in("id", ids);
-    if (error) { console.error("Error deleting estampados:", error); return; }
-    setEstampados((prev) => prev.filter((e) => !ids.includes(e.id)));
-    setSelectedDesigns(new Set());
-    setConfirmTarget(null);
-  };
-
-  const toggleBulkEstampadoActive = async () => {
-    const ids = [...selectedDesigns];
-    if (ids.length === 0) return;
-    const targetActive = !estampados.some((e) => ids.includes(e.id) && e.active);
-    const { error } = await supabase.from("estampados").update({ active: targetActive }).in("id", ids);
-    if (error) { console.error("Error updating estampados:", error); return; }
-    setEstampados((prev) => prev.map((e) => ids.includes(e.id) ? { ...e, active: targetActive } : e));
-    setSelectedDesigns(new Set());
   };
 
   const startEditSize = (s: EstampadoSizeRow) => {
@@ -230,15 +171,12 @@ export default function AdminDashboard() {
     <div className="admin-page">
        <ConfirmModal
          open={confirmTarget !== null}
-         title={confirmTarget?.type === "garment" ? "Eliminar prenda" : confirmTarget?.type === "estampado" ? "Eliminar clase" : confirmTarget?.type === "bulk-garments" ? "Eliminar prendas" : confirmTarget?.type === "bulk-estampados" ? "Eliminar clases" : "Eliminar tipo"}
-         message={confirmTarget?.type === "garment" ? "¿Eliminar esta prenda? Esta acción no se puede deshacer." : confirmTarget?.type === "estampado" ? "¿Eliminar esta clase de diseño? También se eliminarán sus tipos." : confirmTarget?.type === "bulk-garments" ? `¿Eliminar ${confirmTarget.ids?.length ?? 0} prendas seleccionadas? Esta acción no se puede deshacer.` : confirmTarget?.type === "bulk-estampados" ? `¿Eliminar ${confirmTarget.ids?.length ?? 0} clases seleccionadas? También se eliminarán sus tipos.` : "¿Eliminar este tipo de diseño?"}
+         title={confirmTarget?.type === "garment" ? "Eliminar prenda" : "Eliminar prendas"}
+         message={confirmTarget?.type === "garment" ? "¿Eliminar esta prenda? Esta acción no se puede deshacer." : `¿Eliminar ${confirmTarget?.ids?.length ?? 0} prendas seleccionadas? Esta acción no se puede deshacer.`}
          onConfirm={() => {
            if (!confirmTarget) return;
            if (confirmTarget.type === "garment") deleteGarment(confirmTarget.id!);
-           else if (confirmTarget.type === "estampado") deleteEstampado(confirmTarget.id!);
-           else if (confirmTarget.type === "diseno_tipo") deleteTipo(confirmTarget.id!, confirmTarget.parentId!);
            else if (confirmTarget.type === "bulk-garments") deleteBulkGarments();
-           else if (confirmTarget.type === "bulk-estampados") deleteBulkEstampados();
          }}
          onCancel={() => setConfirmTarget(null)}
        />
@@ -468,178 +406,7 @@ export default function AdminDashboard() {
           </section>
         </>
       )}
-      {tab === "disenos" && (
-        <>
-          <section className="admin-section">
-            <div className="admin-section-header">
-              <h2>Clases de diseño</h2>
-              <button className="btn-back" onClick={() => { setEstampadoForm({ name: "", description: "", active: true, tags: [], sort_order: estampados.length }); setExpandedClase(null); setTipoForm(null); }}>
-                + Nueva clase
-              </button>
-            </div>
-            {estampadoForm && !expandedClase && !tipoForm && (
-              <div className="admin-form">
-                <label className="admin-label">Nombre</label>
-                <input className="admin-input" value={estampadoForm.name ?? ""} onChange={(e) => setEstampadoForm({ ...estampadoForm, name: e.target.value })} />
-                <label className="admin-label">Descripción</label>
-                <input className="admin-input" value={estampadoForm.description ?? ""} onChange={(e) => setEstampadoForm({ ...estampadoForm, description: e.target.value })} />
-                <label className="admin-label">Tags (separados por coma)</label>
-                <input className="admin-input" value={Array.isArray(estampadoForm.tags) ? estampadoForm.tags.join(", ") : ""} onChange={(e) => setEstampadoForm({ ...estampadoForm, tags: e.target.value.split(",").map((t: string) => t.trim()).filter(Boolean) })} />
-                <label className="admin-label">Orden</label>
-                <input className="admin-input" type="number" value={estampadoForm.sort_order ?? 0} onChange={(e) => setEstampadoForm({ ...estampadoForm, sort_order: parseInt(e.target.value) || 0 })} />
-                <label className="admin-label"><input type="checkbox" checked={estampadoForm.active ?? true} onChange={(e) => setEstampadoForm({ ...estampadoForm, active: e.target.checked })} />{" Activo"}</label>
-                <div className="admin-form-actions">
-                  <button className="btn-back" onClick={() => setEstampadoForm(null)}>Cancelar</button>
-                  <button className="btn-primary" disabled={!estampadoForm.name || saving}
-                    onClick={async () => {
-                      if (!estampadoForm.name) return; setSaving(true);
-                      const p = { name: estampadoForm.name, description: estampadoForm.description ?? "", svg_content: "", image_url: "", active: estampadoForm.active ?? true, tags: estampadoForm.tags ?? [], sort_order: estampadoForm.sort_order ?? 0 };
-                      let err: any;
-                      if (estampadoForm.id) {
-                        const { error } = await supabase.from("estampados").update(p).eq("id", estampadoForm.id);
-                        err = error;
-                      } else {
-                        const { error } = await supabase.from("estampados").insert(p);
-                        err = error;
-                      }
-                      if (err) { console.error("Error saving estampado:", err); setSaving(false); return; }
-                      setSaving(false); setEstampadoForm(null);
-                      const { data } = await supabase.from("estampados").select("*").order("sort_order");
-                      if (data) setEstampados(data);
-                    }}
-                  >{estampadoForm.id ? "Guardar" : "Crear"}</button>
-                </div>
-              </div>
-            )}
-            {!estampadoForm && (
-              <table className="admin-table">
-                <thead><tr>
-                  <th style={{ width: 36 }}>
-                    <input
-                      type="checkbox"
-                      aria-label="Seleccionar todas las clases"
-                      checked={estampados.length > 0 && selectedDesigns.size === estampados.length}
-                      onChange={(e) => setSelectedDesigns(e.target.checked ? new Set(estampados.map((x) => x.id)) : new Set())}
-                    />
-                  </th>
-                  <th>Nombre</th><th>Tags</th><th>Activo</th><th>Tipos</th><th>Orden</th><th></th>
-                </tr></thead>
-                <tbody>
-                  {estampados.length === 0 && <tr><td colSpan={7} style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem" }}>No hay clases de diseño</td></tr>}
-                  {estampados.map((e) => (
-                    <React.Fragment key={e.id}>
-                      <tr>
-                        <td>
-                          <input
-                            type="checkbox"
-                            aria-label={`Seleccionar ${e.name}`}
-                            checked={selectedDesigns.has(e.id)}
-                            onChange={() => toggleDesignSelection(e.id)}
-                          />
-                        </td>
-                        <td>{e.name}</td>
-                        <td style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{(e.tags ?? []).join(", ")}</td>
-                        <td>{e.active ? "✓" : "✕"}</td>
-                        <td>{(tiposByClase[e.id] ?? []).length}</td>
-                        <td>{e.sort_order}</td>
-                        <td>
-                          <div className="admin-actions">
-                            <button className="btn-small" onClick={async () => {
-                              if (expandedClase === e.id) { setExpandedClase(null); setTipoForm(null); return; }
-                              setExpandedClase(e.id); setTipoForm(null);
-                              if (!tiposByClase[e.id]) await loadTipos(e.id);
-                            }}>{expandedClase === e.id ? "−" : "+"} Tipos</button>
-                            <button className="btn-small" onClick={() => { setEstampadoForm(e); setExpandedClase(null); setTipoForm(null); }}>Editar</button>
-                            <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "estampado", id: e.id })}>✕</button>
-                          </div>
-                        </td>
-                      </tr>
-                      {expandedClase === e.id && (
-                        <tr key={`tipos-${e.id}`}>
-                          <td colSpan={7} style={{ padding: "0.5rem 1rem 1rem", background: "var(--surface)" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                              <strong style={{ fontSize: "0.85rem" }}>Tipos de {e.name}</strong>
-                              <button className="btn-back" onClick={() => setTipoForm({ estampado_id: e.id, name: "", description: "", svg_content: "", image_url: "", tags: [], active: true, sort_order: (tiposByClase[e.id] ?? []).length })}>
-                                + Nuevo tipo
-                              </button>
-                            </div>
-                            {tipoForm && tipoForm.estampado_id === e.id && (
-                              <div className="admin-form" style={{ marginBottom: "0.75rem" }}>
-                                <label className="admin-label">Nombre</label>
-                                <input className="admin-input" value={tipoForm.name ?? ""} onChange={(e2) => { setTipoError(null); setTipoForm({ ...tipoForm, name: e2.target.value }); }} />
-                                <label className="admin-label">Descripción</label>
-                                <input className="admin-input" value={tipoForm.description ?? ""} onChange={(e2) => setTipoForm({ ...tipoForm, description: e2.target.value })} />
-                                <label className="admin-label">Tags (separados por coma)</label>
-                                <input className="admin-input" value={Array.isArray(tipoForm.tags) ? tipoForm.tags.join(", ") : ""} onChange={(e2) => setTipoForm({ ...tipoForm, tags: e2.target.value.split(",").map((t: string) => t.trim()).filter(Boolean) })} />
-                                <label className="admin-label">SVG</label>
-                                <textarea className="admin-textarea" rows={4} value={tipoForm.svg_content ?? ""} onChange={(e2) => setTipoForm({ ...tipoForm, svg_content: e2.target.value })} />
-                                <label className="admin-label">URL imagen (opcional)</label>
-                                <input className="admin-input" value={tipoForm.image_url ?? ""} onChange={(e2) => setTipoForm({ ...tipoForm, image_url: e2.target.value })} />
-                                <label className="admin-label"><input type="checkbox" checked={tipoForm.active ?? true} onChange={(e2) => setTipoForm({ ...tipoForm, active: e2.target.checked })} />{" Activo"}</label>
-                                {tipoError && <p className="admin-error">{tipoError}</p>}
-                                <div className="admin-form-actions">
-                                  <button className="btn-back" onClick={() => { setTipoForm(null); setTipoError(null); }}>Cancelar</button>
-                                  <button className="btn-primary" disabled={!tipoForm.name || saving}
-                                    onClick={async () => {
-                                      if (!tipoForm.name) return; setSaving(true); setTipoError(null);
-                                      const p = { estampado_id: e.id, name: tipoForm.name, description: tipoForm.description ?? "", svg_content: tipoForm.svg_content ?? "", image_url: tipoForm.image_url ?? "", tags: tipoForm.tags ?? [], active: tipoForm.active ?? true, sort_order: tipoForm.sort_order ?? 0 };
-                                      let err: any;
-                                      if (tipoForm.id) {
-                                        const { error } = await supabase.from("diseno_tipos").update(p).eq("id", tipoForm.id);
-                                        err = error;
-                                      } else {
-                                        const { error } = await supabase.from("diseno_tipos").insert(p);
-                                        err = error;
-                                      }
-                                      if (err) { console.error("Error saving tipo:", err); setTipoError(err.message || "Error al guardar"); setSaving(false); return; }
-                                      setSaving(false); setTipoForm(null);
-                                      await loadTipos(e.id);
-                                    }}
-                                  >{tipoForm.id ? "Guardar" : "Crear"}</button>
-                                </div>
-                              </div>
-                            )}
-                            {(tiposByClase[e.id] ?? []).length === 0 && !tipoForm && (
-                              <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.85rem", padding: "0.5rem" }}>Esta clase no tiene tipos todavía</p>
-                            )}
-                            {(tiposByClase[e.id] ?? []).map((t) => (
-                              <div key={t.id} className="admin-row" style={{ marginBottom: "0.25rem" }}>
-                                <div style={{ flex: 1 }}>
-                                  <strong style={{ fontSize: "0.85rem" }}>{t.name}</strong>
-                                  {t.description && <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginLeft: "0.5rem" }}>{t.description}</span>}
-                                  {(t.tags ?? []).length > 0 && <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginLeft: "0.5rem" }}>#{ (t.tags ?? []).join(", #")}</span>}
-                                </div>
-                                <span style={{ fontSize: "0.75rem", marginRight: "0.5rem", color: t.active ? "var(--accent)" : "var(--text-muted)" }}>{t.active ? "✓" : "✕"}</span>
-                                {t.svg_content && (
-                                  <div style={{ width: 28, height: 28, color: "var(--accent)", marginRight: "0.5rem" }}
-                                    dangerouslySetInnerHTML={{ __html: t.svg_content.replace(/currentColor/gi, "var(--accent)") }} />
-                                )}
-                                <button className="btn-small" onClick={() => setTipoForm(t)}>Editar</button>
-                                <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "diseno_tipo", id: t.id, parentId: e.id })}>✕</button>
-                              </div>
-                            ))}
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
-            )}
-            {selectedDesigns.size > 0 && (
-              <div className="admin-bulk-bar">
-                <span className="admin-bulk-bar__count">{selectedDesigns.size} seleccionadas</span>
-                <button className="btn-small" onClick={toggleBulkEstampadoActive}>
-                  Activar/Desactivar
-                </button>
-                <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "bulk-estampados", ids: [...selectedDesigns] })}>
-                  Eliminar seleccionadas
-                </button>
-              </div>
-            )}
-          </section>
-        </>
-      )}
+      {tab === "disenos" && <AdminDesignsTab />}
       {tab === "store" && settings && (
         <div className="admin-form">
           <label className="admin-label">Título de la tienda</label>
