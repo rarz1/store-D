@@ -4,9 +4,11 @@ interface Props {
   locations: EstampadoLocationRow[];
   selectedIds: number[];
   onToggle: (id: number) => void;
+  onCustomToggle?: () => void;
+  customActive?: boolean;
 }
 
-export default function LocationSelector({ locations, selectedIds, onToggle }: Props) {
+export default function LocationSelector({ locations, selectedIds, onToggle, onCustomToggle, customActive }: Props) {
   if (locations.length === 0) return null;
 
   return (
@@ -28,6 +30,14 @@ export default function LocationSelector({ locations, selectedIds, onToggle }: P
             </button>
           );
         })}
+        {onCustomToggle && (
+          <button
+            className={`design-option-card${customActive ? " design-option-card--active" : ""}`}
+            onClick={onCustomToggle}
+          >
+            <span className="design-option-card__name">🎯 Ubicación libre</span>
+          </button>
+        )}
       </div>
     </div>
   );

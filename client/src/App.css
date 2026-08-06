@@ -3215,3 +3215,21 @@ textarea:focus-visible {
   height: 100%;
 }
 
+/* ─── DesignFlow custom placement ─────────────── */
+.design-flow__drag {
+  margin-top: 0.5rem;
+}
+
+.choice-btn--active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.design-flow__drag .garment-mock {
+  cursor: grab;
+}
+
+.design-flow__drag .garment-mock:active {
+  cursor: grabbing;
+}
+
