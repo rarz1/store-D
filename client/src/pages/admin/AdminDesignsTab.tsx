@@ -11,7 +11,7 @@ interface ConfirmTarget {
   ids?: number[];
 }
 
-export default function AdminDesignsTab() {
+export default function AdminDesignsTab({ onStatsChange }: { onStatsChange?: (clases: number) => void }) {
   const [estampados, setEstampados] = useState<EstampadoRow[]>([]);
   const [estampadoForm, setEstampadoForm] = useState<Partial<EstampadoRow> | null>(null);
   const [tiposByClase, setTiposByClase] = useState<Record<number, DisenoTipoRow[]>>({});
@@ -26,9 +26,16 @@ export default function AdminDesignsTab() {
   const tipoFormRef = useRef<Partial<DisenoTipoRow> | null>(null);
   tipoFormRef.current = tipoForm;
 
+  const onStatsChangeRef = useRef(onStatsChange);
+  onStatsChangeRef.current = onStatsChange;
+
   useEffect(() => {
     loadEstampados();
   }, []);
+
+  useEffect(() => {
+    onStatsChangeRef.current?.(estampados.length);
+  }, [estampados.length]);
 
   const loadEstampados = async () => {
     const { data } = await supabase.from("estampados").select("*").order("sort_order");

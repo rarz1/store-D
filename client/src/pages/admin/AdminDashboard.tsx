@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase, type GarmentRow, type EstampadoRow, type EstampadoSizeRow, type EstampadoLocationRow } from "../../lib/supabase";
+import { supabase, type GarmentRow, type EstampadoSizeRow, type EstampadoLocationRow } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import ConfirmModal from "../../components/ConfirmModal";
 import AdminDesignsTab from "./AdminDesignsTab";
@@ -21,7 +21,7 @@ export default function AdminDashboard() {
   const [draggedSizeId, setDraggedSizeId] = useState<number | null>(null);
   const [draggedLocationId, setDraggedLocationId] = useState<number | null>(null);
 
-  const [estampados, setEstampados] = useState<EstampadoRow[]>([]);
+  const [disenosCount, setDisenosCount] = useState(0);
 
   const [estampadoSizes, setEstampadoSizes] = useState<EstampadoSizeRow[]>([]);
   const [estampadoLocations, setEstampadoLocations] = useState<EstampadoLocationRow[]>([]);
@@ -43,9 +43,9 @@ export default function AdminDashboard() {
     });
     getSettings().then(setSettings);
     getSlides().then(setSlides);
-    supabase.from("estampados").select("*").order("sort_order").then(({ data, error }) => {
+    supabase.from("estampados").select("id").then(({ data, error }) => {
       if (error) console.error("Error loading estampados:", error);
-      if (data) setEstampados(data);
+      if (data) setDisenosCount(data.length);
     });
     supabase.from("estampado_sizes").select("*").order("sort_order").then(({ data, error }) => {
       if (error) console.error("Error loading sizes:", error);
@@ -189,7 +189,7 @@ export default function AdminDashboard() {
          </div>
          <div style={{ flex: 1, minWidth: 120, padding: "1rem", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", boxShadow: "var(--shadow-sm)" }}>
            <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase" }}>Diseños</span>
-           <p style={{ fontFamily: "var(--font-display)", fontSize: "2rem", color: "var(--accent)", margin: "0.25rem 0 0", letterSpacing: "0.04em" }}>{estampados.length}</p>
+           <p style={{ fontFamily: "var(--font-display)", fontSize: "2rem", color: "var(--accent)", margin: "0.25rem 0 0", letterSpacing: "0.04em" }}>{disenosCount}</p>
          </div>
          <div style={{ flex: 1, minWidth: 120, padding: "1rem", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", boxShadow: "var(--shadow-sm)" }}>
            <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase" }}>Talles</span>
@@ -406,7 +406,7 @@ export default function AdminDashboard() {
           </section>
         </>
       )}
-      {tab === "disenos" && <AdminDesignsTab />}
+      {tab === "disenos" && <AdminDesignsTab onStatsChange={setDisenosCount} />}
       {tab === "store" && settings && (
         <div className="admin-form">
           <label className="admin-label">Título de la tienda</label>
