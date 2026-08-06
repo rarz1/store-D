@@ -117,6 +117,7 @@ export default function DesignFlow({
     setSelectedLocationIds([]);
     setCustomMode(false);
     setCustomPos(null);
+    setCustomSide("front");
     setStep("size");
   };
 
