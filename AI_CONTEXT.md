@@ -268,6 +268,11 @@ Archivo: `client/src/lib/settings.ts`
 - El carrito persiste `customPosition` y el mensaje de WhatsApp muestra "Ubicación libre".
 - Fix: se preserva el size del diseño al cambiar a custom placement.
 
+#### Feedback del cliente (2026-08-05)
+- **Precio**: la "Ubicación libre" es GRATIS (no suma). Lo que suma es cantidad de diseños × `size.price_increment`. Verificado sin cambios de código (`locations: []` → incremento 0).
+- **Drag en frente y posterior**: `DesignFlow` gana estado `customSide` ("front" | "back") reseteado en todos los handlers; el drag del `GarmentMock` conmuta frente/posterior. `ProductPage` propaga `side` a `placedDesigns`/`previewDesigns` (`p.side ?? "front"`) y el dedupe del carrito compara lado. WhatsApp muestra "Ubicación libre (frente)/(posterior)".
+- **Contadores en vivo**: `AdminDesignsTab` reporta su conteo vía prop `onStatsChange`; `AdminDashboard` reemplazó su array `estampados` (estaba congelado del mount) por `disenosCount`, consulta solo el conteo al montar y evita el flash de 0 con `statsLoadedRef`. Los contadores reflejan la cuenta real de elementos, no son decorativos.
+
 #### Notas técnicas
 - `tsc --noEmit` es NO-OP con tsconfig de solución; el chequeo real es `npm run build` (tsc -b + vite).
 - Trabajamos directo en `main` (con consentimiento del usuario).
