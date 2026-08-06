@@ -46,11 +46,14 @@ export async function saveSlide(id: number, slide: Partial<CarouselSlide>): Prom
   return !error;
 }
 
-export async function uploadImage(file: File, path: string): Promise<string | null> {
+export async function uploadImage(file: File, path: string): Promise<{ url: string | null; error: string | null }> {
   const { data, error } = await supabase.storage.from("store-images").upload(path, file, { upsert: true });
-  if (error) { console.error("Upload error:", error); return null; }
+  if (error) {
+    console.error("Upload error:", error);
+    return { url: null, error: error.message || "Error al subir la imagen a Supabase" };
+  }
   const { data: { publicUrl } } = supabase.storage.from("store-images").getPublicUrl(data.path);
-  return publicUrl;
+  return { url: publicUrl, error: null };
 }
 
 export function hexToRgba(hex: string, alpha: number): string {

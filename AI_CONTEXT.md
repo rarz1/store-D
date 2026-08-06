@@ -73,7 +73,7 @@
 - **Vercel conectado a GitHub** (`rarz1/store-D`): cada push a `main` deploya automático
 - **Variables en Vercel**: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 - **Archivo clave**: `client/vercel.json` con rewrites para SPA routing
-- **Último push**: feedback del cliente (drag frente/posterior + contadores en vivo) pusheado a `main` (26eabdd) → auto-deploy en Vercel
+- **Último push**: fix de errores reales de Supabase en upload (uploadImage devuelve `{url, error}` y se muestra en UI) + AI_CONTEXT actualizado
 
 ## Variables de entorno
 
@@ -286,3 +286,20 @@ Archivo: `client/src/lib/settings.ts`
 - `tsc --noEmit` es NO-OP con tsconfig de solución; el chequeo real es `npm run build` (tsc -b + vite).
 - Trabajamos directo en `main` (con consentimiento del usuario).
 - Verificación: `npm run lint` y `npm run build` pasan; oxlint solo con warnings preexistentes y build solo con el warning de chunk-size.
+
+### Sesión 9 — 2026-08-06 (Fix: upload PNG a Supabase + imágenes PNG en vista cliente)
+
+#### Problema 1: "Error al subir la imagen a Supabase" en tipos de diseño
+- Causa raíz: el bucket `store-images` **no existía** en Supabase (`listBuckets()` vacío, upload con `Bucket not found` 404). El SQL del bucket en `supabase-schema.sql` estaba comentado ("Run this separately") y nunca se había ejecutado.
+- Fix (SQL Editor de Supabase): `insert` del bucket `store-images` (public) + políticas RLS: "Public read" (select), "Admin upload" (insert con `auth.role()='authenticated'`), "Admin update", "Admin delete`.
+- Fix de código: `uploadImage()` en `client/src/lib/settings.ts` ahora devuelve `{ url, error }` con el **mensaje real de Supabase** (antes devolvía `null` y el error solo iba a consola). `AdminDesignsTab` muestra `tipoError` con ese mensaje en la UI. Callers de `AdminDashboard.tsx` y `AdminSettings.tsx` actualizados.
+- Nota: `AdminSettings.tsx` es código muerto (no se importa) pero se compila, por eso se actualizó igual.
+
+#### Problema 2: no aparecían los PNG de los tipos en la vista cliente
+- Causa raíz: las tablas junction `garment_estampado_sizes` y `garment_estampado_locations` **no existían** en Supabase (PGRST205). `useGarmentEstampadoSizes`/`useGarmentEstampadoLocations` en `client/src/lib/hooks.ts` fallaban con 404 → sin sizes/locations, el DesignFlow no llegaba a renderizar los tipos.
+- Fix (SQL Editor de Supabase): crear ambas tablas (PK compuesta, sin columna `id`), RLS + policies, y seed: todos los garments × todos los sizes/locations (`on conflict do nothing`).
+- Verificado con Playwright en producción: los 5 tipos de Calaveras renderizan `<img>` y cargan 5/5.
+- Diagnóstico: PGRST205 = tabla no existe; 42703 en `select("id")` sobre junction tables = PK compuesta sin columna `id` (esperado).
+
+#### Deploy
+- Commit con `uploadImage` + AI_CONTEXT pusheado a `main` → auto-deploy en Vercel.

@@ -56,7 +56,7 @@ export default function AdminSettings() {
           <input type="file" accept="image/*" onChange={async (e) => {
             const file = e.target.files?.[0];
             if (!file) return;
-            const url = await uploadImage(file, `logo/${Date.now()}-${file.name}`);
+            const { url } = await uploadImage(file, `logo/${Date.now()}-${file.name}`);
             if (url) setSettings({ ...settings, logo_url: url });
           }} />
           {settings.logo_url && (
@@ -95,7 +95,7 @@ export default function AdminSettings() {
               <input type="file" accept="image/*" onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
-                const url = await uploadImage(file, `carousel/slide-${slide.id}-1-${Date.now()}`);
+                const { url } = await uploadImage(file, `carousel/slide-${slide.id}-1-${Date.now()}`);
                 if (url) {
                   const copy = [...slides];
                   copy[i] = { ...copy[i], image_1_url: url };
@@ -110,7 +110,7 @@ export default function AdminSettings() {
                   <input type="file" accept="image/*" onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    const url = await uploadImage(file, `carousel/slide-${slide.id}-2-${Date.now()}`);
+                    const { url } = await uploadImage(file, `carousel/slide-${slide.id}-2-${Date.now()}`);
                     if (url) {
                       const copy = [...slides];
                       copy[i] = { ...copy[i], image_2_url: url };

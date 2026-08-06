@@ -164,8 +164,8 @@ export default function AdminDesignsTab({ onStatsChange }: { onStatsChange?: (cl
     setUploadingImg(true);
     setTipoError(null);
     try {
-      const url = await uploadImage(file, `disenos/${Date.now()}-${file.name}`);
-      if (!url) { setTipoError("Error al subir la imagen a Supabase"); return; }
+      const { url, error } = await uploadImage(file, `disenos/${Date.now()}-${file.name}`);
+      if (error || !url) { setTipoError(error ?? "Error al subir la imagen a Supabase"); return; }
       setTipoForm((prev) => (prev ? { ...tipoFormRef.current!, image_url: url } : prev));
     } finally {
       setUploadingImg(false);
