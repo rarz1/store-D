@@ -3021,3 +3021,49 @@ textarea:focus-visible {
   background: var(--surface-hover);
 }
 
+/* ─── Admin TagInput ──────────────────────────── */
+.admin-tag-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-tag-input__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.admin-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem 0.25rem 0.75rem;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  color: var(--text);
+}
+
+.admin-tag-chip__remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.65rem;
+  transition: all 150ms ease;
+}
+
+.admin-tag-chip__remove:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
