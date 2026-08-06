@@ -28,18 +28,22 @@ export default function AdminDesignsTab({ onStatsChange }: { onStatsChange?: (cl
 
   const onStatsChangeRef = useRef(onStatsChange);
   onStatsChangeRef.current = onStatsChange;
+  const statsLoadedRef = useRef(false);
 
   useEffect(() => {
     loadEstampados();
   }, []);
 
   useEffect(() => {
-    onStatsChangeRef.current?.(estampados.length);
+    if (statsLoadedRef.current) onStatsChangeRef.current?.(estampados.length);
   }, [estampados.length]);
 
   const loadEstampados = async () => {
     const { data } = await supabase.from("estampados").select("*").order("sort_order");
-    if (data) setEstampados(data);
+    if (data) {
+      statsLoadedRef.current = true;
+      setEstampados(data);
+    }
   };
 
   const loadTipos = async (claseId: number) => {
