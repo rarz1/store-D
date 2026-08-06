@@ -249,3 +249,26 @@ Archivo: `client/src/lib/settings.ts`
 - **Sin cambios en Supabase**: todo el upgrade es frontend; pedidos/wishlist usan localStorage, el resto lee/escribe tablas ya existentes.
 - Limpieza previa al commit: 5 scaffolds vacíos `Admin*Tab.tsx` eliminados (código muerto de la refactor de admin) y `.codegraph/` agregado a `.gitignore`.
 - Regla de caché PWA: `sw.js` es stale-while-revalidate; para invalidar caché en futuros releases, cambiar `CACHE_NAME` (ej: `store-v2`).
+
+### Sesión 7 — 2026-08-05 (Diseños PNG + ubicación libre)
+
+#### Admin Diseños reescrito
+- Tab Diseños reescrito: clases y tipos con subida de PNG a Supabase (bucket `store-images`, campo `image_url`), además de SVG text.
+- Etiquetas por chips reutilizables (`TagInput`): alta/edición de tags sin commit de draft al quitar un chip.
+- Paneles de alta/edición con botón de cierre ✕ + Cancelar.
+- Errores visibles en UI: fix del "3er tipo no se guarda" (falta de propagación de estado de guardado + errores ocultos). Se maneja la race en la subida y se sumó resiliencia de errores y mejoras de a11y.
+
+#### GarmentMock: imágenes y posición custom
+- `GarmentMock` soporta imágenes PNG además de SVG text.
+- Posición custom `{x, y}` en % sobre la prenda.
+- Modo drag con pointer capture (clamp 5–95) sin fugas de eventos.
+
+#### DesignFlow: ubicación libre
+- Modo "Ubicación libre": el cliente arrastra el diseño sobre la prenda en lugar de elegir una ubicación fija.
+- El carrito persiste `customPosition` y el mensaje de WhatsApp muestra "Ubicación libre".
+- Fix: se preserva el size del diseño al cambiar a custom placement.
+
+#### Notas técnicas
+- `tsc --noEmit` es NO-OP con tsconfig de solución; el chequeo real es `npm run build` (tsc -b + vite).
+- Trabajamos directo en `main` (con consentimiento del usuario).
+- Verificación: `npm run lint` y `npm run build` pasan; oxlint solo con warnings preexistentes y build solo con el warning de chunk-size.
