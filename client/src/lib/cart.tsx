@@ -17,6 +17,7 @@ export interface CartItem {
     tipo: DisenoTipoRow;
     size: EstampadoSizeRow;
     locations: EstampadoLocationRow[];
+    customPosition?: { x: number; y: number } | null;
   }>;
 }
 
@@ -188,7 +189,10 @@ function CartDrawer() {
       const unitTotal = item.garmentBasePrice + unitAddons;
       lines.push(`\n${idx + 1}. x${qty} ${item.garmentName} (${item.colorName}, Talle ${item.size}) - $${(unitTotal * qty).toLocaleString("es-AR")}`);
       item.estampados.forEach((p) => {
-        lines.push(`   • Estampado: ${p.estampado.name} · ${p.tipo.name} (${p.size.name}) [${p.locations.map((l) => l.name).join(", ")}]`);
+        const locText = p.customPosition
+          ? "Ubicación libre"
+          : p.locations.map((l) => l.name).join(", ");
+        lines.push(`   • Estampado: ${p.estampado.name} · ${p.tipo.name} (${p.size.name}) [${locText}]`);
       });
     });
     lines.push(`\nTotal general (${totalItems} ítems): $${totalPrice.toLocaleString("es-AR")}`);

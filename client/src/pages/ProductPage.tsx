@@ -20,6 +20,7 @@ interface PlacedEstampado {
   tipo: DisenoTipoRow;
   size: EstampadoSizeRow;
   locations: EstampadoLocationRow[];
+  customPosition?: { x: number; y: number } | null;
 }
 
 export default function ProductPage() {
@@ -40,7 +41,7 @@ export default function ProductPage() {
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [placedEstampados, setPlacedEstampados] = useState<PlacedEstampado[]>([]);
-  const [previewStamp, setPreviewStamp] = useState<{ svgContent: string; locations: EstampadoLocationRow[]; name: string } | null>(null);
+  const [previewStamp, setPreviewStamp] = useState<{ svgContent: string; locations: EstampadoLocationRow[]; name: string; imageUrl?: string; customPosition?: { x: number; y: number } | null } | null>(null);
 
   const handleSelectClase = async (claseId: number) => {
     if (tiposByClase[claseId]) return;
@@ -238,23 +239,47 @@ export default function ProductPage() {
 
   const whatsappMessage = buildWhatsAppMessage();
 
-  const placedDesigns = placedEstampados.flatMap((p) =>
-    p.locations.map((loc) => ({
+  const placedDesigns = placedEstampados.flatMap((p) => {
+    const base = {
       variantId: p.tipo.id,
       svgContent: p.tipo.svg_content || p.estampado.svg_content,
-      position: loc.position_key as "small_front" | "small_front_right" | "large_front" | "small_back" | "large_back" | "sleeve",
+      imageUrl: p.tipo.image_url || undefined,
       name: `${p.estampado.name} · ${p.tipo.name}`,
-    }))
-  );
+    };
+    if (p.customPosition) {
+      return [{
+        ...base,
+        position: "large_front" as const,
+        customPosition: p.customPosition,
+        side: "front" as const,
+      }];
+    }
+    return p.locations.map((loc) => ({
+      ...base,
+      position: loc.position_key as "small_front" | "small_front_right" | "large_front" | "small_back" | "large_back" | "sleeve",
+    }));
+  });
 
   const previewDesigns = previewStamp
-    ? previewStamp.locations.map((loc) => ({
-        variantId: 999999,
-        svgContent: previewStamp.svgContent,
-        position: loc.position_key as "small_front" | "small_front_right" | "large_front" | "small_back" | "large_back" | "sleeve",
-        name: previewStamp.name,
-        isPreview: true,
-      }))
+    ? (previewStamp.customPosition
+        ? [{
+            variantId: 999999,
+            svgContent: previewStamp.svgContent,
+            imageUrl: previewStamp.imageUrl,
+            position: "large_front" as const,
+            customPosition: previewStamp.customPosition,
+            side: "front" as const,
+            name: previewStamp.name,
+            isPreview: true,
+          }]
+        : previewStamp.locations.map((loc) => ({
+            variantId: 999999,
+            svgContent: previewStamp.svgContent,
+            imageUrl: previewStamp.imageUrl,
+            position: loc.position_key as "small_front" | "small_front_right" | "large_front" | "small_back" | "large_back" | "sleeve",
+            name: previewStamp.name,
+            isPreview: true,
+          })))
     : [];
 
   const allMockDesigns = [...placedDesigns, ...previewDesigns];
@@ -409,6 +434,10 @@ export default function ProductPage() {
               tiposByClase={tiposByClase}
               stampSizes={stampSizes}
               stampLocations={stampLocations}
+              garmentId={garmentId as string}
+              color={selectedColor}
+              svgMock={garment.svg_mock}
+              svgMockBack={garment.svg_mock_back}
               onOpenHelp={() => setShowHelpModal(true)}
               onSelectClase={handleSelectClase}
               onPreviewChange={setPreviewStamp}
@@ -416,7 +445,8 @@ export default function ProductPage() {
                 const isDuplicate = placedEstampados.some((p) =>
                   p.estampado.id === item.estampado.id &&
                   p.tipo.id === item.tipo.id &&
-                  JSON.stringify(p.locations.map(l => l.id).sort()) === JSON.stringify(item.locations.map(l => l.id).sort())
+                  JSON.stringify(p.locations.map(l => l.id).sort()) === JSON.stringify(item.locations.map(l => l.id).sort()) &&
+                  JSON.stringify(p.customPosition ?? null) === JSON.stringify(item.customPosition ?? null)
                 );
                 if (isDuplicate) {
                   toast.warning("Este diseño ya está agregado en esa ubicación");
