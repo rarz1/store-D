@@ -41,7 +41,7 @@ export default function ProductPage() {
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [placedEstampados, setPlacedEstampados] = useState<PlacedEstampado[]>([]);
-  const [previewStamp, setPreviewStamp] = useState<{ svgContent: string; locations: EstampadoLocationRow[]; name: string; imageUrl?: string; customPosition?: { x: number; y: number } | null } | null>(null);
+  const [previewStamp, setPreviewStamp] = useState<{ svgContent: string; locations: EstampadoLocationRow[]; name: string; imageUrl?: string; customPosition?: { x: number; y: number } | null; widthPercent?: number } | null>(null);
 
   const handleSelectClase = async (claseId: number) => {
     if (tiposByClase[claseId]) return;
@@ -270,7 +270,7 @@ export default function ProductPage() {
             imageUrl: previewStamp.imageUrl,
             position: "large_front" as const,
             customPosition: previewStamp.customPosition,
-            widthPercent: 40,
+            widthPercent: previewStamp.widthPercent ?? 40,
             side: "front" as const,
             name: previewStamp.name,
             isPreview: true,

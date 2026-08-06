@@ -24,6 +24,7 @@ export interface PreviewEstampado {
   name: string;
   imageUrl?: string;
   customPosition?: CustomPosition | null;
+  widthPercent?: number;
 }
 
 interface Props {
@@ -86,12 +87,13 @@ export default function DesignFlow({
         imageUrl: selectedTipo.image_url || undefined,
         locations: selectedLocations,
         customPosition: customMode ? customPos : null,
+        widthPercent: selectedSizeObj?.width_percent ?? 40,
         name: `${selectedClase?.name ?? ""} · ${selectedTipo.name}`,
       });
     } else {
       onPreviewChange?.(null);
     }
-  }, [step, selectedTipo, selectedLocations, selectedClase, customMode, customPos, onPreviewChange]);
+  }, [step, selectedTipo, selectedLocations, selectedClase, selectedSizeObj, customMode, customPos, onPreviewChange]);
 
   const handleSelectClase = (id: number) => {
     setSelectedClaseId(id);

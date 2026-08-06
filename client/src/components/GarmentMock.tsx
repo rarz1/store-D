@@ -133,11 +133,11 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
 
       {sideDesigns.map((d) => {
         const style = d.customPosition
-          ? { left: `${d.customPosition.x}%`, top: `${d.customPosition.y}%`, transform: "translate(-50%, -50%)", width: `${d.widthPercent ?? 40}%` }
+          ? { left: `${d.customPosition.x}%`, top: `${d.customPosition.y}%`, transform: "translate(-50%, -50%)", width: `${d.widthPercent ?? 40}%`, height: "auto" }
           : positionStyles[d.position];
         return (
           <div
-            key={`${d.variantId}-${d.position}-${d.side ?? "auto"}${d.customPosition ? `-${d.customPosition.x}x${d.customPosition.y}` : ""}`}
+            key={d.isPreview ? `preview-${d.position}-${d.side ?? "auto"}` : `${d.variantId}-${d.position}-${d.side ?? "auto"}${d.customPosition ? `-${d.customPosition.x}x${d.customPosition.y}` : ""}`}
             className={`garment-mock__design${d.isPreview ? " garment-mock__design--preview" : ""}`}
             style={style}
           >
@@ -149,7 +149,7 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
       {dragDesign && (
         <div
           className="garment-mock__design garment-mock__design--drag"
-          style={{ left: `${dragDesign.position.x}%`, top: `${dragDesign.position.y}%`, transform: "translate(-50%, -50%)", width: `${dragDesign.widthPercent}%` }}
+          style={{ left: `${dragDesign.position.x}%`, top: `${dragDesign.position.y}%`, transform: "translate(-50%, -50%)", width: `${dragDesign.widthPercent}%`, height: "auto" }}
         >
           {dragDesign.imageUrl ? (
             <img className="garment-mock__design-image" src={dragDesign.imageUrl} alt="" />
