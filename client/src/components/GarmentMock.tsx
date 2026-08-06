@@ -86,8 +86,11 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!draggable || !onDragPosition) return;
     e.preventDefault();
+    const el = containerRef.current;
+    if (!el) return;
+    el.setPointerCapture(e.pointerId);
     const update = (clientX: number, clientY: number) => {
-      const rect = containerRef.current?.getBoundingClientRect();
+      const rect = el.getBoundingClientRect();
       if (!rect) return;
       const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
       const x = clamp(((clientX - rect.left) / rect.width) * 100, 5, 95);
@@ -96,12 +99,15 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
     };
     update(e.clientX, e.clientY);
     const move = (ev: PointerEvent) => update(ev.clientX, ev.clientY);
-    const up = () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
+    const end = () => {
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", end);
+      el.removeEventListener("pointercancel", end);
+      if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
     };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", end);
+    el.addEventListener("pointercancel", end);
   };
 
   const renderDesignNode = (d: PlacedDesign): ReactNode => {
@@ -113,7 +119,7 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
   };
 
   return (
-    <div className="garment-mock__svg" ref={containerRef} onPointerDown={draggable ? handlePointerDown : undefined}>
+    <div className="garment-mock__svg" ref={containerRef} style={draggable ? { touchAction: "none" } : undefined} onPointerDown={draggable ? handlePointerDown : undefined}>
       {coloredMock ? (
         <div className="garment-mock__custom" dangerouslySetInnerHTML={{ __html: coloredMock }} />
       ) : GarmentSVG ? (
@@ -130,7 +136,7 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
           : positionStyles[d.position];
         return (
           <div
-            key={`${d.variantId}-${d.position}-${d.customPosition ? `${d.customPosition.x}-${d.customPosition.y}` : "fixed"}`}
+            key={`${d.variantId}-${d.position}-${d.side ?? "auto"}`}
             className={`garment-mock__design${d.isPreview ? " garment-mock__design--preview" : ""}`}
             style={style}
           >
