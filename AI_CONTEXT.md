@@ -251,6 +251,14 @@ Archivo: `client/src/lib/settings.ts`
 - Limpieza previa al commit: 5 scaffolds vacíos `Admin*Tab.tsx` eliminados (código muerto de la refactor de admin) y `.codegraph/` agregado a `.gitignore`.
 - Regla de caché PWA: `sw.js` es stale-while-revalidate; para invalidar caché en futuros releases, cambiar `CACHE_NAME` (ej: `store-v2`).
 
+### Sesión 8 — 2026-08-06 (Bugfix: pantalla en blanco por caché PWA)
+
+- Síntoma: `store-d-psi.vercel.app` en blanco en TODAS las rutas (cliente y admin); las previews de Vercel (`store-d-git-main-...`) cargaban bien.
+- Causa raíz: `client/public/sw.js` usaba `CACHE_NAME "store-v1"` con stale-while-revalidate **cache-first para todo, incluido el HTML**. Tras múltiples deploys, el navegador servía un HTML viejo cacheado que referencia assets ya purgados de Vercel → el JS no cargaba (`Failed to load module script ... MIME text/html`) → blanco. Las previews funcionaban porque son orígenes distintos sin la caché envenenada.
+- Fix (commit `d4dcaf1`): `CACHE_NAME` → `store-v2` (el `activate` borra la caché vieja) + navegación **network-first** (nunca servir HTML stale si hay red).
+- Verificado: reproducción en Playwright (HTML stale + asset 404 → `BODY=''`) y contra-fix (con el mismo HTML stale, la app carga completa).
+- **Importante**: en el navegador del usuario el SW nuevo se activa con skipWaiting + claim; si persiste blanco tras el deploy, hacer hard reload una vez.
+
 ### Sesión 7 — 2026-08-05 (Diseños PNG + ubicación libre)
 
 #### Admin Diseños reescrito
