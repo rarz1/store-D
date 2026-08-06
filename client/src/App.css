@@ -406,7 +406,6 @@
   left: 22%;
   width: 56%;
   height: 30%;
-  pointer-events: none;
   transition: opacity 200ms ease;
 }
 
@@ -3184,5 +3183,35 @@ textarea:focus-visible {
   border: 1px solid var(--border);
   color: var(--text-muted);
   font-size: 0.8rem;
+}
+
+.garment-mock__design--drag {
+  opacity: 0.85;
+  cursor: grab;
+  pointer-events: none;
+}
+
+.garment-mock__design-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.garment-mock__design-svg {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.garment-mock__design-svg svg {
+  width: 100%;
+  height: 100%;
 }
 

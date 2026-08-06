@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ComponentType, useState } from "react";
+import { lazy, Suspense, type ComponentType, useRef, useState, type ReactNode } from "react";
 
 const garmentComponents: Record<string, ComponentType<{ color: string }>> = {
   remeras: lazy(() => import("../assets/garments/TShirtSVG")),
@@ -17,12 +17,27 @@ function isLight(hex: string) {
 type Side = "front" | "back";
 type Position = "small_front" | "small_front_right" | "large_front" | "small_back" | "large_back" | "sleeve";
 
+export interface CustomPosition {
+  x: number;
+  y: number;
+}
+
 interface PlacedDesign {
   variantId: number;
   svgContent: string;
+  imageUrl?: string;
   position: Position;
+  customPosition?: CustomPosition;
+  side?: Side;
   name: string;
   isPreview?: boolean;
+}
+
+interface DragDesign {
+  imageUrl?: string;
+  svgContent?: string;
+  widthPercent: number;
+  position: CustomPosition;
 }
 
 interface Props {
@@ -35,6 +50,9 @@ interface Props {
   side?: Side;
   onToggleSide?: () => void;
   hideFlip?: boolean;
+  dragDesign?: DragDesign | null;
+  onDragPosition?: (pos: CustomPosition) => void;
+  draggable?: boolean;
 }
 
 const positionStyles: Record<Position, React.CSSProperties> = {
@@ -46,7 +64,8 @@ const positionStyles: Record<Position, React.CSSProperties> = {
   sleeve: { top: "8%", left: "2%", width: "15%", height: "20%" },
 };
 
-function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, designSvg, side }: Props) {
+function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, designSvg, side, dragDesign, onDragPosition, draggable }: Props) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const GarmentSVG = garmentComponents[garmentId];
   const designColor = isLight(color) ? "#1a1a1a" : "#ffffff";
 
@@ -58,13 +77,43 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
     : null;
 
   const sideDesigns = (placedDesigns ?? []).filter((d) => {
+    if (d.side) return d.side === side;
     if (d.position === "sleeve") return true;
     if (side === "front") return d.position.includes("front");
     return d.position.includes("back");
   });
 
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (!draggable || !onDragPosition) return;
+    e.preventDefault();
+    const update = (clientX: number, clientY: number) => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
+      const x = clamp(((clientX - rect.left) / rect.width) * 100, 5, 95);
+      const y = clamp(((clientY - rect.top) / rect.height) * 100, 5, 95);
+      onDragPosition({ x, y });
+    };
+    update(e.clientX, e.clientY);
+    const move = (ev: PointerEvent) => update(ev.clientX, ev.clientY);
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
+  const renderDesignNode = (d: PlacedDesign): ReactNode => {
+    if (d.imageUrl) {
+      return <img className="garment-mock__design-image" src={d.imageUrl} alt={d.name} />;
+    }
+    const colored = d.svgContent.replace(/currentColor/gi, designColor);
+    return <div className="garment-mock__design-svg" dangerouslySetInnerHTML={{ __html: colored }} />;
+  };
+
   return (
-    <div className="garment-mock__svg">
+    <div className="garment-mock__svg" ref={containerRef} onPointerDown={draggable ? handlePointerDown : undefined}>
       {coloredMock ? (
         <div className="garment-mock__custom" dangerouslySetInnerHTML={{ __html: coloredMock }} />
       ) : GarmentSVG ? (
@@ -76,23 +125,35 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
       )}
 
       {sideDesigns.map((d) => {
-        const colored = d.svgContent.replace(/currentColor/gi, designColor);
+        const style = d.customPosition
+          ? { left: `${d.customPosition.x}%`, top: `${d.customPosition.y}%`, transform: "translate(-50%, -50%)" }
+          : positionStyles[d.position];
         return (
           <div
-            key={`${d.variantId}-${d.position}`}
+            key={`${d.variantId}-${d.position}-${d.customPosition ? `${d.customPosition.x}-${d.customPosition.y}` : "fixed"}`}
             className={`garment-mock__design${d.isPreview ? " garment-mock__design--preview" : ""}`}
-            style={positionStyles[d.position]}
-            dangerouslySetInnerHTML={{ __html: colored }}
-          />
+            style={style}
+          >
+            {renderDesignNode(d)}
+          </div>
         );
       })}
 
-      {side === "front" && designSvg && (
+      {dragDesign && (
         <div
-          className="garment-mock__design"
-          style={positionStyles.large_front}
-          dangerouslySetInnerHTML={{ __html: designSvg.replace(/currentColor/gi, designColor) }}
-        />
+          className="garment-mock__design garment-mock__design--drag"
+          style={{ left: `${dragDesign.position.x}%`, top: `${dragDesign.position.y}%`, transform: "translate(-50%, -50%)", width: `${dragDesign.widthPercent}%` }}
+        >
+          {dragDesign.imageUrl ? (
+            <img className="garment-mock__design-image" src={dragDesign.imageUrl} alt="" />
+          ) : (
+            <div className="garment-mock__design-svg" dangerouslySetInnerHTML={{ __html: (dragDesign.svgContent ?? "").replace(/currentColor/gi, designColor) }} />
+          )}
+        </div>
+      )}
+
+      {side === "front" && designSvg && (
+        <div className="garment-mock__design" style={positionStyles.large_front} dangerouslySetInnerHTML={{ __html: designSvg.replace(/currentColor/gi, designColor) }} />
       )}
     </div>
   );
