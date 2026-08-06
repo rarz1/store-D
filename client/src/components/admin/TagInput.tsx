@@ -50,7 +50,11 @@ export default function TagInput({ value, onChange, placeholder }: TagInputProps
             onChange(value.slice(0, -1));
           }
         }}
-        onBlur={addTag}
+        onBlur={(e) => {
+          const target = e.relatedTarget as HTMLElement | null;
+          if (target?.closest(".admin-tag-chip__remove")) return;
+          addTag();
+        }}
         placeholder={placeholder ?? "Escribí una etiqueta y presioná Enter"}
       />
     </div>
