@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { supabase, type EstampadoRow, type DisenoTipoRow } from "../../lib/supabase";
 import { uploadImage } from "../../lib/settings";
 import ConfirmModal from "../../components/ConfirmModal";
@@ -22,6 +22,9 @@ export default function AdminDesignsTab() {
   const [saving, setSaving] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
   const [tipoError, setTipoError] = useState<string | null>(null);
+  const [claseError, setClaseError] = useState<string | null>(null);
+  const tipoFormRef = useRef<Partial<DisenoTipoRow> | null>(null);
+  tipoFormRef.current = tipoForm;
 
   useEffect(() => {
     loadEstampados();
@@ -85,6 +88,7 @@ export default function AdminDesignsTab() {
   const saveEstampado = async () => {
     if (!estampadoForm?.name) return;
     setSaving(true);
+    setClaseError(null);
     const p = {
       name: estampadoForm.name,
       description: estampadoForm.description ?? "",
@@ -94,13 +98,20 @@ export default function AdminDesignsTab() {
       tags: estampadoForm.tags ?? [],
       sort_order: estampadoForm.sort_order ?? 0,
     };
-    const { error } = estampadoForm.id
-      ? await supabase.from("estampados").update(p).eq("id", estampadoForm.id)
-      : await supabase.from("estampados").insert(p);
-    setSaving(false);
-    if (error) { console.error("Error saving estampado:", error); return; }
-    setEstampadoForm(null);
-    await loadEstampados();
+    try {
+      const { error } = estampadoForm.id
+        ? await supabase.from("estampados").update(p).eq("id", estampadoForm.id)
+        : await supabase.from("estampados").insert(p);
+      if (error) {
+        console.error("Error saving estampado:", error);
+        setClaseError(error.message || "Error al guardar la clase");
+        return;
+      }
+      setEstampadoForm(null);
+      await loadEstampados();
+    } finally {
+      setSaving(false);
+    }
   };
 
   const saveTipo = async () => {
@@ -117,31 +128,37 @@ export default function AdminDesignsTab() {
       active: tipoForm.active ?? true,
       sort_order: tipoForm.sort_order ?? 0,
     };
-    const { error } = tipoForm.id
-      ? await supabase.from("diseno_tipos").update(p).eq("id", tipoForm.id)
-      : await supabase.from("diseno_tipos").insert(p);
-    setSaving(false);
-    if (error) {
-      console.error("Error saving tipo:", error);
-      setTipoError(error.message || "Error al guardar el tipo");
-      return;
+    try {
+      const { error } = tipoForm.id
+        ? await supabase.from("diseno_tipos").update(p).eq("id", tipoForm.id)
+        : await supabase.from("diseno_tipos").insert(p);
+      if (error) {
+        console.error("Error saving tipo:", error);
+        setTipoError(error.message || "Error al guardar el tipo");
+        return;
+      }
+      setTipoForm(null);
+      await loadTipos(p.estampado_id);
+    } finally {
+      setSaving(false);
     }
-    setTipoForm(null);
-    await loadTipos(p.estampado_id);
   };
 
   const handleTipoImage = async (file: File) => {
-    if (!tipoForm) return;
+    if (!tipoFormRef.current) return;
     if (!file.type.startsWith("image/png")) {
       setTipoError("Solo se permiten imágenes PNG");
       return;
     }
     setUploadingImg(true);
     setTipoError(null);
-    const url = await uploadImage(file, `disenos/${Date.now()}-${file.name}`);
-    setUploadingImg(false);
-    if (!url) { setTipoError("Error al subir la imagen a Supabase"); return; }
-    setTipoForm({ ...tipoForm, image_url: url });
+    try {
+      const url = await uploadImage(file, `disenos/${Date.now()}-${file.name}`);
+      if (!url) { setTipoError("Error al subir la imagen a Supabase"); return; }
+      setTipoForm((prev) => (prev ? { ...tipoFormRef.current!, image_url: url } : prev));
+    } finally {
+      setUploadingImg(false);
+    }
   };
 
   return (
@@ -164,6 +181,7 @@ export default function AdminDesignsTab() {
         <button
           className="btn-back"
           onClick={() => {
+            setClaseError(null);
             setEstampadoForm({ name: "", description: "", active: true, tags: [], sort_order: estampados.length });
             setExpandedClase(null);
             setTipoForm(null);
@@ -177,22 +195,23 @@ export default function AdminDesignsTab() {
         <div className="admin-panel">
           <div className="admin-panel__header">
             <h4>{estampadoForm.id ? "Editar clase" : "Nueva clase"}</h4>
-            <button type="button" className="admin-panel__close" onClick={() => setEstampadoForm(null)} aria-label="Cerrar">✕</button>
+            <button type="button" className="admin-panel__close" onClick={() => { setClaseError(null); setEstampadoForm(null); }} aria-label="Cerrar">✕</button>
           </div>
           <div className="admin-form">
             <label className="admin-label">Nombre</label>
-            <input className="admin-input" value={estampadoForm.name ?? ""} onChange={(e) => setEstampadoForm({ ...estampadoForm, name: e.target.value })} placeholder="Ej: Animal Print" />
+            <input className="admin-input" value={estampadoForm.name ?? ""} onChange={(e) => { setClaseError(null); setEstampadoForm({ ...estampadoForm, name: e.target.value }); }} placeholder="Ej: Animal Print" />
             <label className="admin-label">Descripción</label>
-            <input className="admin-input" value={estampadoForm.description ?? ""} onChange={(e) => setEstampadoForm({ ...estampadoForm, description: e.target.value })} />
+            <input className="admin-input" value={estampadoForm.description ?? ""} onChange={(e) => { setClaseError(null); setEstampadoForm({ ...estampadoForm, description: e.target.value }); }} />
             <label className="admin-label">Etiquetas</label>
-            <TagInput value={estampadoForm.tags ?? []} onChange={(tags) => setEstampadoForm({ ...estampadoForm, tags })} />
+            <TagInput value={estampadoForm.tags ?? []} onChange={(tags) => { setClaseError(null); setEstampadoForm({ ...estampadoForm, tags }); }} />
             <label className="admin-label">Orden</label>
-            <input className="admin-input" type="number" value={estampadoForm.sort_order ?? 0} onChange={(e) => setEstampadoForm({ ...estampadoForm, sort_order: parseInt(e.target.value) || 0 })} />
+            <input className="admin-input" type="number" value={estampadoForm.sort_order ?? 0} onChange={(e) => { setClaseError(null); setEstampadoForm({ ...estampadoForm, sort_order: parseInt(e.target.value) || 0 }); }} />
             <label className="admin-label">
-              <input type="checkbox" checked={estampadoForm.active ?? true} onChange={(e) => setEstampadoForm({ ...estampadoForm, active: e.target.checked })} />{" Activo"}
+              <input type="checkbox" checked={estampadoForm.active ?? true} onChange={(e) => { setClaseError(null); setEstampadoForm({ ...estampadoForm, active: e.target.checked }); }} />{" Activo"}
             </label>
+            {claseError && <p className="admin-error">{claseError}</p>}
             <div className="admin-form-actions">
-              <button type="button" className="btn-secondary" onClick={() => setEstampadoForm(null)}>Cancelar</button>
+              <button type="button" className="btn-secondary" onClick={() => { setClaseError(null); setEstampadoForm(null); }}>Cancelar</button>
               <button type="button" className="btn-primary btn-primary--auto" disabled={!estampadoForm.name || saving} onClick={saveEstampado}>
                 {estampadoForm.id ? "Guardar" : "Crear"}
               </button>
@@ -240,8 +259,8 @@ export default function AdminDesignsTab() {
                         setTipoForm(null);
                         if (!tiposByClase[e.id]) await loadTipos(e.id);
                       }}>{expandedClase === e.id ? "−" : "+"} Tipos</button>
-                      <button className="btn-small" onClick={() => { setEstampadoForm(e); setExpandedClase(null); setTipoForm(null); }}>Editar</button>
-                      <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "estampado", id: e.id })}>✕</button>
+                      <button className="btn-small" onClick={() => { setClaseError(null); setEstampadoForm(e); setExpandedClase(null); setTipoForm(null); }}>Editar</button>
+                      <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "estampado", id: e.id })} aria-label={`Eliminar ${e.name}`}>✕</button>
                     </div>
                   </td>
                 </tr>
@@ -265,9 +284,10 @@ export default function AdminDesignsTab() {
                             <input className="admin-input" value={tipoForm.name ?? ""} onChange={(e2) => { setTipoError(null); setTipoForm({ ...tipoForm, name: e2.target.value }); }} />
                             <label className="admin-label">Descripción</label>
                             <input className="admin-input" value={tipoForm.description ?? ""} onChange={(e2) => setTipoForm({ ...tipoForm, description: e2.target.value })} />
-                            <label className="admin-label">Imagen PNG</label>
-                            <input className="admin-input" type="file" accept="image/png" onChange={(e2) => {
+                            <label className="admin-label" htmlFor="tipo-image-input">Imagen PNG</label>
+                            <input id="tipo-image-input" className="admin-input" type="file" accept="image/png" onChange={(e2) => {
                               const file = e2.target.files?.[0];
+                              e2.target.value = "";
                               if (file) handleTipoImage(file);
                             }} />
                             {uploadingImg && <p className="admin-error">Subiendo imagen...</p>}
@@ -311,7 +331,7 @@ export default function AdminDesignsTab() {
                           </div>
                           <span style={{ fontSize: "0.75rem", marginRight: "0.5rem", color: t.active ? "var(--accent)" : "var(--text-muted)" }}>{t.active ? "✓" : "✕"}</span>
                           <button className="btn-small" onClick={() => setTipoForm(t)}>Editar</button>
-                          <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "diseno_tipo", id: t.id, parentId: e.id })}>✕</button>
+                          <button className="btn-small btn-small--danger" onClick={() => setConfirmTarget({ type: "diseno_tipo", id: t.id, parentId: e.id })} aria-label={`Eliminar ${t.name}`}>✕</button>
                         </div>
                       ))}
                     </td>
