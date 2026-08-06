@@ -16,6 +16,7 @@ interface PlacedEstampado {
   size: EstampadoSizeRow;
   locations: EstampadoLocationRow[];
   customPosition?: CustomPosition | null;
+  side?: "front" | "back";
 }
 
 export interface PreviewEstampado {
@@ -25,6 +26,7 @@ export interface PreviewEstampado {
   imageUrl?: string;
   customPosition?: CustomPosition | null;
   widthPercent?: number;
+  side?: "front" | "back";
 }
 
 interface Props {
@@ -72,6 +74,7 @@ export default function DesignFlow({
   const [selectedLocationIds, setSelectedLocationIds] = useState<number[]>([]);
   const [customMode, setCustomMode] = useState(false);
   const [customPos, setCustomPos] = useState<CustomPosition | null>({ x: 50, y: 50 });
+  const [customSide, setCustomSide] = useState<"front" | "back">("front");
 
   const selectedClase = estampados.find((e) => e.id === selectedClaseId) ?? null;
   const tipos = selectedClaseId ? (tiposByClase[selectedClaseId] ?? []) : [];
@@ -89,11 +92,12 @@ export default function DesignFlow({
         customPosition: customMode ? customPos : null,
         widthPercent: selectedSizeObj?.width_percent ?? 40,
         name: `${selectedClase?.name ?? ""} · ${selectedTipo.name}`,
+        side: customMode ? customSide : undefined,
       });
     } else {
       onPreviewChange?.(null);
     }
-  }, [step, selectedTipo, selectedLocations, selectedClase, selectedSizeObj, customMode, customPos, onPreviewChange]);
+  }, [step, selectedTipo, selectedLocations, selectedClase, selectedSizeObj, customMode, customPos, customSide, onPreviewChange]);
 
   const handleSelectClase = (id: number) => {
     setSelectedClaseId(id);
@@ -102,6 +106,7 @@ export default function DesignFlow({
     setSelectedLocationIds([]);
     setCustomMode(false);
     setCustomPos(null);
+    setCustomSide("front");
     setStep("tipo");
     onSelectClase(id);
   };
@@ -120,6 +125,7 @@ export default function DesignFlow({
     setSelectedLocationIds([]);
     setCustomMode(false);
     setCustomPos({ x: 50, y: 50 });
+    setCustomSide("front");
     setStep("location");
   };
 
@@ -129,16 +135,19 @@ export default function DesignFlow({
     );
     setCustomMode(false);
     setCustomPos(null);
+    setCustomSide("front");
   };
 
   const handleToggleCustom = () => {
     if (customMode) {
       setCustomMode(false);
       setCustomPos(null);
+      setCustomSide("front");
     } else {
       setCustomMode(true);
       setSelectedLocationIds([]);
       setCustomPos({ x: 50, y: 50 });
+      setCustomSide("front");
     }
   };
 
@@ -151,6 +160,7 @@ export default function DesignFlow({
       size: selectedSizeObj,
       locations: customMode ? [] : selectedLocations,
       customPosition: customMode ? customPos : null,
+      side: customMode ? customSide : undefined,
     });
     setSelectedClaseId(null);
     setSelectedTipoId(null);
@@ -304,9 +314,11 @@ export default function DesignFlow({
                           position: customPos ?? { x: 50, y: 50 },
                         }}
                         onDragPosition={setCustomPos}
+                        side={customSide}
+                        onToggleSide={() => setCustomSide((s) => (s === "front" ? "back" : "front"))}
                       />
                       <p className="text-muted" style={{ fontSize: "0.75rem", textAlign: "center", margin: "0.25rem 0 0" }}>
-                        Tamaño: {selectedSizeObj?.name} — mantené pulsado y mové sobre la prenda
+                        Tamaño: {selectedSizeObj?.name} — mantené pulsado y mové sobre la prenda · Cara: {customSide === "back" ? "posterior" : "frente"}
                       </p>
                     </div>
                   )}

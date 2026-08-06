@@ -18,6 +18,7 @@ export interface CartItem {
     size: EstampadoSizeRow;
     locations: EstampadoLocationRow[];
     customPosition?: { x: number; y: number } | null;
+    side?: "front" | "back";
   }>;
 }
 
@@ -61,7 +62,7 @@ function saveCart(items: CartItem[]) {
 }
 
 function normalizeEstampados(estampados: CartItem["estampados"]) {
-  return estampados.map((e) => ({ ...e, customPosition: e.customPosition ?? null }));
+  return estampados.map((e) => ({ ...e, customPosition: e.customPosition ?? null, side: e.side ?? "front" }));
 }
 
 function loadOrders(): Order[] {
@@ -194,7 +195,7 @@ function CartDrawer() {
       lines.push(`\n${idx + 1}. x${qty} ${item.garmentName} (${item.colorName}, Talle ${item.size}) - $${(unitTotal * qty).toLocaleString("es-AR")}`);
       item.estampados.forEach((p) => {
         const locText = p.customPosition
-          ? "Ubicación libre"
+          ? (p.side === "back" ? "Ubicación libre (posterior)" : "Ubicación libre (frente)")
           : p.locations.map((l) => l.name).join(", ");
         lines.push(`   • Estampado: ${p.estampado.name} · ${p.tipo.name} (${p.size.name}) [${locText}]`);
       });

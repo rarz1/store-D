@@ -21,6 +21,7 @@ interface PlacedEstampado {
   size: EstampadoSizeRow;
   locations: EstampadoLocationRow[];
   customPosition?: { x: number; y: number } | null;
+  side?: "front" | "back";
 }
 
 export default function ProductPage() {
@@ -41,7 +42,7 @@ export default function ProductPage() {
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [placedEstampados, setPlacedEstampados] = useState<PlacedEstampado[]>([]);
-  const [previewStamp, setPreviewStamp] = useState<{ svgContent: string; locations: EstampadoLocationRow[]; name: string; imageUrl?: string; customPosition?: { x: number; y: number } | null; widthPercent?: number } | null>(null);
+  const [previewStamp, setPreviewStamp] = useState<{ svgContent: string; locations: EstampadoLocationRow[]; name: string; imageUrl?: string; customPosition?: { x: number; y: number } | null; widthPercent?: number; side?: "front" | "back" } | null>(null);
 
   const handleSelectClase = async (claseId: number) => {
     if (tiposByClase[claseId]) return;
@@ -158,7 +159,7 @@ export default function ProductPage() {
     placedEstampados.forEach((p) => {
       const sizeInc = p.size.price_increment;
       const locInc = p.locations.reduce((s, l) => s + l.price_increment, 0);
-      const locText = p.customPosition ? "Ubicación libre" : p.locations.map((l) => l.name).join(", ");
+      const locText = p.customPosition ? (p.side === "back" ? "Ubicación libre (posterior)" : "Ubicación libre (frente)") : p.locations.map((l) => l.name).join(", ");
       lines.push(`• ${p.estampado.name} · ${p.tipo.name} (${p.size.name}) - ${locText}: +$${(sizeInc + locInc).toLocaleString("es-AR")}`);
     });
     lines.push(`• Total: $${totalPrice.toLocaleString("es-AR")}`);
@@ -253,7 +254,7 @@ export default function ProductPage() {
         position: "large_front" as const,
         customPosition: p.customPosition,
         widthPercent: p.size.width_percent,
-        side: "front" as const,
+        side: p.side ?? "front",
       }];
     }
     return p.locations.map((loc) => ({
@@ -271,7 +272,7 @@ export default function ProductPage() {
             position: "large_front" as const,
             customPosition: previewStamp.customPosition,
             widthPercent: previewStamp.widthPercent ?? 40,
-            side: "front" as const,
+            side: previewStamp.side ?? "front",
             name: previewStamp.name,
             isPreview: true,
           }]
@@ -449,7 +450,8 @@ export default function ProductPage() {
                   p.estampado.id === item.estampado.id &&
                   p.tipo.id === item.tipo.id &&
                   JSON.stringify(p.locations.map(l => l.id).sort()) === JSON.stringify(item.locations.map(l => l.id).sort()) &&
-                  JSON.stringify(p.customPosition ?? null) === JSON.stringify(item.customPosition ?? null)
+                  JSON.stringify(p.customPosition ?? null) === JSON.stringify(item.customPosition ?? null) &&
+                  (p.side ?? "front") === (item.side ?? "front")
                 );
                 if (isDuplicate) {
                   toast.warning("Este diseño ya está agregado en esa ubicación");
