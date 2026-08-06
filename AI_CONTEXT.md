@@ -73,6 +73,7 @@
 - **Vercel conectado a GitHub** (`rarz1/store-D`): cada push a `main` deploya automático
 - **Variables en Vercel**: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 - **Archivo clave**: `client/vercel.json` con rewrites para SPA routing
+- **Último push**: feedback del cliente (drag frente/posterior + contadores en vivo) pusheado a `main` (26eabdd) → auto-deploy en Vercel
 
 ## Variables de entorno
 
