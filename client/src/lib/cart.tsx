@@ -60,6 +60,10 @@ function saveCart(items: CartItem[]) {
   localStorage.setItem("cart", JSON.stringify(items));
 }
 
+function normalizeEstampados(estampados: CartItem["estampados"]) {
+  return estampados.map((e) => ({ ...e, customPosition: e.customPosition ?? null }));
+}
+
 function loadOrders(): Order[] {
   try {
     const raw = localStorage.getItem("orders");
@@ -91,7 +95,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           i.garmentId === item.garmentId &&
           i.colorHex === item.colorHex &&
           i.size === item.size &&
-          JSON.stringify(i.estampados) === JSON.stringify(item.estampados)
+          JSON.stringify(normalizeEstampados(i.estampados)) === JSON.stringify(normalizeEstampados(item.estampados))
       );
       if (existingIdx >= 0) {
         const updated = [...prev];
@@ -130,7 +134,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             i.garmentId === item.garmentId &&
             i.colorHex === item.colorHex &&
             i.size === item.size &&
-            JSON.stringify(i.estampados) === JSON.stringify(item.estampados)
+            JSON.stringify(normalizeEstampados(i.estampados)) === JSON.stringify(normalizeEstampados(item.estampados))
         );
         if (existingIdx >= 0) {
           next[existingIdx] = {

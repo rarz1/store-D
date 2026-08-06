@@ -28,6 +28,7 @@ interface PlacedDesign {
   imageUrl?: string;
   position: Position;
   customPosition?: CustomPosition;
+  widthPercent?: number;
   side?: Side;
   name: string;
   isPreview?: boolean;
@@ -132,11 +133,11 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
 
       {sideDesigns.map((d) => {
         const style = d.customPosition
-          ? { left: `${d.customPosition.x}%`, top: `${d.customPosition.y}%`, transform: "translate(-50%, -50%)" }
+          ? { left: `${d.customPosition.x}%`, top: `${d.customPosition.y}%`, transform: "translate(-50%, -50%)", width: `${d.widthPercent ?? 40}%` }
           : positionStyles[d.position];
         return (
           <div
-            key={`${d.variantId}-${d.position}-${d.side ?? "auto"}`}
+            key={`${d.variantId}-${d.position}-${d.side ?? "auto"}${d.customPosition ? `-${d.customPosition.x}x${d.customPosition.y}` : ""}`}
             className={`garment-mock__design${d.isPreview ? " garment-mock__design--preview" : ""}`}
             style={style}
           >

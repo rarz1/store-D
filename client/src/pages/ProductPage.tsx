@@ -158,7 +158,8 @@ export default function ProductPage() {
     placedEstampados.forEach((p) => {
       const sizeInc = p.size.price_increment;
       const locInc = p.locations.reduce((s, l) => s + l.price_increment, 0);
-      lines.push(`• ${p.estampado.name} · ${p.tipo.name} (${p.size.name}) - ${p.locations.map(l => l.name).join(", ")}: +$${(sizeInc + locInc).toLocaleString("es-AR")}`);
+      const locText = p.customPosition ? "Ubicación libre" : p.locations.map((l) => l.name).join(", ");
+      lines.push(`• ${p.estampado.name} · ${p.tipo.name} (${p.size.name}) - ${locText}: +$${(sizeInc + locInc).toLocaleString("es-AR")}`);
     });
     lines.push(`• Total: $${totalPrice.toLocaleString("es-AR")}`);
     return encodeURIComponent(lines.join("\n"));
@@ -251,6 +252,7 @@ export default function ProductPage() {
         ...base,
         position: "large_front" as const,
         customPosition: p.customPosition,
+        widthPercent: p.size.width_percent,
         side: "front" as const,
       }];
     }
@@ -268,6 +270,7 @@ export default function ProductPage() {
             imageUrl: previewStamp.imageUrl,
             position: "large_front" as const,
             customPosition: previewStamp.customPosition,
+            widthPercent: 40,
             side: "front" as const,
             name: previewStamp.name,
             isPreview: true,
