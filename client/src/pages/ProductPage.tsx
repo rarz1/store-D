@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import GarmentMock from "../components/GarmentMock";
 import DesignFlow, { type CustomPosition } from "../components/DesignFlow";
@@ -46,6 +46,45 @@ export default function ProductPage() {
   const [customMode, setCustomMode] = useState(false);
   const [customPos, setCustomPos] = useState<CustomPosition | null>(null);
   const [customSide, setCustomSide] = useState<"front" | "back">("front");
+  const frameRef = useRef<HTMLDivElement | null>(null);
+
+  // Unified free-placement drag over the whole mock frame. On each move,
+  // finds which garment mock (front or back) is under the pointer and updates
+  // customPos + customSide accordingly, so the design can be placed on either
+  // image from a single drag surface.
+  const handleFramePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!customMode) return;
+    e.preventDefault();
+    const el = frameRef.current;
+    if (!el) return;
+    el.setPointerCapture(e.pointerId);
+    const update = (clientX: number, clientY: number) => {
+      const mocks = Array.from(el.querySelectorAll("[data-side]"));
+      const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
+      for (const mock of mocks) {
+        const rect = (mock as HTMLElement).getBoundingClientRect();
+        if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+          const side = (mock as HTMLElement).dataset.side === "back" ? "back" : "front";
+          const x = clamp(((clientX - rect.left) / rect.width) * 100, 5, 95);
+          const y = clamp(((clientY - rect.top) / rect.height) * 100, 5, 95);
+          setCustomSide(side);
+          setCustomPos({ x, y });
+          break;
+        }
+      }
+    };
+    update(e.clientX, e.clientY);
+    const move = (ev: PointerEvent) => update(ev.clientX, ev.clientY);
+    const end = () => {
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", end);
+      el.removeEventListener("pointercancel", end);
+      if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+    };
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", end);
+    el.addEventListener("pointercancel", end);
+  };
 
   const handleSelectClase = async (claseId: number) => {
     if (tiposByClase[claseId]) return;
@@ -325,33 +364,37 @@ export default function ProductPage() {
 
       <div className="product-content">
         <div className="mock-section">
-          <div className="mock-duo">
-            <GarmentMock
-              garmentId={garmentId as string}
-              color={selectedColor}
-              svgMock={garment.svg_mock}
-              svgMockBack={garment.svg_mock_back}
-              placedDesigns={allMockDesigns}
-              side={customMode ? "front" : undefined}
-              hideFlip={customMode}
-              draggable={customMode}
-              dragDesign={customMode && customSide === "front" ? dragDesign : null}
-              onDragPosition={customMode ? (pos) => { setCustomPos(pos); setCustomSide("front"); } : undefined}
-            />
-            {garment.svg_mock_back && (
+          {/* Unified drag frame: a single pointer handler covers both front and
+              back mocks; the side under the cursor determines customSide. */}
+          <div
+            className={`mock-frame${customMode ? " mock-frame--drag" : ""}`}
+            ref={frameRef}
+            onPointerDown={customMode ? handleFramePointerDown : undefined}
+          >
+            <div className="mock-duo">
               <GarmentMock
                 garmentId={garmentId as string}
                 color={selectedColor}
                 svgMock={garment.svg_mock}
                 svgMockBack={garment.svg_mock_back}
                 placedDesigns={allMockDesigns}
-                side="back"
-                hideFlip
-                draggable={customMode}
-                dragDesign={customMode && customSide === "back" ? dragDesign : null}
-                onDragPosition={customMode ? (pos) => { setCustomPos(pos); setCustomSide("back"); } : undefined}
+                side={customMode ? "front" : undefined}
+                hideFlip={customMode}
+                dragDesign={customMode && customSide === "front" ? dragDesign : null}
               />
-            )}
+              {(customMode || garment.svg_mock_back) && (
+                <GarmentMock
+                  garmentId={garmentId as string}
+                  color={selectedColor}
+                  svgMock={garment.svg_mock}
+                  svgMockBack={garment.svg_mock_back}
+                  placedDesigns={allMockDesigns}
+                  side="back"
+                  hideFlip
+                  dragDesign={customMode && customSide === "back" ? dragDesign : null}
+                />
+              )}
+            </div>
           </div>
         </div>
 

@@ -120,7 +120,13 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
   };
 
   return (
-    <div className="garment-mock__svg" ref={containerRef} style={draggable ? { touchAction: "none" } : undefined} onPointerDown={draggable ? handlePointerDown : undefined}>
+    <div
+      className="garment-mock__svg"
+      ref={containerRef}
+      data-side={side}
+      style={draggable ? { touchAction: "none" } : undefined}
+      onPointerDown={draggable ? handlePointerDown : undefined}
+    >
       {coloredMock ? (
         <div className="garment-mock__custom" dangerouslySetInnerHTML={{ __html: coloredMock }} />
       ) : GarmentSVG ? (

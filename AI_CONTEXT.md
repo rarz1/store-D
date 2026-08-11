@@ -315,3 +315,17 @@ Archivo: `client/src/lib/settings.ts`
 - `placed-estampado-row__locs` muestra "Ubicación libre · Frente/Posterior".
 - Limpieza de dead code: eliminados `LocationSelector.tsx`, hooks `useEstampadoLocations`/`useGarmentEstampadoLocations` de `lib/hooks.ts`, y CSS `.design-option-*` de `App.css`. El CRUD de `estampado_locations` en admin queda intacto.
 - Verificación: `npm run build` pasa; oxlint solo con warnings preexistentes (exhaustive-deps en ProductPage).
+
+### Sesión 10b — 2026-08-10 (Marco unificado de arrastre frente/posterior)
+
+- Problema reportado: el diseño solo se ubicaba en la imagen superior. Causa raíz: en móvil el segundo mock estaba `display:none`, y el mock posterior solo se renderizaba si existía `svg_mock_back` (solo "Conjuntos" lo tiene). Nunca se llegaba a la vista posterior.
+- Solución: `.mock-frame` envuelve ambos mocks con un único handler de drag (`handleFramePointerDown` en `ProductPage`). Usa `data-side` en `.garment-mock__svg` para detectar qué imagen está bajo el cursor y setea `customPos` + `customSide`.
+- En modo custom ambos mocks se muestran siempre (incluso en móvil y sin `svg_mock_back`, el back mock hace fallback al SVG frontal).
+- `.mock-frame--drag` da outline de acento al marco durante el drag. Verificado con Playwright (desktop + mobile 390px): arrastrando sobre el mock posterior el diseño queda en la vista back.
+
+### Sesión 10c — 2026-08-10 (Fix móvil: drag no pasaba al mock inferior)
+
+- Bug: en móvil el diseño "solo se movía en la imagen superior" y no pasaba a la inferior. Causa: con los mocks apilados en columna y `touch-action: none` en todo el marco, la página no scrolleaba y el mock de abajo quedaba fuera del viewport → imposible arrastrar hasta él.
+- Fix CSS en `App.css`: en modo drag (`.mock-frame--drag`) el `.mock-duo` pasa a `flex-direction: row` con `align-items: flex-start` y cada mock `flex: 1; max-width: 48%` — así ambos mocks quedan lado a lado como un solo marco, incluso en móvil, y el diseño se arrastra de una imagen a la otra sin scroll.
+- En modo normal (sin drag) todo queda igual en móvil: segundo mock `display: none`, botón flip visible.
+- Verificación Playwright (touch CDP, iPhone 13): cruce front→back confirmado en móvil con los dos mocks visibles lado a lado; el drag queda en `back` al soltar sobre el mock posterior.

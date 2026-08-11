@@ -347,6 +347,27 @@
   justify-content: center;
 }
 
+.mock-frame {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.mock-frame--drag {
+  touch-action: none;
+  cursor: grab;
+}
+
+.mock-frame--drag:active {
+  cursor: grabbing;
+}
+
+.mock-frame--drag .garment-mock {
+  box-shadow: inset 0 0 0 2px var(--accent);
+  border-radius: var(--radius-sm);
+}
+
 .mock-duo {
   display: flex;
   flex-direction: column;
@@ -363,6 +384,25 @@
 /* hide second mock on mobile, first mock's flip shows on mobile */
 .mock-duo .garment-mock + .garment-mock {
   display: none;
+}
+
+/* show both front + back mocks in the unified drag frame, even on mobile */
+.mock-frame--drag .mock-duo .garment-mock + .garment-mock {
+  display: flex;
+}
+
+/* drag mode: place the two mocks side by side (as one continuous frame) even
+   on mobile so the free-placed design can reach either image without
+   scrolling */
+.mock-frame--drag .mock-duo {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.mock-frame--drag .mock-duo .garment-mock {
+  flex: 1;
+  min-width: 0;
+  max-width: 48%;
 }
 
 .controls-section {
