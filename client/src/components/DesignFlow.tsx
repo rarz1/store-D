@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import type { EstampadoRow, DisenoTipoRow, EstampadoSizeRow, EstampadoLocationRow } from "../lib/supabase";
 import EstampadoSelector from "./EstampadoSelector";
 import SizeSelector from "./SizeSelector";
-import LocationSelector from "./LocationSelector";
-import GarmentMock from "./GarmentMock";
 
 export interface CustomPosition {
   x: number;
@@ -33,15 +31,16 @@ interface Props {
   estampados: EstampadoRow[];
   tiposByClase: Record<number, DisenoTipoRow[]>;
   stampSizes: EstampadoSizeRow[];
-  stampLocations: EstampadoLocationRow[];
   onAdd: (item: PlacedEstampado) => void;
   onOpenHelp: () => void;
   onSelectClase: (claseId: number) => void;
   onPreviewChange?: (preview: PreviewEstampado | null) => void;
-  garmentId?: string;
-  color?: string;
-  svgMock?: string;
-  svgMockBack?: string;
+  customMode: boolean;
+  customPos: CustomPosition | null;
+  customSide: "front" | "back";
+  onCustomModeChange: (mode: boolean) => void;
+  onCustomPosChange: (pos: CustomPosition | null) => void;
+  onCustomSideChange: (side: "front" | "back") => void;
 }
 
 type Step = "closed" | "clase" | "tipo" | "size" | "location";
@@ -57,56 +56,63 @@ export default function DesignFlow({
   estampados,
   tiposByClase,
   stampSizes,
-  stampLocations,
   onAdd,
   onOpenHelp,
   onSelectClase,
   onPreviewChange,
-  garmentId,
-  color,
-  svgMock,
-  svgMockBack,
+  customPos,
+  customSide,
+  onCustomModeChange,
+  onCustomPosChange,
+  onCustomSideChange,
 }: Props) {
   const [step, setStep] = useState<Step>("closed");
   const [selectedClaseId, setSelectedClaseId] = useState<number | null>(null);
   const [selectedTipoId, setSelectedTipoId] = useState<number | null>(null);
   const [selectedSizeId, setSelectedSizeId] = useState<number | null>(null);
-  const [selectedLocationIds, setSelectedLocationIds] = useState<number[]>([]);
-  const [customMode, setCustomMode] = useState(false);
-  const [customPos, setCustomPos] = useState<CustomPosition | null>({ x: 50, y: 50 });
-  const [customSide, setCustomSide] = useState<"front" | "back">("front");
 
   const selectedClase = estampados.find((e) => e.id === selectedClaseId) ?? null;
   const tipos = selectedClaseId ? (tiposByClase[selectedClaseId] ?? []) : [];
   const selectedTipo = tipos.find((t) => t.id === selectedTipoId) ?? null;
   const selectedSizeObj = stampSizes.find((s) => s.id === selectedSizeId) ?? null;
-  const selectedLocations = stampLocations.filter((l) => selectedLocationIds.includes(l.id));
 
-  // M3: Emit preview of currently selected but unconfirmed stamp design
+  // Sync custom placement mode with the "location" step. Free placement is now
+  // the only option, so reaching the location step activates the drag on the
+  // main garment mock in ProductPage.
   useEffect(() => {
-    if (step !== "closed" && selectedTipo && (selectedLocations.length > 0 || (customMode && customPos))) {
+    if (step === "location") {
+      onCustomModeChange(true);
+      onCustomPosChange({ x: 50, y: 50 });
+      onCustomSideChange("front");
+    } else {
+      onCustomModeChange(false);
+      onCustomPosChange(null);
+      onCustomSideChange("front");
+    }
+  }, [step, onCustomModeChange, onCustomPosChange, onCustomSideChange]);
+
+  // Emit preview of the currently selected (but unconfirmed) design so
+  // ProductPage can render it as the draggable design on the garment mock.
+  useEffect(() => {
+    if (step === "location" && selectedTipo && customPos) {
       onPreviewChange?.({
         svgContent: selectedTipo.svg_content || selectedClase?.svg_content || "",
         imageUrl: selectedTipo.image_url || undefined,
-        locations: selectedLocations,
-        customPosition: customMode ? customPos : null,
+        locations: [],
+        customPosition: customPos,
         widthPercent: selectedSizeObj?.width_percent ?? 40,
         name: `${selectedClase?.name ?? ""} · ${selectedTipo.name}`,
-        side: customMode ? customSide : undefined,
+        side: customSide,
       });
     } else {
       onPreviewChange?.(null);
     }
-  }, [step, selectedTipo, selectedLocations, selectedClase, selectedSizeObj, customMode, customPos, customSide, onPreviewChange]);
+  }, [step, selectedTipo, selectedClase, selectedSizeObj, customPos, customSide, onPreviewChange]);
 
   const handleSelectClase = (id: number) => {
     setSelectedClaseId(id);
     setSelectedTipoId(null);
     setSelectedSizeId(stampSizes[0]?.id ?? null);
-    setSelectedLocationIds([]);
-    setCustomMode(false);
-    setCustomPos(null);
-    setCustomSide("front");
     setStep("tipo");
     onSelectClase(id);
   };
@@ -114,61 +120,28 @@ export default function DesignFlow({
   const handleSelectTipo = (id: number) => {
     setSelectedTipoId(id);
     setSelectedSizeId(stampSizes[0]?.id ?? null);
-    setSelectedLocationIds([]);
-    setCustomMode(false);
-    setCustomPos(null);
-    setCustomSide("front");
     setStep("size");
   };
 
   const handleSelectSize = (id: number) => {
     setSelectedSizeId(id);
-    setSelectedLocationIds([]);
-    setCustomMode(false);
-    setCustomPos({ x: 50, y: 50 });
-    setCustomSide("front");
     setStep("location");
-  };
-
-  const handleToggleLocation = (id: number) => {
-    setSelectedLocationIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-    setCustomMode(false);
-    setCustomPos(null);
-    setCustomSide("front");
-  };
-
-  const handleToggleCustom = () => {
-    if (customMode) {
-      setCustomMode(false);
-      setCustomPos(null);
-      setCustomSide("front");
-    } else {
-      setCustomMode(true);
-      setSelectedLocationIds([]);
-      setCustomPos({ x: 50, y: 50 });
-      setCustomSide("front");
-    }
   };
 
   const handleConfirm = () => {
     if (!selectedClase || !selectedTipo || !selectedSizeObj) return;
-    if (customMode && !customPos) return;
+    if (!customPos) return;
     onAdd({
       estampado: selectedClase,
       tipo: selectedTipo,
       size: selectedSizeObj,
-      locations: customMode ? [] : selectedLocations,
-      customPosition: customMode ? customPos : null,
-      side: customMode ? customSide : undefined,
+      locations: [],
+      customPosition: customPos,
+      side: customSide,
     });
     setSelectedClaseId(null);
     setSelectedTipoId(null);
     setSelectedSizeId(null);
-    setSelectedLocationIds([]);
-    setCustomMode(false);
-    setCustomPos(null);
     setStep("closed");
     onPreviewChange?.(null);
   };
@@ -292,42 +265,15 @@ export default function DesignFlow({
 
               {step === "location" && (
                 <div className="design-flow__confirm">
-                  <LocationSelector
-                    locations={stampLocations}
-                    selectedIds={selectedLocationIds}
-                    onToggle={handleToggleLocation}
-                    onCustomToggle={handleToggleCustom}
-                    customActive={customMode}
-                  />
-                  {customMode && garmentId && color && (
-                    <div className="design-flow__drag">
-                      <span className="control-label" style={{ marginBottom: "0.25rem", display: "block" }}>ARRÁSTRÁ EL DISEÑO SOBRE LA PRENDA</span>
-                      <GarmentMock
-                        garmentId={garmentId}
-                        color={color}
-                        svgMock={svgMock}
-                        svgMockBack={svgMockBack}
-                        draggable
-                        dragDesign={{
-                          imageUrl: selectedTipo?.image_url || undefined,
-                          svgContent: selectedTipo?.svg_content || selectedClase?.svg_content || "",
-                          widthPercent: selectedSizeObj?.width_percent ?? 40,
-                          position: customPos ?? { x: 50, y: 50 },
-                        }}
-                        onDragPosition={setCustomPos}
-                        side={customSide}
-                        onToggleSide={() => setCustomSide((s) => (s === "front" ? "back" : "front"))}
-                      />
-                      <p className="text-muted" style={{ fontSize: "0.75rem", textAlign: "center", margin: "0.25rem 0 0" }}>
-                        Tamaño: {selectedSizeObj?.name} — mantené pulsado y mové sobre la prenda · Cara: {customSide === "back" ? "posterior" : "frente"}
-                      </p>
-                    </div>
-                  )}
+                  <p className="text-muted" style={{ fontSize: "0.8rem", margin: "0.25rem 0 0" }}>
+                    Arrastrá el diseño directamente sobre la prenda para ubicarlo donde quieras.
+                    Usá la vista frontal o posterior para elegir la cara.
+                  </p>
                   <button
                     className="btn-primary"
                     style={{ width: "100%", marginTop: "0.75rem" }}
                     onClick={handleConfirm}
-                    disabled={!customMode ? selectedLocationIds.length === 0 : !customPos}
+                    disabled={!customPos}
                     type="button"
                   >
                     Confirmar estampado

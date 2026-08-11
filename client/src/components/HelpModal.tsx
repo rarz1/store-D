@@ -23,7 +23,7 @@ export default function HelpModal({ open, onClose }: Props) {
             <li>Tocá <strong>"+ Agregar estampado"</strong></li>
             <li>Elegí un <strong>diseño</strong> del catálogo</li>
             <li>Seleccioná el <strong>tamaño</strong> del estampado</li>
-            <li>Elegí <strong>dónde</strong> va ubicado en la prenda (podés elegir más de uno)</li>
+            <li>Arrastrá el diseño <strong>directamente sobre la prenda</strong> para ubicarlo donde quieras (frente o posterior)</li>
             <li>Confirmá y repetí si querés más estampados</li>
             <li>Agregá al <strong>carrito</strong> cuando estés listo</li>
           </ol>

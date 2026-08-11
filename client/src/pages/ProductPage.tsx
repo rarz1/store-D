@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import GarmentMock from "../components/GarmentMock";
-import DesignFlow from "../components/DesignFlow";
+import DesignFlow, { type CustomPosition } from "../components/DesignFlow";
 import HelpModal from "../components/HelpModal";
 import SizeGuideModal from "../components/SizeGuideModal";
 import AppHeader from "../components/AppHeader";
 import { useCart } from "../lib/cart";
 import { useToast } from "../lib/toast";
 import { useFavorites } from "../lib/favorites";
-import { useGarment, useGarmentColors, useGarmentSizes, useEstampados, useGarmentEstampadoSizes, useGarmentEstampadoLocations } from "../lib/hooks";
+import { useGarment, useGarmentColors, useGarmentSizes, useEstampados, useGarmentEstampadoSizes } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 import { setMeta, setCanonical, setJsonLd, clearJsonLd } from "../lib/seo";
 import type { EstampadoRow, DisenoTipoRow, EstampadoSizeRow, EstampadoLocationRow, GarmentRow } from "../lib/supabase";
@@ -36,13 +36,16 @@ export default function ProductPage() {
   const { data: sizes = [] } = useGarmentSizes(garment?.id ?? 0);
   const { data: estampados = [] } = useEstampados();
   const { data: stampSizes = [] } = useGarmentEstampadoSizes(garment?.id ?? 0);
-  const { data: stampLocations = [] } = useGarmentEstampadoLocations(garment?.id ?? 0);
   const [tiposByClase, setTiposByClase] = useState<Record<number, DisenoTipoRow[]>>({});
 
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [placedEstampados, setPlacedEstampados] = useState<PlacedEstampado[]>([]);
   const [previewStamp, setPreviewStamp] = useState<{ svgContent: string; locations: EstampadoLocationRow[]; name: string; imageUrl?: string; customPosition?: { x: number; y: number } | null; widthPercent?: number; side?: "front" | "back" } | null>(null);
+
+  const [customMode, setCustomMode] = useState(false);
+  const [customPos, setCustomPos] = useState<CustomPosition | null>(null);
+  const [customSide, setCustomSide] = useState<"front" | "back">("front");
 
   const handleSelectClase = async (claseId: number) => {
     if (tiposByClase[claseId]) return;
@@ -263,30 +266,18 @@ export default function ProductPage() {
     }));
   });
 
-  const previewDesigns = previewStamp
-    ? (previewStamp.customPosition
-        ? [{
-            variantId: 999999,
-            svgContent: previewStamp.svgContent,
-            imageUrl: previewStamp.imageUrl,
-            position: "large_front" as const,
-            customPosition: previewStamp.customPosition,
-            widthPercent: previewStamp.widthPercent ?? 40,
-            side: previewStamp.side ?? "front",
-            name: previewStamp.name,
-            isPreview: true,
-          }]
-        : previewStamp.locations.map((loc) => ({
-            variantId: 999999,
-            svgContent: previewStamp.svgContent,
-            imageUrl: previewStamp.imageUrl,
-            position: loc.position_key as "small_front" | "small_front_right" | "large_front" | "small_back" | "large_back" | "sleeve",
-            name: previewStamp.name,
-            isPreview: true,
-          })))
-    : [];
+  // Design that is being dragged/previewed directly on the garment mock while
+  // the user is in the free placement ("location") step.
+  const dragDesign = customMode && previewStamp
+    ? {
+        imageUrl: previewStamp.imageUrl,
+        svgContent: previewStamp.svgContent,
+        widthPercent: previewStamp.widthPercent ?? 40,
+        position: customPos ?? { x: 50, y: 50 },
+      }
+    : null;
 
-  const allMockDesigns = [...placedDesigns, ...previewDesigns];
+  const allMockDesigns = placedDesigns;
 
   return (
     <div className="product-page">
@@ -341,6 +332,11 @@ export default function ProductPage() {
               svgMock={garment.svg_mock}
               svgMockBack={garment.svg_mock_back}
               placedDesigns={allMockDesigns}
+              side={customMode ? "front" : undefined}
+              hideFlip={customMode}
+              draggable={customMode}
+              dragDesign={customMode && customSide === "front" ? dragDesign : null}
+              onDragPosition={customMode ? (pos) => { setCustomPos(pos); setCustomSide("front"); } : undefined}
             />
             {garment.svg_mock_back && (
               <GarmentMock
@@ -351,6 +347,9 @@ export default function ProductPage() {
                 placedDesigns={allMockDesigns}
                 side="back"
                 hideFlip
+                draggable={customMode}
+                dragDesign={customMode && customSide === "back" ? dragDesign : null}
+                onDragPosition={customMode ? (pos) => { setCustomPos(pos); setCustomSide("back"); } : undefined}
               />
             )}
           </div>
@@ -422,7 +421,7 @@ export default function ProductPage() {
                   <div key={i} className="placed-estampado-row">
                     <div className="placed-estampado-row__info">
                       <span className="placed-estampado-row__name">{p.estampado.name} · {p.tipo.name} · {p.size.name}</span>
-                      <span className="placed-estampado-row__locs">{p.locations.map(l => l.name).join(", ")}</span>
+                      <span className="placed-estampado-row__locs">Ubicación libre · {(p.side ?? "front") === "back" ? "Posterior" : "Frente"}</span>
                     </div>
                     <span className="placed-estampado-row__price">
                       +${(p.size.price_increment + p.locations.reduce((s, l) => s + l.price_increment, 0)).toLocaleString("es-AR")}
@@ -437,14 +436,15 @@ export default function ProductPage() {
               estampados={estampados}
               tiposByClase={tiposByClase}
               stampSizes={stampSizes}
-              stampLocations={stampLocations}
-              garmentId={garmentId as string}
-              color={selectedColor}
-              svgMock={garment.svg_mock}
-              svgMockBack={garment.svg_mock_back}
               onOpenHelp={() => setShowHelpModal(true)}
               onSelectClase={handleSelectClase}
               onPreviewChange={setPreviewStamp}
+              customMode={customMode}
+              customPos={customPos}
+              customSide={customSide}
+              onCustomModeChange={setCustomMode}
+              onCustomPosChange={setCustomPos}
+              onCustomSideChange={setCustomSide}
               onAdd={(item) => {
                 const isDuplicate = placedEstampados.some((p) =>
                   p.estampado.id === item.estampado.id &&

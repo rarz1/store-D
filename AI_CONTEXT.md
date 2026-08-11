@@ -56,9 +56,11 @@
 - `estampados` = clases de diseño (ej: Animal Print, Geométricos)
 - `diseno_tipos` = sub-diseños dentro de una clase (ej: Leopardo dentro de Animal Print), cada uno con su propio SVG
 - `estampado_sizes` = escala del diseño (Pequeño 25% → Full 100% del ancho), controla qué % del área de la prenda ocupa
-- `estampado_locations` = posición en el mock (Pecho Izq, Centro Espalda, etc.), el `position_key` mapea a coordenadas SVG en GarmentMock
+- `estampado_locations` = posición fija (Pecho Izq, Centro Espalda, etc.) — **ya NO se usa en el flujo de compra**, solo queda el CRUD del admin
 - `garment_estampado_sizes`/`garment_estampado_locations` = junction tables: qué sizes/locations están disponibles por prenda
-- Flujo en frontend: usuario elige clase → tipo → tamaño → ubicación(es) → confirma
+- Flujo en frontend: usuario elige clase → tipo → tamaño → arrastra el diseño sobre el mock (ubicación libre) → confirma
+- La ubicación es SIEMPRE libre (drag sobre el mock): `customPosition {x,y}` + `side ("front"|"back")`; `locations: []` siempre
+- El estado del drag vive en `ProductPage` (`customMode`, `customPos`, `customSide`) y se pasa a `DesignFlow` como props controladas
 
 ## Admin reciente
 
@@ -100,10 +102,9 @@ Archivo: `client/src/lib/settings.ts`
 | `QuickViewModal` | `components/QuickViewModal.tsx` | Modal de vista rápida de productos desde el homepage |
 | `OnboardingModal` | `components/OnboardingModal.tsx` | Modal de bienvenida para primeros visitantes |
 | `GarmentMock` | `components/GarmentMock.tsx` | Mock SVG de prenda con color dinámico, flip front/back, placement de diseños |
-| `DesignFlow` | `components/DesignFlow.tsx` | Configurador de estampados con stepper de 4 pasos y preview en tiempo real |
+| `DesignFlow` | `components/DesignFlow.tsx` | Configurador de estampados con stepper de 4 pasos; paso "location" activa el drag controlado desde ProductPage |
 | `EstampadoSelector` | `components/EstampadoSelector.tsx` | Selector de clase de estampado con filtro por tags |
 | `SizeSelector` | `components/SizeSelector.tsx` | Selector de tamaño de estampado |
-| `LocationSelector` | `components/LocationSelector.tsx` | Selector de ubicación del estampado en la prenda |
 | `SizeGuideModal` | `components/SizeGuideModal.tsx` | Guía de talles con medidas reales en cm por tipo de prenda |
 | `ConfirmModal` | `components/ConfirmModal.tsx` | Modal de confirmación reutilizable |
 | `HelpModal` | `components/HelpModal.tsx` | Modal de ayuda con pasos de personalización |
@@ -303,3 +304,14 @@ Archivo: `client/src/lib/settings.ts`
 
 #### Deploy
 - Commit con `uploadImage` + AI_CONTEXT pusheado a `main` → auto-deploy en Vercel.
+
+### Sesión 10 — 2026-08-10 (Ubicación fija eliminada del flujo de compra)
+
+- Concepto del cliente: eliminar el selector de ubicaciones fijas de la vista cliente; el diseño se arrastra SIEMPRE directo sobre el mock real de la prenda (ubicación libre).
+- `DesignFlow` deja de renderizar su propio `GarmentMock` y de usar `LocationSelector`/`stampLocations`. Las props `stampLocations`, `garmentId`, `color`, `svgMock`, `svgMockBack` se eliminaron del componente.
+- El estado del drag (`customMode`, `customPos`, `customSide`) se levantó a `ProductPage` y se pasa a `DesignFlow` como props controladas (`onCustomModeChange`, `onCustomPosChange`, `onCustomSideChange`).
+- Ambos mocks (frente + posterior) en `ProductPage` son `draggable` en modo custom; el `dragDesign` solo se renderiza en el lado activo (`customSide`).
+- Se eliminó la duplicación `previewDesigns`: `allMockDesigns = placedDesigns`, y el preview en vivo es el propio `dragDesign` construido desde `previewStamp` + `customPos`.
+- `placed-estampado-row__locs` muestra "Ubicación libre · Frente/Posterior".
+- Limpieza de dead code: eliminados `LocationSelector.tsx`, hooks `useEstampadoLocations`/`useGarmentEstampadoLocations` de `lib/hooks.ts`, y CSS `.design-option-*` de `App.css`. El CRUD de `estampado_locations` en admin queda intacto.
+- Verificación: `npm run build` pasa; oxlint solo con warnings preexistentes (exhaustive-deps en ProductPage).
