@@ -17,7 +17,7 @@
 ### Rutas públicas
 | Ruta | Descripción |
 |------|-------------|
-| `/` | Home con carrusel (slides desde DB) + StoreBanner con logo/título + grilla de categorías + Quick View |
+| `/` | Home con carrusel (slides desde DB) + StoreBanner con logo/título + grilla de categorías (clic → va directo a personalización) |
 | `/producto/:garmentId` | Configurador interactivo (color/talle/diseño) con mock SVG + breadcrumb |
 
 ### Rutas admin
@@ -38,7 +38,7 @@
 - Consulta por WhatsApp con resumen del producto configurado
 - Admin con 5 tabs: Productos, Diseños, Tienda, Carrusel, Colores
 - Mobile-first, responsive, safe areas
-- Quick View modal en tarjetas de categoría del homepage
+- Quick View modal eliminado: el clic en una tarjeta de categoría navega directo a la personalización (`/producto/:slug`)
 - Onboarding modal para primeros visitantes (una vez, con localStorage)
 - FAB flotante del carrito en móvil con badge dinámico
 - Breadcrumb de navegación en página de producto
@@ -99,7 +99,7 @@ Archivo: `client/src/lib/settings.ts`
 | `Carousel` | `components/Carousel.tsx` | Carrusel full-viewport, slides desde `carousel_slides` |
 | `StoreBanner` | `components/StoreBanner.tsx` | Header con glass effect sobre carrusel, logo + título + subtítulo |
 | `AppHeader` | `components/AppHeader.tsx` | Header persistente con logo, badge de carrito, FAB flotante en móvil |
-| `QuickViewModal` | `components/QuickViewModal.tsx` | Modal de vista rápida de productos desde el homepage |
+| `QuickViewModal` | `components/QuickViewModal.tsx` | Modal de vista rápida de productos — **ya no se usa** (las cards navegan directo) |
 | `OnboardingModal` | `components/OnboardingModal.tsx` | Modal de bienvenida para primeros visitantes |
 | `GarmentMock` | `components/GarmentMock.tsx` | Mock SVG de prenda con color dinámico, flip front/back, placement de diseños |
 | `DesignFlow` | `components/DesignFlow.tsx` | Configurador de estampados con stepper de 4 pasos; paso "location" activa el drag controlado desde ProductPage |
@@ -329,7 +329,6 @@ Archivo: `client/src/lib/settings.ts`
 - Fix CSS en `App.css`: en modo drag (`.mock-frame--drag`) el `.mock-duo` pasa a `flex-direction: row` con `align-items: flex-start` y cada mock `flex: 1; max-width: 48%` — así ambos mocks quedan lado a lado como un solo marco, incluso en móvil, y el diseño se arrastra de una imagen a la otra sin scroll.
 
 ### Sesión 10d — 2026-08-10 (UI de personalización premium: labels, stepper, botón "Elegí diseño")
-
 - Título de sección `.personalize-title` ("Personaliza tu prenda" sin tilde) sobre el selector de color en `ProductPage`; labels de control pasan a "ELEGÍ COLOR" y "ELEGÍ TALLA".
 - "Talle" → "talla" en toda la app (ProductPage, cart.tsx, SizeGuideModal, OnboardingModal, AdminGarmentForm, AdminDashboard).
 - Eliminado `HelpModal.tsx` (botón de ayuda y modal "¿Cómo funciona?") y su CSS (`.btn-small--help`, `.help-steps`).
@@ -338,3 +337,20 @@ Archivo: `client/src/lib/settings.ts`
 - Verificado con Playwright: labels nuevos renderizan, sin "talle" en la UI, botón volver cierra/reabre el flujo, stepper 2×2 sin overflow, y el drag de ubicación sigue funcionando.
 - En modo normal (sin drag) todo queda igual en móvil: segundo mock `display: none`, botón flip visible.
 - Verificación Playwright (touch CDP, iPhone 13): cruce front→back confirmado en móvil con los dos mocks visibles lado a lado; el drag queda en `back` al soltar sobre el mock posterior.
+
+### Sesión 10e — 2026-08-10 (Colecciones directo a personalización + acciones del carrito)
+
+- **HomePage**: eliminado `QuickViewModal` (import, estado, handler y JSX). El clic en una tarjeta de categoría ahora navega directo a la personalización: `onClick={() => handleConfigure(g.slug)}` → `/producto/:slug`.
+- **Descripción en colecciones**: las cards de categoría ahora muestran `g.description` en `.category-card__desc` (clamp de 2 líneas).
+- **Carrito (`cart.tsx`)**: el drawer ahora siempre muestra "Continuar comprando" (btn-outline) que cierra el drawer y navega a `/` (colecciones). "Vaciar carrito" (btn-danger) limpia el carrito **y** cierra el drawer (vuelve a donde estaba el usuario al agregar). `CartDrawer` usa `useNavigate`.
+- **Botón "Elegir diseño" (`DesignFlow.tsx` + `App.css`)**: se eliminó la frase duplicada — el `.choice-btn__label` "Elegí diseño" desaparece y queda solo el value "Elegir diseño" (o el diseño seleccionado). El botón ahora es salmón: clase `.choice-btn--salmon` (bg `#fa8072`, hover `#f96c5c`, texto y flecha blancos).
+- Verificación: `npx tsc -b` sin errores; oxlint solo con warnings preexistentes. Commit `d22938a` pusheado a `main`.
+
+### Sesión 10f — 2026-08-10 (Thumbnail de la prenda personalizada en el carrito)
+
+- El drawer del carrito ahora muestra una miniatura de la prenda personalizada por ítem (render en vivo con `GarmentMock`, opción A — sin captura PNG).
+- `CartItem` gana `garmentSvgMock?` y `garmentSvgMockBack?` (opcionales), guardados desde `ProductPage.handleAddToCart`.
+- `cart.tsx`: helper `buildCartMockDesigns()` replica la lógica `placedDesigns` de ProductPage (variantId, svgContent, imageUrl, position desde `location.position_key`, customPosition + widthPercent + side). Componente `CartItemThumb` renderiza el frente y, si hay diseños en back (`side === "back"` o position con "back"), también el dorso.
+- CSS: `.cart-drawer__item-thumb` (4.5rem, `--surface-hover` bg) con override del `max-width: 380px` de `.garment-mock__custom` para que el SVG ocupe el thumb.
+- Items viejos en `localStorage` sin los SVG guardados caen al mock genérico por slug (`remeras`/`pantalones`/`buzos`) — siguen visibles.
+- Gotcha: TS2339 al acceder `d.side` sobre la unión de returns → cast `(d as { side?: string })`. Verificación: `npx tsc -b` y oxlint pasan. Commit `ae76a9b` pusheado a `main`.
