@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
+import GarmentMock from "../components/GarmentMock";
 import type { EstampadoRow, EstampadoSizeRow, EstampadoLocationRow, DisenoTipoRow } from "./supabase";
 
 const ADMIN_PHONE = import.meta.env.VITE_WHATSAPP_PHONE ?? "";
@@ -9,6 +10,8 @@ export interface CartItem {
   garmentName: string;
   garmentSlug: string;
   garmentBasePrice: number;
+  garmentSvgMock?: string;
+  garmentSvgMockBack?: string;
   colorHex: string;
   colorName: string;
   size: string;
@@ -183,6 +186,59 @@ export function useCart() {
   return useContext(CartContext);
 }
 
+function buildCartMockDesigns(estampados: CartItem["estampados"]) {
+  return estampados.flatMap((p) => {
+    const base = {
+      variantId: p.tipo.id,
+      svgContent: p.tipo.svg_content || p.estampado.svg_content,
+      imageUrl: p.tipo.image_url || undefined,
+      name: `${p.estampado.name} · ${p.tipo.name}`,
+    };
+    if (p.customPosition) {
+      return [{
+        ...base,
+        position: "large_front" as const,
+        customPosition: p.customPosition,
+        widthPercent: p.size.width_percent,
+        side: p.side ?? "front",
+      }];
+    }
+    return p.locations.map((loc) => ({
+      ...base,
+      position: loc.position_key as "small_front" | "small_front_right" | "large_front" | "small_back" | "large_back" | "sleeve",
+    }));
+  });
+}
+
+function CartItemThumb({ item }: { item: CartItem }) {
+  const designs = buildCartMockDesigns(item.estampados);
+  const hasBack = designs.some((d) => (d as { side?: string }).side === "back" || d.position.includes("back"));
+  return (
+    <div className="cart-drawer__item-thumb">
+      <GarmentMock
+        garmentId={item.garmentSlug}
+        color={item.colorHex}
+        svgMock={item.garmentSvgMock}
+        svgMockBack={item.garmentSvgMockBack}
+        placedDesigns={designs}
+        side="front"
+        hideFlip
+      />
+      {hasBack && (
+        <GarmentMock
+          garmentId={item.garmentSlug}
+          color={item.colorHex}
+          svgMock={item.garmentSvgMock}
+          svgMockBack={item.garmentSvgMockBack}
+          placedDesigns={designs}
+          side="back"
+          hideFlip
+        />
+      )}
+    </div>
+  );
+}
+
 function CartDrawer() {
   const navigate = useNavigate();
   const { items, updateQuantity, removeItem, clearCart, totalPrice, totalItems, isOpen, closeCart, orders, reorder, placeOrder } = useCart();
@@ -241,6 +297,7 @@ function CartDrawer() {
 
                 return (
                   <div key={i} className="cart-drawer__item">
+                    <CartItemThumb item={item} />
                     <div className="cart-drawer__item-info">
                       <strong>{item.garmentName}</strong>
                       <span className="cart-drawer__item-meta">

@@ -2157,6 +2157,39 @@
   border-bottom: 1px solid var(--border);
 }
 
+.cart-drawer__item-thumb {
+  flex-shrink: 0;
+  width: 4.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cart-drawer__item-thumb .garment-mock__svg {
+  background: var(--surface-hover);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem;
+}
+
+.cart-drawer__item-thumb .garment-mock__custom {
+  max-width: none;
+  margin: 0;
+}
+
+.cart-drawer__item-thumb .garment-mock__custom svg {
+  max-height: none;
+}
+
+.cart-drawer__item-thumb .garment-mock__svg + .garment-mock__svg {
+  margin-top: 0.25rem;
+}
+
+.cart-drawer__item-thumb .garment-mock__custom svg,
+.cart-drawer__item-thumb .garment-mock__design svg {
+  width: 100%;
+  height: auto;
+}
+
 .cart-drawer__item:last-child {
   border-bottom: none;
 }

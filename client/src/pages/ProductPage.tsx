@@ -242,6 +242,8 @@ export default function ProductPage() {
       garmentName: garment.name,
       garmentSlug: garment.slug,
       garmentBasePrice: garment.base_price,
+      garmentSvgMock: garment.svg_mock,
+      garmentSvgMockBack: garment.svg_mock_back,
       colorHex: selectedColor,
       colorName: colorName,
       size: selectedSize,
