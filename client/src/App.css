@@ -1857,6 +1857,25 @@
   min-width: 0;
 }
 
+.choice-btn--salmon {
+  background: #fa8072;
+  border-color: #fa8072;
+}
+
+.choice-btn--salmon:hover {
+  border-color: #f96c5c;
+  background: #f96c5c;
+}
+
+.choice-btn--salmon .choice-btn__value {
+  color: #fff;
+  font-weight: 600;
+}
+
+.choice-btn--salmon .choice-btn__arrow {
+  color: #fff;
+}
+
 .design-flow__back {
   flex-shrink: 0;
   width: 42px;

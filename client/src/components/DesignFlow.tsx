@@ -161,8 +161,7 @@ export default function DesignFlow({
     <div className="design-flow">
       <div className="control-group">
         <div className="design-flow__header">
-          <button className="choice-btn" onClick={toggleOpen} type="button">
-            <span className="choice-btn__label">Elegí diseño</span>
+          <button className="choice-btn choice-btn--salmon" onClick={toggleOpen} type="button">
             <span className="choice-btn__value">
               {selectedClase ? `${selectedClase.name}${selectedTipo ? ` · ${selectedTipo.name}` : ""}${selectedSizeObj ? ` (${selectedSizeObj.name})` : ""}` : "Elegir diseño"}
             </span>

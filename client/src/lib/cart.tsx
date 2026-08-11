@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import type { EstampadoRow, EstampadoSizeRow, EstampadoLocationRow, DisenoTipoRow } from "./supabase";
 
 const ADMIN_PHONE = import.meta.env.VITE_WHATSAPP_PHONE ?? "";
@@ -183,6 +184,7 @@ export function useCart() {
 }
 
 function CartDrawer() {
+  const navigate = useNavigate();
   const { items, updateQuantity, removeItem, clearCart, totalPrice, totalItems, isOpen, closeCart, orders, reorder, placeOrder } = useCart();
   const [showOrders, setShowOrders] = useState(false);
 
@@ -289,6 +291,16 @@ function CartDrawer() {
                 <span>Total ({totalItems} {totalItems === 1 ? "ítem" : "ítems"})</span>
                 <strong>${totalPrice.toLocaleString("es-AR")}</strong>
               </div>
+              <button
+                className="btn-outline"
+                onClick={() => {
+                  closeCart();
+                  navigate("/");
+                }}
+                style={{ width: "100%" }}
+              >
+                Continuar comprando
+              </button>
               {ADMIN_PHONE ? (
                 <a
                   href={`https://wa.me/${ADMIN_PHONE}?text=${buildWhatsAppCartMessage()}`}
@@ -303,12 +315,15 @@ function CartDrawer() {
                   </svg>
                   Consultar carrito por WhatsApp
                 </a>
-              ) : (
-                <button className="btn-primary" onClick={closeCart} style={{ width: "100%" }}>
-                  Continuar comprando
-                </button>
-              )}
-              <button className="btn-danger" onClick={clearCart} style={{ width: "100%" }}>
+              ) : null}
+              <button
+                className="btn-danger"
+                onClick={() => {
+                  clearCart();
+                  closeCart();
+                }}
+                style={{ width: "100%" }}
+              >
                 Vaciar carrito
               </button>
             </div>

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Carousel from "../components/Carousel";
 import AppHeader from "../components/AppHeader";
-import QuickViewModal from "../components/QuickViewModal";
 import OnboardingModal from "../components/OnboardingModal";
 import { supabase, type GarmentRow } from "../lib/supabase";
 import { setMeta } from "../lib/seo";
@@ -14,8 +13,6 @@ export default function HomePage() {
   const [garments, setGarments] = useState<GarmentRow[]>([]);
   const [settings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [quickViewId, setQuickViewId] = useState<number | null>(null);
-  const [quickViewOpen, setQuickViewOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
 
@@ -34,9 +31,8 @@ export default function HomePage() {
     }
   }, []);
 
-  const handleQuickView = (id: number) => {
-    setQuickViewId(id);
-    setQuickViewOpen(true);
+  const handleConfigure = (slug: string) => {
+    navigate(`/producto/${slug}`);
   };
 
   return (
@@ -87,7 +83,7 @@ export default function HomePage() {
                   key={g.id}
                   className="category-card"
                   style={{ animationDelay: `${(i + 3) * 80}ms` }}
-                  onClick={() => handleQuickView(g.id)}
+                  onClick={() => handleConfigure(g.slug)}
                 >
                   <div className="category-card__icon">
                     {coloredMock ? (
@@ -101,6 +97,7 @@ export default function HomePage() {
                   </div>
                     <div className="category-card__info">
                       <h3 className="category-card__name">{g.name}</h3>
+                      <p className="category-card__desc">{g.description}</p>
                       <span className="category-card__price">
                         Desde ${Number(g.base_price).toLocaleString("es-AR")}
                       </span>
@@ -137,12 +134,6 @@ export default function HomePage() {
           </div>
         )}
       </section>
-
-      <QuickViewModal
-        open={quickViewOpen}
-        onClose={() => setQuickViewOpen(false)}
-        garmentId={quickViewId}
-      />
 
       <OnboardingModal
         open={onboardingOpen}
