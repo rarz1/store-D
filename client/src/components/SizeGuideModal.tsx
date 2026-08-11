@@ -68,7 +68,7 @@ export default function SizeGuideModal({ open, onClose, garmentSlug }: Props) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content size-guide-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Guía de Talles y Medidas</h3>
+          <h3>Guía de Tallas y Medidas</h3>
           <button className="btn-icon" onClick={onClose} aria-label="Cerrar guía">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
               <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
@@ -109,7 +109,7 @@ export default function SizeGuideModal({ open, onClose, garmentSlug }: Props) {
             <table className="size-guide-table">
               <thead>
                 <tr>
-                  <th>Talle</th>
+                  <th>Talla</th>
                   <th>{currentData.chestLabel}</th>
                   <th>Largo Total</th>
                   <th>{currentData.shoulderLabel}</th>
@@ -129,7 +129,7 @@ export default function SizeGuideModal({ open, onClose, garmentSlug }: Props) {
           </div>
 
           <div className="size-guide-tip">
-            <strong>💡 Tip de calce:</strong> Si preferís un corte <em>very oversize</em> o dudas entre dos talles, te recomendamos elegir el talle mayor.
+            <strong>💡 Tip de calce:</strong> Si preferís un corte <em>very oversize</em> o dudas entre dos tallas, te recomendamos elegir la talla mayor.
           </div>
         </div>
       </div>

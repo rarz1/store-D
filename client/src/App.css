@@ -493,6 +493,20 @@
   gap: 0.75rem;
 }
 
+.personalize-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin: 0 0 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 2px solid var(--accent);
+  display: inline-block;
+  align-self: flex-start;
+}
+
 .control-label {
   font-size: 0.75rem;
   font-weight: 600;
@@ -1820,6 +1834,7 @@
 /* ─── Design Flow ─────────────────────────────── */
 .design-flow {
   margin-top: 0.5rem;
+  container-type: inline-size;
 }
 
 .design-flow__body {
@@ -1830,33 +1845,44 @@
   margin-top: 0.5rem;
 }
 
-.control-group__header {
+.design-flow__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
 
-.control-group__header--clickable {
-  cursor: pointer;
-  user-select: none;
+.design-flow__header .choice-btn {
+  flex: 1;
+  min-width: 0;
 }
 
-.control-group__header--clickable:hover .control-label {
+.design-flow__back {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.design-flow__back:hover {
+  border-color: var(--accent);
   color: var(--accent);
 }
 
-/* ─── Help Modal ──────────────────────────────── */
-.help-steps ol {
-  padding-left: 1.25rem;
+/* ─── Placed Estampados ───────────────────────── */
+.placed-estampados {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-}
-
-.help-steps li {
-  line-height: 1.5;
-  color: var(--text-secondary);
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 /* ─── Tag Chips ───────────────────────────────── */
@@ -1975,27 +2001,6 @@
   flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
-}
-
-/* ─── Help button ─────────────────────────────── */
-.btn-small--help {
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-small--help:hover {
-  border-color: var(--accent);
-  color: var(--accent);
 }
 
 /* ─── Choice btn arrow ────────────────────────── */
@@ -2450,6 +2455,34 @@ textarea:focus-visible {
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
+}
+
+@container (max-width: 480px) {
+  .design-flow__stepper {
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+  }
+
+  .design-flow__stepper > div {
+    flex: 1 1 45% !important;
+    justify-content: center;
+  }
+
+  .stepper-step {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .stepper-connector {
+    display: none;
+  }
+
+  .stepper-step__label {
+    font-size: 0.58rem;
+    letter-spacing: 0.04em;
+  }
 }
 
 .design-flow__stepper::-webkit-scrollbar {

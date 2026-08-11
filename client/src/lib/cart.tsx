@@ -192,7 +192,7 @@ function CartDrawer() {
       const qty = item.quantity ?? 1;
       const unitAddons = item.estampados.reduce((s, p) => s + p.size.price_increment + p.locations.reduce((a, l) => a + l.price_increment, 0), 0);
       const unitTotal = item.garmentBasePrice + unitAddons;
-      lines.push(`\n${idx + 1}. x${qty} ${item.garmentName} (${item.colorName}, Talle ${item.size}) - $${(unitTotal * qty).toLocaleString("es-AR")}`);
+      lines.push(`\n${idx + 1}. x${qty} ${item.garmentName} (${item.colorName}, Talla ${item.size}) - $${(unitTotal * qty).toLocaleString("es-AR")}`);
       item.estampados.forEach((p) => {
         const locText = p.customPosition
           ? (p.side === "back" ? "Ubicación libre (posterior)" : "Ubicación libre (frente)")
@@ -242,7 +242,7 @@ function CartDrawer() {
                     <div className="cart-drawer__item-info">
                       <strong>{item.garmentName}</strong>
                       <span className="cart-drawer__item-meta">
-                        {item.colorName} · Talle {item.size}
+                        {item.colorName} · Talla {item.size}
                       </span>
                       {item.estampados.length > 0 && (
                         <span className="cart-drawer__item-estampados">

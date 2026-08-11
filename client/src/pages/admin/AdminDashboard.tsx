@@ -192,7 +192,7 @@ export default function AdminDashboard() {
            <p style={{ fontFamily: "var(--font-display)", fontSize: "2rem", color: "var(--accent)", margin: "0.25rem 0 0", letterSpacing: "0.04em" }}>{disenosCount}</p>
          </div>
          <div style={{ flex: 1, minWidth: 120, padding: "1rem", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", boxShadow: "var(--shadow-sm)" }}>
-           <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase" }}>Talles</span>
+           <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase" }}>Tallas</span>
            <p style={{ fontFamily: "var(--font-display)", fontSize: "2rem", color: "var(--accent)", margin: "0.25rem 0 0", letterSpacing: "0.04em" }}>{estampadoSizes.length}</p>
          </div>
          <div style={{ flex: 1, minWidth: 120, padding: "1rem", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", boxShadow: "var(--shadow-sm)" }}>

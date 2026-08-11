@@ -9,7 +9,7 @@ const STEPS = [
   {
     icon: "🎨",
     title: "Personalizá tu prenda",
-    desc: "Elegí color, talle y agregá diseños exclusivos",
+    desc: "Elegí color, talla y agregá diseños exclusivos",
   },
   {
     icon: "👁️",

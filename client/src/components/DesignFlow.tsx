@@ -32,7 +32,6 @@ interface Props {
   tiposByClase: Record<number, DisenoTipoRow[]>;
   stampSizes: EstampadoSizeRow[];
   onAdd: (item: PlacedEstampado) => void;
-  onOpenHelp: () => void;
   onSelectClase: (claseId: number) => void;
   onPreviewChange?: (preview: PreviewEstampado | null) => void;
   customMode: boolean;
@@ -46,10 +45,10 @@ interface Props {
 type Step = "closed" | "clase" | "tipo" | "size" | "location";
 
 const STEPS: { id: Step; label: string }[] = [
-  { id: "clase", label: "Categoría" },
-  { id: "tipo", label: "Diseño" },
-  { id: "size", label: "Escala" },
-  { id: "location", label: "Ubicación" },
+  { id: "clase", label: "Elegí categoría" },
+  { id: "tipo", label: "Elegí diseño" },
+  { id: "size", label: "Elegí tamaño" },
+  { id: "location", label: "Elegí ubicación" },
 ];
 
 export default function DesignFlow({
@@ -57,7 +56,6 @@ export default function DesignFlow({
   tiposByClase,
   stampSizes,
   onAdd,
-  onOpenHelp,
   onSelectClase,
   onPreviewChange,
   customPos,
@@ -162,15 +160,29 @@ export default function DesignFlow({
   return (
     <div className="design-flow">
       <div className="control-group">
-        <div className="control-group__header control-group__header--clickable" onClick={toggleOpen}>
-          <span className="control-label">PERSONALIZÁ TU PRENDA</span>
-          <button className="btn-small btn-small--help" onClick={(e) => { e.stopPropagation(); onOpenHelp(); }} title="¿Cómo funciona?">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M12 17h.01" strokeLinecap="round" strokeLinejoin="round" />
+        <div className="design-flow__header">
+          <button className="choice-btn" onClick={toggleOpen} type="button">
+            <span className="choice-btn__label">Elegí diseño</span>
+            <span className="choice-btn__value">
+              {selectedClase ? `${selectedClase.name}${selectedTipo ? ` · ${selectedTipo.name}` : ""}${selectedSizeObj ? ` (${selectedSizeObj.name})` : ""}` : "Elegir diseño"}
+            </span>
+            <svg className={`choice-btn__arrow${step !== "closed" ? " choice-btn__arrow--open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+              <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
+          {step !== "closed" && (
+            <button
+              className="btn-icon design-flow__back"
+              onClick={() => setStep("closed")}
+              type="button"
+              title="Volver atrás"
+              aria-label="Volver atrás"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {step !== "closed" && estampados.length === 0 && (
@@ -179,16 +191,6 @@ export default function DesignFlow({
 
         {step !== "closed" && estampados.length > 0 && (
           <>
-            <button className="choice-btn" onClick={toggleOpen} style={{ marginBottom: "0.75rem" }}>
-              <span className="choice-btn__label">Diseño</span>
-              <span className="choice-btn__value">
-                {selectedClase ? `${selectedClase.name}${selectedTipo ? ` · ${selectedTipo.name}` : ""}${selectedSizeObj ? ` (${selectedSizeObj.name})` : ""}` : "Elegir diseño"}
-              </span>
-              <svg className="choice-btn__arrow choice-btn__arrow--open" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-
             {/* M2: Stepper UI */}
             <div className="design-flow__stepper">
               {STEPS.map((s, idx) => {

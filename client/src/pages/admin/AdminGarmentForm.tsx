@@ -73,7 +73,7 @@ export default function AdminGarmentForm() {
     const validColors = colors.filter((c) => c.name.trim() && c.hex.trim());
     if (validColors.length === 0) e.colors = "Debe haber al menos un color";
     const validSizes = sizes.filter((s) => s.name.trim());
-    if (validSizes.length === 0) e.sizes = "Debe haber al menos un talle";
+    if (validSizes.length === 0) e.sizes = "Debe haber al menos una talla";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -208,7 +208,7 @@ export default function AdminGarmentForm() {
          ))}
 
          <label className="admin-label">
-           Talles
+           Tallas
            <button className="btn-small" style={{ marginLeft: 8 }} onClick={() => setSizes([...sizes, { name: "" }])}>+</button>
          </label>
          {errors.sizes && <p className="admin-error">{errors.sizes}</p>}

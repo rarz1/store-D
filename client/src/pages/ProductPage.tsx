@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import GarmentMock from "../components/GarmentMock";
 import DesignFlow, { type CustomPosition } from "../components/DesignFlow";
-import HelpModal from "../components/HelpModal";
 import SizeGuideModal from "../components/SizeGuideModal";
 import AppHeader from "../components/AppHeader";
 import { useCart } from "../lib/cart";
@@ -94,7 +93,6 @@ export default function ProductPage() {
 
   const [showColorModal, setShowColorModal] = useState(false);
   const [showSizeModal, setShowSizeModal] = useState(false);
-  const [showHelpModal, setShowHelpModal] = useState(false);
   const [showSizeGuideModal, setShowSizeGuideModal] = useState(false);
 
   const [recommendations, setRecommendations] = useState<GarmentRow[]>([]);
@@ -196,7 +194,7 @@ export default function ProductPage() {
       "Hola! Quiero consultar por:",
       `• Prenda: ${garment?.name ?? ""}`,
       `• Color: ${colorName}`,
-      `• Talle: ${selectedSize}`,
+      `• Talla: ${selectedSize}`,
     ];
     placedEstampados.forEach((p) => {
       const sizeInc = p.size.price_increment;
@@ -235,7 +233,7 @@ export default function ProductPage() {
   const handleAddToCart = () => {
     if (!garment) return;
     if (!selectedSize) {
-      toast.warning("Elegí un talle antes de agregar al carrito");
+      toast.warning("Elegí una talla antes de agregar al carrito");
       setShowSizeModal(true);
       return;
     }
@@ -331,7 +329,7 @@ export default function ProductPage() {
       <div className="product-info-bar">
         <div className="product-info-bar__choices">
           {colorName && <span><span className="product-info-bar__label">Color</span> {colorName}</span>}
-          {selectedSize && <span><span className="product-info-bar__label">Talle</span> {selectedSize}</span>}
+          {selectedSize && <span><span className="product-info-bar__label">Talla</span> {selectedSize}</span>}
         </div>
         <div className="product-info-bar__price">
           {placedEstampados.length > 0 && (
@@ -399,11 +397,13 @@ export default function ProductPage() {
         </div>
 
         <div className="controls-section">
+          <h2 className="personalize-title">Personaliza tu prenda</h2>
+
           {/* M6: Inline Color Swatches */}
           {colors.length > 0 && (
             <div className="control-group">
               <span className="control-label">
-                COLOR: <strong style={{ color: "var(--text)" }}>{colorName}</strong>
+                ELEGÍ COLOR: <strong style={{ color: "var(--text)" }}>{colorName}</strong>
               </span>
               <div className="color-selector">
                 {colors.map((c) => (
@@ -432,14 +432,14 @@ export default function ProductPage() {
             <div className="control-group">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span className="control-label">
-                  TALLE: <strong style={{ color: "var(--text)" }}>{selectedSize || "SELECCIONAR"}</strong>
+                  ELEGÍ TALLA: <strong style={{ color: "var(--text)" }}>{selectedSize || "SELECCIONAR"}</strong>
                 </span>
                 <button
                   className="control-clear"
                   onClick={() => setShowSizeGuideModal(true)}
                   type="button"
                 >
-                  Guía de talles
+                  Guía de tallas
                 </button>
               </div>
               <div className="size-selector">
@@ -479,7 +479,6 @@ export default function ProductPage() {
               estampados={estampados}
               tiposByClase={tiposByClase}
               stampSizes={stampSizes}
-              onOpenHelp={() => setShowHelpModal(true)}
               onSelectClase={handleSelectClase}
               onPreviewChange={setPreviewStamp}
               customMode={customMode}
@@ -573,7 +572,7 @@ export default function ProductPage() {
         <div className="modal-overlay" onClick={() => setShowSizeModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Elegí el talle</h3>
+              <h3>Elegí la talla</h3>
               <button className="btn-icon" onClick={() => setShowSizeModal(false)}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
                   <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
@@ -593,7 +592,6 @@ export default function ProductPage() {
         </div>
       )}
 
-      <HelpModal open={showHelpModal} onClose={() => setShowHelpModal(false)} />
       <SizeGuideModal
         open={showSizeGuideModal}
         onClose={() => setShowSizeGuideModal(false)}

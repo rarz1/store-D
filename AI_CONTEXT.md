@@ -327,5 +327,14 @@ Archivo: `client/src/lib/settings.ts`
 
 - Bug: en móvil el diseño "solo se movía en la imagen superior" y no pasaba a la inferior. Causa: con los mocks apilados en columna y `touch-action: none` en todo el marco, la página no scrolleaba y el mock de abajo quedaba fuera del viewport → imposible arrastrar hasta él.
 - Fix CSS en `App.css`: en modo drag (`.mock-frame--drag`) el `.mock-duo` pasa a `flex-direction: row` con `align-items: flex-start` y cada mock `flex: 1; max-width: 48%` — así ambos mocks quedan lado a lado como un solo marco, incluso en móvil, y el diseño se arrastra de una imagen a la otra sin scroll.
+
+### Sesión 10d — 2026-08-10 (UI de personalización premium: labels, stepper, botón "Elegí diseño")
+
+- Título de sección `.personalize-title` ("Personaliza tu prenda" sin tilde) sobre el selector de color en `ProductPage`; labels de control pasan a "ELEGÍ COLOR" y "ELEGÍ TALLA".
+- "Talle" → "talla" en toda la app (ProductPage, cart.tsx, SizeGuideModal, OnboardingModal, AdminGarmentForm, AdminDashboard).
+- Eliminado `HelpModal.tsx` (botón de ayuda y modal "¿Cómo funciona?") y su CSS (`.btn-small--help`, `.help-steps`).
+- `DesignFlow`: el header clickeable pasó a un botón `.choice-btn` "Elegí diseño". El antiguo botón "Diseño/Elegir diseño" que cerraba el flujo se reemplazó por un icono `.design-flow__back` (flecha atrás) al lado del botón, visible solo cuando el flujo está abierto. Se eliminó la prop `onOpenHelp`.
+- Stepper renombrado: "Elegí categoría", "Elegí diseño", "Elegí tamaño", "Elegí ubicación". Responsive con container query (`container-type: inline-size` en `.design-flow` + `@container (max-width: 480px)`): si el `.design-flow` mide ≤480px los pasos se apilan en grilla 2×2 (dot arriba, label abajo) y se ocultan los conectores; con más ancho van en fila con conectores. Sin overflow en móvil (390px) ni desktop (columna de 280px).
+- Verificado con Playwright: labels nuevos renderizan, sin "talle" en la UI, botón volver cierra/reabre el flujo, stepper 2×2 sin overflow, y el drag de ubicación sigue funcionando.
 - En modo normal (sin drag) todo queda igual en móvil: segundo mock `display: none`, botón flip visible.
 - Verificación Playwright (touch CDP, iPhone 13): cruce front→back confirmado en móvil con los dos mocks visibles lado a lado; el drag queda en `back` al soltar sobre el mock posterior.
