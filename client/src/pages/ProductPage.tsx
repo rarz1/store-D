@@ -48,6 +48,13 @@ export default function ProductPage() {
   const [customSide, setCustomSide] = useState<"front" | "back">("front");
   const frameRef = useRef<HTMLDivElement | null>(null);
 
+  // When the free-placement drag activates (location step), bring the mock
+  // frame into view — on mobile it can be scrolled well above the fold after
+  // the user walked through the design steps.
+  useEffect(() => {
+    if (customMode) frameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [customMode]);
+
   // Unified free-placement drag over the whole mock frame. On each move,
   // finds which garment mock (front or back) is under the pointer and updates
   // customPos + customSide accordingly, so the design can be placed on either

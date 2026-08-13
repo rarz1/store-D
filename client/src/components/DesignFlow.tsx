@@ -162,9 +162,7 @@ export default function DesignFlow({
       <div className="control-group">
         <div className="design-flow__header">
           <button className="choice-btn choice-btn--salmon" onClick={toggleOpen} type="button">
-            <span className="choice-btn__value">
-              {selectedClase ? `${selectedClase.name}${selectedTipo ? ` · ${selectedTipo.name}` : ""}${selectedSizeObj ? ` (${selectedSizeObj.name})` : ""}` : "Elegir diseño"}
-            </span>
+            <span className="choice-btn__value">Elegir diseño</span>
             <svg className={`choice-btn__arrow${step !== "closed" ? " choice-btn__arrow--open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
               <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>

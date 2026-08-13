@@ -1858,13 +1858,14 @@
 }
 
 .choice-btn--salmon {
-  background: #fa8072;
-  border-color: #fa8072;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
 }
 
 .choice-btn--salmon:hover {
-  border-color: #f96c5c;
-  background: #f96c5c;
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
 }
 
 .choice-btn--salmon .choice-btn__value {
