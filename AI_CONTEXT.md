@@ -392,3 +392,14 @@ Archivo: `client/src/lib/settings.ts`
 - Fix 3 (`App.css`, móvil/base): paddings laterales unificados a `1rem` (igual que `.product-footer`) en `.mock-section` y `.controls-section`; `.mock-duo .garment-mock` pasa de `max-width:280px` a `100%` → la imagen coincide con el ancho del botón (`16..374` en viewport 390). El modo drag (`mock-frame--drag .mock-duo .garment-mock`) ya usaba `max-width:48%` (mayor especificidad) así que no se afecta. `.product-content` `padding-bottom` de `5rem` → `10rem` para que el último control (Elegir diseño) quede por encima del footer fijo (~151px); en desktop (`min-width:768`) `padding-bottom:6rem`.
 - Validación local: Playwright móvil (390px, touch) — breadcrumb ausente, "Inicio"/"QUIZÁS TAMBIÉN TE GUSTE" ausentes del texto, botón e imagen alineados `[16,374]`, flujo clase→tipo→size→ubicación + drag mueve el diseño y confirma 1 colocado. Ojo de testing: el scroll real de la página de producto vive en el `window` (`.product-content` no scrollea solo); Playwright no debe usar `scrollIntoView` automático porque deja el elemento pegado al footer fijo → scrollear con `window.scrollTo(top - 350)` antes de tocar.
 - Commit `7a4773a` pusheado a `main` → auto-deploy Vercel.
+
+### Sesión 14c — 2026-08-13 (Fix de datos: faltaban tamaños de estampado en prendas 5 y 6)
+
+- Reporte del cliente: al personalizar la CAMISA POLO (id=5) y la CAMISETA OVERSIDE (id=6) no aparecía el paso "TAMAÑO" del diseño en el DesignFlow.
+- Causa raíz: NO es bug de código. `useGarmentEstampadoSizes` (`client/src/lib/hooks.ts:69`) consulta la junction `garment_estampado_sizes`; para garments 1–4 había filas (sizes 1–5), pero 5 y 6 no tenían → `SizeSelector` devuelve `null` y el paso no se renderiza.
+- El seed de `supabase-schema.sql:359` ("insert into garment_estampado_sizes select g.id, s.id ... on conflict do nothing") es DINÁMICO y ya cubre todas las prendas, pero se había corrido cuando solo existían 1–4. Las prendas 5/6 se crearon después (por admin/SQL) sin vínculos de tamaño y el seed nunca se re-ejecutó.
+- `AdminGarmentForm.tsx` sí carga y persiste los sizes/locations por prenda (`setSelectedSizeIds`/`setSelectedLocationIds`, líneas 61/64/98-99/107-108) — el admin puede corregirlo también.
+- Fix aplicado por el usuario en el SQL Editor de Supabase (yo no puedo: insert vía anónimo → 401 por RLS `auth.role()='authenticated'`):
+  `insert into garment_estampado_sizes (garment_id, estampado_size_id) values (5,1),(5,2),(5,3),(5,4),(5,5),(6,1),(6,2),(6,3),(6,4),(6,5) on conflict do nothing;`
+- Estampado size ids: 1=Pequeño 20%, 2=Mediano 35%, 3=Grande 50%, 4=XL 70%, 5=Full 95%. Verificar en `/producto/Camisas%20Polo` (polo) y `/producto/Camiseta%20Overside` (overside).
+- Sin commits de código (cambio solo de datos).
