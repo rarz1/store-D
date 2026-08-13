@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { recolorMockSvg } from "../lib/recolorMock";
 import Carousel from "../components/Carousel";
 import AppHeader from "../components/AppHeader";
 import OnboardingModal from "../components/OnboardingModal";
@@ -74,9 +75,7 @@ export default function HomePage() {
           <div className="categories__grid">
             {garments.map((g, i) => {
               const coloredMock = g.svg_mock
-                ? g.svg_mock
-                    .replace(/\s(width|height)="[^"]*"/g, "")
-                    .replace(/currentColor/gi, "var(--accent)")
+                ? recolorMockSvg(g.svg_mock, "var(--accent)")
                 : null;
               return (
                 <button

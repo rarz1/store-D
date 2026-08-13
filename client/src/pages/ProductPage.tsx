@@ -8,6 +8,7 @@ import { useCart } from "../lib/cart";
 import { useToast } from "../lib/toast";
 import { useFavorites } from "../lib/favorites";
 import { useGarment, useGarmentColors, useGarmentSizes, useEstampados, useGarmentEstampadoSizes } from "../lib/hooks";
+import { recolorMockSvg } from "../lib/recolorMock";
 import { supabase } from "../lib/supabase";
 import { setMeta, setCanonical, setJsonLd, clearJsonLd } from "../lib/seo";
 import type { EstampadoRow, DisenoTipoRow, EstampadoSizeRow, EstampadoLocationRow, GarmentRow } from "../lib/supabase";
@@ -514,9 +515,7 @@ export default function ProductPage() {
           <div className="recommendations__row">
             {recommendations.map((r) => {
               const mock = r.svg_mock
-                ? r.svg_mock
-                    .replace(/\s(width|height)="[^"]*"/g, "")
-                    .replace(/currentColor/gi, "var(--accent)")
+                ? recolorMockSvg(r.svg_mock, "var(--accent)")
                 : null;
               return (
                 <button

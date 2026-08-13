@@ -1,4 +1,5 @@
 import { lazy, Suspense, type ComponentType, useRef, useState, type ReactNode } from "react";
+import { recolorMockSvg } from "../lib/recolorMock";
 
 const garmentComponents: Record<string, ComponentType<{ color: string }>> = {
   remeras: lazy(() => import("../assets/garments/TShirtSVG")),
@@ -71,11 +72,7 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
   const designColor = isLight(color) ? "#1a1a1a" : "#ffffff";
 
   const mockSvg = side === "back" && svgMockBack ? svgMockBack : svgMock;
-  const coloredMock = mockSvg
-    ? mockSvg
-        .replace(/\s(width|height)="[^"]*"/g, "")
-        .replace(/currentColor/gi, color)
-    : null;
+  const coloredMock = mockSvg ? recolorMockSvg(mockSvg, color) : null;
 
   const sideDesigns = (placedDesigns ?? []).filter((d) => {
     if (d.side) return d.side === side;
