@@ -112,7 +112,7 @@ Archivo: `client/src/lib/settings.ts`
 ## Notas
 
 - Todo el código está en inglés, siguiendo la convención del proyecto.
-- Los diseños SVG deben usar `currentColor` para heredar el color de contraste del mock.
+- Los mockups de prenda (`svg_mock`/`svg_mock_back`) deben tener el cuerpo en BLANCO (fills cercanos a blanco) y las costuras/detalles en NEGRO/GRIS. El tintado lo hace `lib/recolorMock.ts` (helper `recolorMockSvg`): si el SVG usa `currentColor` lo reemplaza; si no, tiñe TODOS los fills casi-blancos (luma > 220) conservando los detalles oscuros. NO usar solo `currentColor` en los mockups (los templates de vecteezy no lo usan y quedaban en gris/blanco).
 - Los imports de solo tipos deben usar `import type`, no `import`.
 - `saveSettings()` excluye `id` y `updated_at` del payload para evitar errores con columnas identity.
 - Renombrar `.env.example` a `.env` y completar las variables antes de desarrollar.
@@ -354,3 +354,13 @@ Archivo: `client/src/lib/settings.ts`
 - CSS: `.cart-drawer__item-thumb` (4.5rem, `--surface-hover` bg) con override del `max-width: 380px` de `.garment-mock__custom` para que el SVG ocupe el thumb.
 - Items viejos en `localStorage` sin los SVG guardados caen al mock genérico por slug (`remeras`/`pantalones`/`buzos`) — siguen visibles.
 - Gotcha: TS2339 al acceder `d.side` sobre la unión de returns → cast `(d as { side?: string })`. Verificación: `npx tsc -b` y oxlint pasan. Commit `ae76a9b` pusheado a `main`.
+
+### Sesión 12 — 2026-08-12 (Fix: mockups de prenda no se teñían con el color elegido)
+
+- Síntoma reportado: al cambiar el color de la prenda (ProductPage, o el acento de la home), el mock quedaba SIEMPRE en gris/blanco/negro — el color no se aplicaba.
+- Causa raíz (verificada contra datos reales): los 6 `svg_mock`/`svg_mock_back` en Supabase son templates vecteezy/Inkscape (100–270 KB) que NO contienen `currentColor`; el cuerpo es blanco real (`#ffffff`/`#f2f2f2`, 62–81% del render, sin rect de fondo, bordes del viewBox transparentes) y los detalles/costuras son negros/grises (`#000000`, `#231f20`, `#cccccc`, `#7f7f7f`). El código solo hacía `.replace(/currentColor/gi, color)` → nunca pintaba nada.
+- Fix: nuevo `client/src/lib/recolorMock.ts` con `recolorMockSvg(svg, color)`. Si el SVG tiene `currentColor` lo reemplaza; si no, detecta todos los fills casi-blancos (luma > 220, excluye `#cccccc`=204) y los reemplaza por el color en `fill`/`stroke`/`stop-color`/`color` (regex con UNION de hexs, flags `gi`). No usa "más frecuente" (fallaba en g5/polo: `#ffffff`=5 cuerpo vs `#f2f2f2`=6 sombreado → elegía el equivocado); tiñe TODOS los casi-blancos).
+- Integrado en 4 puntos: `GarmentMock.tsx` (`coloredMock` del mock frente/post con el color real), `HomePage.tsx` (cards con `var(--accent)`), `ProductPage.tsx` (recomendaciones con `var(--accent)`), `AdminGarmentForm.tsx` (preview admin front+back con `var(--text)`).
+- Validación con Playwright + muestreo de píxeles: los 12 SVGs (6 prendas × front/back) quedan teñidos 78–97% en navy, 86–100% en negro, 77–95% en blanco; los detalles negros quedan visibles. Ejemplo: con navy `#1e3a5f`, g4/jogger 81% y g2/pantaloneta 88–94%.
+- Entorno: se trabajó en el clon `C:\STORE` (fuera de OneDrive, que bloquea escritura con placeholders). Repo `rarz1/store-D`, branch `main`, commit `2a7b1a7` pusheado → auto-deploy Vercel.
+- Verificación: `npm run build` OK (solo warning preexistente de chunk-size), oxlint solo warnings preexistentes. Gotcha: el tinte con `var(--text)` en el replacement `$1="${color}"` es seguro (no contiene `$`).
