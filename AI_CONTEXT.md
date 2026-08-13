@@ -373,3 +373,13 @@ Archivo: `client/src/lib/settings.ts`
 - Validación con los 12 SVGs REALES actuales re-descargados de Supabase (los almacenados estaban stale) contra los 4 colores del catálogo (ROJO `#ff0000`, NEGRO `#000000`, BLANCO `#ffffff`, AZUL `#002aff`): teñido 84–99%, sin blanco residual, y con negro se activa la regla `#272727` (1–6% según prenda). Con `var(--accent)` el helper emite `fill="var(--accent)"` (los call sites HomePage/ProductPage/AdminGarmentForm siguen funcionando; en `dangerouslySetInnerHTML` inline el var resuelve en el CSS del documento).
 - Entorno: clon `C:\STORE` (OneDrive bloquea escritura). Commit `a6cee68` pusheado a `main` → auto-deploy Vercel. Verificación: `npm run build` OK, oxlint limpio en recolorMock.ts.
 - Gotcha: transcompilar un solo TS usa `node_modules/.bin/tsc.cmd` con `--ignoreDeprecations 6.0` (TS 7 deprecó `moduleResolution=node10`); `npx tsc` instala el paquete equivocado `tsc@2.0.4`.
+
+### Sesión 14 — 2026-08-12 (Botón de diseño con color accent + label fijo + mock en vista en móvil)
+
+- Reporte del cliente (vista usuario): (1) el botón "Elegir diseño" no tenía el color del botón "Agregar al carrito"; (2) al elegir un diseño, el botón mostraba el nombre del diseño/imagen elegida en vez del título fijo; (3) "colocar las imágenes de los diseños en la prenda ya no funciona".
+- Fix 1 (`App.css`): `.choice-btn--salmon` pasó a usar `var(--accent)`/`var(--accent-hover)` (antes `#fa8072`/`#f96c5c`) → idéntico a `.btn-primary`.
+- Fix 2 (`DesignFlow.tsx`): el `.choice-btn__value` queda fijo en "Elegir diseño"; se eliminó el template que concatenaba `selectedClase/tipo/size`.
+- Fix 3 (`ProductPage.tsx`): `useEffect` que hace `frameRef.current.scrollIntoView({behavior:"smooth", block:"center"})` cuando `customMode` se activa (paso Ubicación). En móvil el mock quedaba scrolleado fuera del viewport (top=-57) tras transitar los pasos → el usuario no veía la prenda para arrastrar.
+- **Investigación del punto 3**: en producción (`store-d-psi.vercel.app`) el drag FUNCIONA en todos los casos (desktop, móvil con scroll, PNG y SVG, 1 y 2 diseños, frente/posterior). El único defecto reproducible era el scroll de vista en móvil. Slugs reales de prendas: `Camiseta Fit`, `Pantaloneta Playera`, `buzos`, `Pantalon Jogger`, `Camisas Polo`, `Camiseta Overside` (con espacios, escapar con %20).
+- Validación local: build con `.env.local` real (gitignored) + mini-serve SPA (`spa_server.cjs`, fallback a `index.html`; `python -m http.server` NO hace SPA fallback → 404 en rutas). Playwright móvil (390px, touch CDP): botón igual al de carrito (`rgb(249,115,22)`), label fijo, mock-frame visible al llegar a Ubicación, drag mueve el diseño y confirma.
+- Commit `357a027` pusheado a `main` → auto-deploy Vercel.
