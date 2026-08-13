@@ -338,11 +338,11 @@
 .product-content {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 5rem;
+  padding-bottom: 10rem;
 }
 
 .mock-section {
-  padding: 1rem 1.5rem 1rem;
+  padding: 1rem 1rem;
   display: flex;
   justify-content: center;
 }
@@ -378,7 +378,7 @@
 
 .mock-duo .garment-mock {
   width: 100%;
-  max-width: 280px;
+  max-width: 100%;
 }
 
 /* hide second mock on mobile, first mock's flip shows on mobile */
@@ -406,7 +406,7 @@
 }
 
 .controls-section {
-  padding: 0 1.25rem 1.5rem;
+  padding: 0 1rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -847,6 +847,7 @@
     max-width: 1300px;
     margin: 0 auto;
     padding-top: 1rem;
+    padding-bottom: 6rem;
     gap: 1.5rem;
     align-items: flex-start;
   }
@@ -2467,38 +2468,8 @@ textarea:focus-visible {
 }
 
 /* ==============================
-    BREADCRUMB
+    DESIGN FLOW STEPPER
     ============================== */
-
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  flex-wrap: wrap;
-}
-
-.breadcrumb a {
-  color: var(--text-muted);
-  text-decoration: none;
-  transition: color var(--transition);
-}
-
-.breadcrumb a:hover {
-  color: var(--accent);
-}
-
-.breadcrumb__separator {
-  color: var(--border);
-  user-select: none;
-}
-
-.breadcrumb__current {
-  color: var(--text-secondary);
-  font-weight: 500;
-}
 
 .design-flow__stepper {
   display: flex;
@@ -2878,96 +2849,6 @@ textarea:focus-visible {
 .error-boundary__actions .btn-back {
   width: 100%;
   min-height: 44px;
-}
-
-/* ==============================
-   PRODUCT RECOMMENDATIONS (4.4)
-   ============================== */
-
-.recommendations {
-  padding: 1.5rem 1.25rem 0;
-  max-width: 480px;
-  margin: 0 auto;
-}
-
-.recommendations__title {
-  font-family: var(--font-display);
-  font-size: 1.125rem;
-  letter-spacing: 0.08em;
-  color: var(--text);
-  margin: 0 0 1rem;
-}
-
-.recommendations__row {
-  display: flex;
-  gap: 0.75rem;
-  overflow-x: auto;
-  padding-bottom: 0.5rem;
-  scrollbar-width: none;
-}
-
-.recommendations__row::-webkit-scrollbar {
-  display: none;
-}
-
-.recommendation-card {
-  flex-shrink: 0;
-  width: 140px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 1rem 0.75rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: all var(--transition);
-  font-family: inherit;
-  text-align: center;
-  box-shadow: var(--shadow-sm);
-}
-
-.recommendation-card:hover,
-.recommendation-card:active {
-  background: var(--surface-hover);
-  border-color: var(--accent);
-  transform: translateY(-2px);
-}
-
-.recommendation-card__mock {
-  width: 64px;
-  height: 84px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent);
-}
-
-.recommendation-card__mock svg {
-  width: 100%;
-  height: 100%;
-}
-
-.recommendation-card__fallback {
-  width: 64px;
-  height: 84px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-size: 2rem;
-  color: var(--accent);
-}
-
-.recommendation-card__name {
-  font-size: 0.8125rem;
-  color: var(--text);
-}
-
-.recommendation-card__price {
-  font-size: 0.75rem;
-  color: var(--text-muted);
 }
 
 /* ==============================
