@@ -35,7 +35,7 @@
 - Diseños almacenados como SVG text en Supabase, se renderizan inline sobre el mock
 - Selector de color (swatches), talla (chips), diseño (thumbnails con preview)
 - Carrusel editorial full-viewport con Ken Burns (12s), auto-play 5.2s con barra de progreso en los dots, parallax/title stagger, swipe por pointer, variante `hero`/`onboarding`, respeta `prefers-reduced-motion`
-- Tema OSCURO en producción (la DB `site_settings` tiene `color_text #f2f4f7`, `color_bg #131518`, `color_surface #1c1f24`, `color_accent #f97316`; el usuario pidió mantener colores oscuros, NO aplicar el seed claro). `supabase-schema.sql` fue actualizado a defaults oscuros para consistencia.
+- Tema CLARO en producción (DB `site_settings` con `color_bg #f8f9fa`, `color_surface #ffffff`, `color_text #1e2230`, `color_accent #fa6e71`; aplicado por el usuario vía SQL Editor el 2026-08-19). Seed de `supabase-schema.sql` en claro.
 - Colores aplicados como CSS variables desde `site_settings` (applyColors extiende `--surface-hover`, `--text-secondary`, `--border`), editables con live preview
 - Consulta por WhatsApp con resumen del carrito seleccionado (botón SOLO en `/carrito`, no en personalización)
 - Envío configurable sin monto fijo: chips "Retiro" (`$0.0`) / "Envío" (`a convenir según distancia`); solo signo `$`
@@ -387,6 +387,15 @@ Archivo: `client/src/lib/settings.ts`
 - **Drag preservado**: `useEffect` en ProductPage hace `scrollIntoView` del mock al abrir `designFlowOpen`, y `.product-sheet__mock--sticky` (clase activa cuando el flujo de diseño está abierto) fija el mock arriba con `z-index: 2001` (sobre el `sheet-overlay`), así la superficie de arrastre queda visible sobre el bottom sheet.
 - Verificación: `npm run build` y `npm run lint` pasan. Push `54d8972..43b7e53`.
 - Verificación: `npm run build` y `npm run lint` pasan (solo warnings preexistentes). Commit `63ed132` sin pushear.
+
+### Sesión 12 — 2026-08-19 (Tema claro aplicado en producción)
+
+- Usuario retomó el plan `2026-08-18-mobile-redesign-light-theme.md` (había sido rechazado en 11b para mantener oscuro). El código YA estaba en claro (tokens `index.css`, `applyColors`, barrido `App.css`, PWA `theme-color #f8f9fa`); lo que mantenían la app oscura eran la DB viva `site_settings` y el seed SQL.
+- `supabase-schema.sql`: seed de `site_settings` revertido a claro (`#f8f9fa`/`#ffffff`/`#1e2230`/`#fa6e71`).
+- Usuario corrió en SQL Editor de Supabase el `update site_settings set color_* = ... where id = 1;`. Verificado vía REST (`apikey` anon): `color_bg #f8f9fa`, `color_surface #ffffff`, `color_text #1e2230`, `color_accent #fa6e71`.
+- Los 3 usos de `#1e2230` hardcodeado en `App.css` son intencionales (CTA onboarding, banner colecciones navy, checkout navy).
+- Verificación: `npm run build` pasa. Sin deploy necesario (los colores se leen de la DB al montar).
+- Pendientes: commitear el seed (`supabase-schema.sql`) si el usuario lo confirma.
 
 ### Sesión 11d — 2026-08-18 (Fix lógica de diseño/tamaño/ubicación, commit `98e38a6`)
 
