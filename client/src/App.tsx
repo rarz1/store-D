@@ -7,6 +7,7 @@ import { FavoritesProvider } from "./lib/favorites";
 import { ToastProvider } from "./lib/toast";
 import AuthGuard from "./components/AuthGuard";
 import ErrorBoundary from "./components/ErrorBoundary";
+import OnboardingScreen from "./pages/OnboardingScreen";
 import HomePage from "./pages/HomePage";
 import ProductPage from "./pages/ProductPage";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -46,7 +47,8 @@ export default function App() {
               <ToastProvider>
               <ErrorBoundary>
               <Routes>
-                <Route path="/" element={<HomePage />} />
+                <Route path="/" element={<OnboardingScreen />} />
+                <Route path="/colecciones" element={<HomePage />} />
                 <Route path="/producto/:garmentId" element={<ProductPage />} />
 
                 <Route path="/admin/login" element={<AdminLogin />} />

@@ -188,6 +188,68 @@
 }
 
 /* ==============================
+    ONBOARDING
+    ============================== */
+
+.carousel--onboarding .carousel__content {
+  display: none;
+}
+
+.onboarding {
+  position: relative;
+  min-height: 100svh;
+  min-height: 100dvh;
+}
+
+.onboarding__overlay {
+  position: absolute;
+  bottom: 4.5rem;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  padding: 0 2rem;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.onboarding__title {
+  font-family: var(--font-display);
+  font-size: clamp(2.6rem, 11vw, 6rem);
+  line-height: 0.92;
+  letter-spacing: 0.03em;
+  color: #fff;
+  margin: 0 0 0.5rem;
+  white-space: pre-line;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+.onboarding__subtitle {
+  font-size: clamp(0.8rem, 2.5vw, 1rem);
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 1.5rem;
+  max-width: 30ch;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+}
+
+.onboarding__cta {
+  background: #fff;
+  color: var(--text);
+  border: none;
+  padding: 0.9rem 2.25rem;
+  border-radius: var(--radius-pill);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.onboarding__cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+}
+
+/* ==============================
    HOME
    ============================== */
 
