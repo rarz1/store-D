@@ -1,8 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Carousel from "../components/Carousel";
 import AppHeader from "../components/AppHeader";
-import OnboardingModal from "../components/OnboardingModal";
 import { supabase, type GarmentRow } from "../lib/supabase";
 import { setMeta } from "../lib/seo";
 import { getSettings, type SiteSettings } from "../lib/settings";
@@ -13,23 +11,41 @@ export default function HomePage() {
   const [garments, setGarments] = useState<GarmentRow[]>([]);
   const [settings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState("Todo");
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
 
   useEffect(() => {
     getSettings().then(setSiteSettings);
-    setMeta({ title: "STORE · Colección", description: "Prendas personalizables. Remeras, pantalones y buzos oversize con diseño propio. Algodón orgánico, edición limitada." });
+    setMeta({
+      title: "STORE · Colección",
+      description: "Prendas personalizables. Remeras, pantalones y buzos oversize con diseño propio. Algodón orgánico, edición limitada.",
+    });
     supabase.from("garments").select("*").order("id").then(({ data, error }) => {
       if (error) console.error("Error loading garments:", error);
       if (data) setGarments(data);
       setLoading(false);
     });
-
-    const seen = localStorage.getItem("onboarding_seen");
-    if (!seen) {
-      setTimeout(() => setOnboardingOpen(true), 800);
-    }
   }, []);
+
+  const categories = useMemo(() => {
+    const set = new Set<string>(["Todo"]);
+    for (const g of garments) for (const t of g.tags) set.add(t);
+    return Array.from(set);
+  }, [garments]);
+
+  const filteredGarments = useMemo(
+    () =>
+      activeCategory === "Todo"
+        ? garments
+        : garments.filter((g) => g.tags.includes(activeCategory)),
+    [garments, activeCategory]
+  );
+
+  const bannerMock = garments[0]?.svg_mock
+    ? garments[0].svg_mock
+        .replace(/\s(width|height)="[^"]*"/g, "")
+        .replace(/currentColor/gi, "var(--accent)")
+    : null;
 
   const handleConfigure = (slug: string) => {
     navigate(`/producto/${slug}`);
@@ -37,16 +53,42 @@ export default function HomePage() {
 
   return (
     <div className="home page-enter">
-      <div className="home__hero">
-        <Carousel />
-        <AppHeader settings={settings} />
-      </div>
+      <AppHeader settings={settings} />
 
       <section className="categories">
-        <div className="categories__header">
-          <h2 className="categories__title">{settings?.collections_title || "COLECCIONES"}</h2>
-          <p className="categories__subtitle">{settings?.collections_subtitle || "Elegí tu prenda y personalizala a tu gusto"}</p>
+        <div className="collections-banner">
+          <div className="collections-banner__content">
+            <h2 className="collections-banner__title">
+              {settings?.collections_title || "COLECCIONES"}
+            </h2>
+            <p className="collections-banner__subtitle">
+              {settings?.collections_subtitle || "Elegí tu prenda y personalizala a tu gusto"}
+            </p>
+            <button
+              className="collections-banner__cta"
+              onClick={() => document.querySelector(".collections-pills")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            >
+              Explorar
+            </button>
+          </div>
+          {bannerMock && (
+            <div className="collections-banner__mock" dangerouslySetInnerHTML={{ __html: bannerMock }} />
+          )}
         </div>
+
+        {categories.length > 1 && (
+          <div className="collections-pills">
+            {categories.map((c) => (
+              <button
+                key={c}
+                className={`collections-pill${activeCategory === c ? " collections-pill--active" : ""}`}
+                onClick={() => setActiveCategory(c)}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
 
         {loading ? (
           <div className="categories__grid">
@@ -61,18 +103,18 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-        ) : garments.length === 0 ? (
+        ) : filteredGarments.length === 0 ? (
           <div className="categories__empty">
             <div className="categories__empty__icon">🧵</div>
             <p className="categories__empty__title">PRÓXIMAMENTE</p>
             <p className="categories__empty__subtitle">Estamos preparando la colección. Volvé pronto.</p>
-            <button className="btn-back" onClick={() => navigate("/")} style={{ marginTop: "1.5rem" }}>
+            <button className="btn-back" onClick={() => navigate("/colecciones")} style={{ marginTop: "1.5rem" }}>
               Volver al inicio
             </button>
           </div>
         ) : (
           <div className="categories__grid">
-            {garments.map((g, i) => {
+            {filteredGarments.map((g, i) => {
               const coloredMock = g.svg_mock
                 ? g.svg_mock
                     .replace(/\s(width|height)="[^"]*"/g, "")
@@ -95,13 +137,13 @@ export default function HomePage() {
                       <span style={{ fontSize: "2rem", color: "var(--accent)" }}>{g.name[0]}</span>
                     )}
                   </div>
-                    <div className="category-card__info">
-                      <h3 className="category-card__name">{g.name}</h3>
-                      <p className="category-card__desc">{g.description}</p>
-                      <span className="category-card__price">
-                        Desde ${Number(g.base_price).toLocaleString("es-AR")}
-                      </span>
-                    </div>
+                  <div className="category-card__info">
+                    <h3 className="category-card__name">{g.name}</h3>
+                    <p className="category-card__desc">{g.description}</p>
+                    <span className="category-card__price">
+                      Desde ${Number(g.base_price).toLocaleString("es-AR")}
+                    </span>
+                  </div>
                   <button
                     className="btn-icon"
                     onClick={(e) => {
@@ -134,11 +176,6 @@ export default function HomePage() {
           </div>
         )}
       </section>
-
-      <OnboardingModal
-        open={onboardingOpen}
-        onClose={() => setOnboardingOpen(false)}
-      />
     </div>
   );
 }
