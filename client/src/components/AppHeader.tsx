@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useCart } from "../lib/cart";
 import { useFavorites } from "../lib/favorites";
 import type { SiteSettings } from "../lib/settings";
@@ -8,25 +8,31 @@ interface Props {
   showBack?: boolean;
   title?: string;
   showFavorites?: boolean;
+  variant?: "default" | "transparent";
 }
 
-export default function AppHeader({ settings, showBack, title, showFavorites = true }: Props) {
+export default function AppHeader({
+  settings,
+  showBack,
+  title,
+  showFavorites = true,
+  variant = "default",
+}: Props) {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { totalItems, openCart } = useCart();
+  const { totalItems } = useCart();
   const { favorites } = useFavorites();
-  const isHome = location.pathname === "/";
+  const isFloating = variant === "transparent";
 
   return (
     <>
-      <header className={`app-header glass${isHome ? " app-header--floating" : ""}`}>
+      <header className={`app-header glass${isFloating ? " app-header--floating" : ""}`}>
         <div className="app-header__inner">
           <div className="app-header__left">
             {showBack ? (
               <button
                 className="btn-icon"
-                onClick={() => navigate("/")}
-                aria-label="Volver al inicio"
+                onClick={() => navigate(-1)}
+                aria-label="Volver"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
                   <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
@@ -35,8 +41,8 @@ export default function AppHeader({ settings, showBack, title, showFavorites = t
             ) : (
               <button
                 className="app-header__logo-btn"
-                onClick={() => navigate("/")}
-                aria-label="Ir al inicio"
+                onClick={() => navigate("/colecciones")}
+                aria-label="Ir a la colección"
               >
                 {settings?.logo_url ? (
                   <img src={settings.logo_url} alt={settings.store_title} className="app-header__logo" />
@@ -69,7 +75,7 @@ export default function AppHeader({ settings, showBack, title, showFavorites = t
             )}
             <button
               className="app-header__cart"
-              onClick={openCart}
+              onClick={() => navigate("/carrito")}
               aria-label={`Carrito, ${totalItems} ${totalItems === 1 ? "ítem" : "ítems"}`}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
@@ -87,7 +93,7 @@ export default function AppHeader({ settings, showBack, title, showFavorites = t
       </header>
 
       {totalItems > 0 && (
-        <button className="fab-cart" onClick={openCart} aria-label="Abrir carrito" type="button">
+        <button className="fab-cart" onClick={() => navigate("/carrito")} aria-label="Abrir carrito" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
             <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M3 6h18" strokeLinecap="round" strokeLinejoin="round" />
