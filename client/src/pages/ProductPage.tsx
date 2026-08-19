@@ -47,6 +47,15 @@ export default function ProductPage() {
 
   const [designFlowOpen, setDesignFlowOpen] = useState(false);
 
+  // When the design flow opens, bring the garment mock back into view (it can
+  // be scrolled off since the page now scrolls as a whole) and keep it pinned
+  // at the top so the drag-to-place surface stays visible above the sheet.
+  useEffect(() => {
+    if (designFlowOpen) {
+      document.querySelector(".product-sheet__mock")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [designFlowOpen]);
+
   // Unified free-placement drag over the whole mock frame. On each move,
   // finds which garment mock (front or back) is under the pointer and updates
   // customPos + customSide accordingly, so the design can be placed on either
@@ -283,7 +292,7 @@ export default function ProductPage() {
       <AppHeader settings={null} showBack title={garment.name} />
 
       <div className="product-sheet">
-        <div className="product-sheet__mock">
+        <div className={`product-sheet__mock${designFlowOpen ? " product-sheet__mock--sticky" : ""}`}>
           <div
             className={`mock-frame${customMode ? " mock-frame--drag" : ""}`}
             ref={frameRef}
