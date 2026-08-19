@@ -83,6 +83,7 @@ export function applyColors(settings: SiteSettings) {
   root.style.setProperty("--accent", settings.color_accent);
   root.style.setProperty("--accent-hover", lightenHex(settings.color_accent, 0.1));
   root.style.setProperty("--accent-glow", hexToRgba(settings.color_accent, 0.2));
-  root.style.setProperty("--surface-hover", lightenHex(settings.color_surface, 0.05));
-  root.style.setProperty("--border", lightenHex(settings.color_surface, 0.08));
+  root.style.setProperty("--surface-hover", lightenHex(settings.color_surface, 0.02));
+  root.style.setProperty("--text-secondary", lightenHex(settings.color_text, 0.05));
+  root.style.setProperty("--border", lightenHex(settings.color_surface, 0.06));
 }
