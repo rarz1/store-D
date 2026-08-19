@@ -481,6 +481,7 @@ export default function ProductPage() {
               onCustomModeChange={setCustomMode}
               onCustomPosChange={setCustomPos}
               onCustomSideChange={setCustomSide}
+              onClose={() => setDesignFlowOpen(false)}
               onAdd={(item) => {
                 const isDuplicate = placedEstampados.some((p) =>
                   p.estampado.id === item.estampado.id &&

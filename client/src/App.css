@@ -616,7 +616,9 @@
 
 .sheet-panel {
   width: 100%;
-  max-height: 60dvh;
+  /* Keep the panel below the pinned garment mock (52dvh on top) so the
+     stepper and its controls are never covered by the drag surface. */
+  max-height: 44dvh;
   background: var(--surface);
   border-radius: 20px 20px 0 0;
   padding: 0.75rem 1.25rem 1.5rem;
@@ -2602,48 +2604,155 @@
   container-type: inline-size;
 }
 
-.design-flow__tabs {
+.design-flow__header {
   display: flex;
-  gap: 0.35rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   margin-bottom: 0.75rem;
-  background: var(--bg);
-  border-radius: var(--radius-pill);
-  padding: 0.25rem;
 }
 
-.design-flow__tab {
-  flex: 1;
+.design-flow__header-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--text);
+}
+
+.design-flow__close {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
-  padding: 0.55rem 0.5rem;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-pill);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  background: var(--surface);
   color: var(--text-muted);
   cursor: pointer;
-  transition: all var(--transition);
+  transition: all 0.2s;
 }
 
-.design-flow__tab--active {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: var(--shadow-sm);
+.design-flow__close:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
-.design-flow__tab-check {
-  width: 16px;
-  height: 16px;
+.design-flow__stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.design-flow__stepper::-webkit-scrollbar {
+  display: none;
+}
+
+.stepper-step {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem 0.25rem 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  transition: opacity 200ms ease;
+  flex-shrink: 0;
+}
+
+.stepper-step:disabled {
+  cursor: default;
+}
+
+.stepper-step__dot {
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  font-size: 0.625rem;
+  border: 2px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.stepper-step--done .stepper-step__dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.stepper-step--active .stepper-step__dot {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.stepper-step__label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.stepper-step--active .stepper-step__label {
+  color: var(--accent);
+}
+
+.stepper-step--done .stepper-step__label {
+  color: var(--text-secondary);
+}
+
+.stepper-connector {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+  min-width: 16px;
+  margin: 0 0.25rem;
+  transition: background 300ms ease;
+}
+
+.stepper-connector--done {
+  background: var(--accent);
+}
+
+/* On narrow sheet widths, wrap the stepper into a compact 2x2 grid. */
+@container (max-width: 480px) {
+  .design-flow__stepper {
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+  }
+
+  .design-flow__stepper > div {
+    flex: 1 1 45% !important;
+    justify-content: center;
+  }
+
+  .stepper-step {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .stepper-connector {
+    display: none;
+  }
+
+  .stepper-step__label {
+    font-size: 0.58rem;
+    letter-spacing: 0.04em;
+  }
 }
 
 .design-flow__body {
