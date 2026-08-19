@@ -2223,6 +2223,50 @@
   container-type: inline-size;
 }
 
+.design-flow__tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+  background: var(--bg);
+  border-radius: var(--radius-pill);
+  padding: 0.25rem;
+}
+
+.design-flow__tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.design-flow__tab--active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+.design-flow__tab-check {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .design-flow__body {
   padding: 0 0.25rem 0.75rem;
 }

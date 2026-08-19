@@ -535,6 +535,7 @@ export default function ProductPage() {
                   return;
                 }
                 setPlacedEstampados([...placedEstampados, item]);
+                setDesignFlowOpen(false);
               }}
             />
           </div>

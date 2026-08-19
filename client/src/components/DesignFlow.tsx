@@ -42,13 +42,12 @@ interface Props {
   onCustomSideChange: (side: "front" | "back") => void;
 }
 
-type Step = "closed" | "clase" | "tipo" | "size" | "location";
+type Tab = "diseno" | "tamano" | "ubicacion";
 
-const STEPS: { id: Step; label: string }[] = [
-  { id: "clase", label: "Elegí categoría" },
-  { id: "tipo", label: "Elegí diseño" },
-  { id: "size", label: "Elegí tamaño" },
-  { id: "location", label: "Elegí ubicación" },
+const TABS: { id: Tab; label: string }[] = [
+  { id: "diseno", label: "Diseño" },
+  { id: "tamano", label: "Tamaño" },
+  { id: "ubicacion", label: "Ubicación" },
 ];
 
 export default function DesignFlow({
@@ -64,7 +63,7 @@ export default function DesignFlow({
   onCustomPosChange,
   onCustomSideChange,
 }: Props) {
-  const [step, setStep] = useState<Step>("closed");
+  const [tab, setTab] = useState<Tab>("diseno");
   const [selectedClaseId, setSelectedClaseId] = useState<number | null>(null);
   const [selectedTipoId, setSelectedTipoId] = useState<number | null>(null);
   const [selectedSizeId, setSelectedSizeId] = useState<number | null>(null);
@@ -74,11 +73,13 @@ export default function DesignFlow({
   const selectedTipo = tipos.find((t) => t.id === selectedTipoId) ?? null;
   const selectedSizeObj = stampSizes.find((s) => s.id === selectedSizeId) ?? null;
 
-  // Sync custom placement mode with the "location" step. Free placement is now
-  // the only option, so reaching the location step activates the drag on the
-  // main garment mock in ProductPage.
+  const disenoDone = selectedClaseId !== null && selectedTipoId !== null;
+  const tamanoDone = selectedSizeId !== null;
+
+  // Free placement is the only option: reaching the "ubicacion" tab activates
+  // the drag on the main garment mock in ProductPage.
   useEffect(() => {
-    if (step === "location") {
+    if (tab === "ubicacion") {
       onCustomModeChange(true);
       onCustomPosChange({ x: 50, y: 50 });
       onCustomSideChange("front");
@@ -87,12 +88,12 @@ export default function DesignFlow({
       onCustomPosChange(null);
       onCustomSideChange("front");
     }
-  }, [step, onCustomModeChange, onCustomPosChange, onCustomSideChange]);
+  }, [tab, onCustomModeChange, onCustomPosChange, onCustomSideChange]);
 
   // Emit preview of the currently selected (but unconfirmed) design so
   // ProductPage can render it as the draggable design on the garment mock.
   useEffect(() => {
-    if (step === "location" && selectedTipo && customPos) {
+    if (tab === "ubicacion" && selectedTipo && customPos) {
       onPreviewChange?.({
         svgContent: selectedTipo.svg_content || selectedClase?.svg_content || "",
         imageUrl: selectedTipo.image_url || undefined,
@@ -105,25 +106,18 @@ export default function DesignFlow({
     } else {
       onPreviewChange?.(null);
     }
-  }, [step, selectedTipo, selectedClase, selectedSizeObj, customPos, customSide, onPreviewChange]);
+  }, [tab, selectedTipo, selectedClase, selectedSizeObj, customPos, customSide, onPreviewChange]);
 
   const handleSelectClase = (id: number) => {
     setSelectedClaseId(id);
     setSelectedTipoId(null);
     setSelectedSizeId(stampSizes[0]?.id ?? null);
-    setStep("tipo");
     onSelectClase(id);
   };
 
   const handleSelectTipo = (id: number) => {
     setSelectedTipoId(id);
     setSelectedSizeId(stampSizes[0]?.id ?? null);
-    setStep("size");
-  };
-
-  const handleSelectSize = (id: number) => {
-    setSelectedSizeId(id);
-    setStep("location");
   };
 
   const handleConfirm = () => {
@@ -140,149 +134,102 @@ export default function DesignFlow({
     setSelectedClaseId(null);
     setSelectedTipoId(null);
     setSelectedSizeId(null);
-    setStep("closed");
+    setTab("diseno");
     onPreviewChange?.(null);
-  };
-
-  const toggleOpen = () => setStep(step === "closed" ? "clase" : "closed");
-
-  const getStepIndex = (s: Step) => STEPS.findIndex((item) => item.id === s);
-  const currentStepIdx = getStepIndex(step);
-
-  const canGoToStep = (targetStep: Step) => {
-    if (targetStep === "clase") return true;
-    if (targetStep === "tipo") return selectedClaseId !== null;
-    if (targetStep === "size") return selectedTipoId !== null;
-    if (targetStep === "location") return selectedSizeId !== null;
-    return false;
   };
 
   return (
     <div className="design-flow">
-      <div className="control-group">
-        <div className="design-flow__header">
-          <button className="choice-btn choice-btn--salmon" onClick={toggleOpen} type="button">
-            <span className="choice-btn__value">
-              {selectedClase ? `${selectedClase.name}${selectedTipo ? ` · ${selectedTipo.name}` : ""}${selectedSizeObj ? ` (${selectedSizeObj.name})` : ""}` : "Elegir diseño"}
-            </span>
-            <svg className={`choice-btn__arrow${step !== "closed" ? " choice-btn__arrow--open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-              <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          {step !== "closed" && (
+      <div className="design-flow__tabs">
+        {TABS.map((t) => {
+          const done = t.id === "diseno" ? disenoDone : t.id === "tamano" ? tamanoDone : false;
+          return (
             <button
-              className="btn-icon design-flow__back"
-              onClick={() => setStep("closed")}
+              key={t.id}
+              className={`design-flow__tab${tab === t.id ? " design-flow__tab--active" : ""}`}
+              onClick={() => setTab(t.id)}
               type="button"
-              title="Volver atrás"
-              aria-label="Volver atrás"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <span className="design-flow__tab-name">{t.label}</span>
+              {done && <span className="design-flow__tab-check">✓</span>}
             </button>
-          )}
-        </div>
+          );
+        })}
+      </div>
 
-        {step !== "closed" && estampados.length === 0 && (
-          <p className="text-muted" style={{ textAlign: "center", padding: "1rem" }}>No hay diseños disponibles</p>
-        )}
-
-        {step !== "closed" && estampados.length > 0 && (
+      <div className="design-flow__body">
+        {tab === "diseno" && (
           <>
-            {/* M2: Stepper UI */}
-            <div className="design-flow__stepper">
-              {STEPS.map((s, idx) => {
-                const isDone = idx < currentStepIdx;
-                const isActive = step === s.id;
-                const enabled = canGoToStep(s.id);
-                return (
-                  <div key={s.id} style={{ display: "flex", alignItems: "center", flex: idx < STEPS.length - 1 ? 1 : "initial" }}>
+            <EstampadoSelector
+              estampados={estampados}
+              selectedId={selectedClaseId}
+              onSelect={handleSelectClase}
+            />
+            {selectedClase && (
+              <div className="control-group">
+                <span className="control-label">TIPO DE {selectedClase.name.toUpperCase()}</span>
+                <div className="estampado-grid">
+                  {tipos.map((t) => (
                     <button
-                      className={`stepper-step${isDone ? " stepper-step--done" : ""}${isActive ? " stepper-step--active" : ""}`}
-                      onClick={() => enabled && setStep(s.id)}
-                      disabled={!enabled}
+                      key={t.id}
+                      className={`estampado-card${selectedTipoId === t.id ? " estampado-card--active" : ""}`}
+                      onClick={() => handleSelectTipo(t.id)}
                       type="button"
                     >
-                      <span className="stepper-step__dot">{isDone ? "✓" : idx + 1}</span>
-                      <span className="stepper-step__label">{s.label}</span>
+                      <div className="estampado-card__preview">
+                        {t.image_url ? (
+                          <img src={t.image_url} alt={t.name} loading="lazy" decoding="async" />
+                        ) : t.svg_content ? (
+                          <div className="estampado-card__svg"
+                            dangerouslySetInnerHTML={{ __html: t.svg_content.replace(/currentColor/gi, "var(--accent)") }}
+                          />
+                        ) : (
+                          <span style={{ fontSize: "1.5rem", opacity: 0.3 }}>?</span>
+                        )}
+                      </div>
+                      <div className="estampado-card__info">
+                        <span className="estampado-card__name">{t.name}</span>
+                        {t.description && <span className="estampado-card__desc">{t.description}</span>}
+                      </div>
                     </button>
-                    {idx < STEPS.length - 1 && (
-                      <div className={`stepper-connector${idx < currentStepIdx ? " stepper-connector--done" : ""}`} />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="design-flow__body">
-              {step === "clase" && (
-                <EstampadoSelector
-                  estampados={estampados}
-                  selectedId={selectedClaseId}
-                  onSelect={handleSelectClase}
-                />
-              )}
-
-              {step === "tipo" && (
-                <div className="control-group">
-                  <span className="control-label">TIPO DE {selectedClase?.name.toUpperCase()}</span>
-                  <div className="estampado-grid">
-                    {tipos.map((t) => (
-                      <button
-                        key={t.id}
-                        className={`estampado-card${selectedTipoId === t.id ? " estampado-card--active" : ""}`}
-                        onClick={() => handleSelectTipo(t.id)}
-                        type="button"
-                      >
-                        <div className="estampado-card__preview">
-                          {t.image_url ? (
-                            <img src={t.image_url} alt={t.name} loading="lazy" decoding="async" />
-                          ) : t.svg_content ? (
-                            <div className="estampado-card__svg"
-                              dangerouslySetInnerHTML={{ __html: t.svg_content.replace(/currentColor/gi, "var(--accent)") }}
-                            />
-                          ) : (
-                            <span style={{ fontSize: "1.5rem", opacity: 0.3 }}>?</span>
-                          )}
-                        </div>
-                        <div className="estampado-card__info">
-                          <span className="estampado-card__name">{t.name}</span>
-                          {t.description && <span className="estampado-card__desc">{t.description}</span>}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                  ))}
                 </div>
-              )}
-
-              {(step === "size" || step === "location") && (
-                <SizeSelector
-                  sizes={stampSizes}
-                  selectedId={selectedSizeId}
-                  onSelect={handleSelectSize}
-                />
-              )}
-
-              {step === "location" && (
-                <div className="design-flow__confirm">
-                  <p className="text-muted" style={{ fontSize: "0.8rem", margin: "0.25rem 0 0" }}>
-                    Arrastrá el diseño directamente sobre la prenda para ubicarlo donde quieras.
-                    Usá la vista frontal o posterior para elegir la cara.
-                  </p>
-                  <button
-                    className="btn-primary"
-                    style={{ width: "100%", marginTop: "0.75rem" }}
-                    onClick={handleConfirm}
-                    disabled={!customPos}
-                    type="button"
-                  >
-                    Confirmar estampado
-                  </button>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </>
+        )}
+
+        {tab === "tamano" && (
+          <div className="control-group">
+            <span className="control-label">TAMAÑO DEL ESTAMPADO</span>
+            <SizeSelector sizes={stampSizes} selectedId={selectedSizeId} onSelect={setSelectedSizeId} />
+          </div>
+        )}
+
+        {tab === "ubicacion" && (
+          <div className="design-flow__confirm">
+            {disenoDone && tamanoDone ? (
+              <>
+                <p className="text-muted" style={{ fontSize: "0.8rem", margin: "0.25rem 0 0" }}>
+                  Arrastrá el diseño directamente sobre la prenda para ubicarlo donde quieras.
+                  Usá la vista frontal o posterior para elegir la cara.
+                </p>
+                <button
+                  className="btn-primary"
+                  style={{ width: "100%", marginTop: "0.75rem" }}
+                  onClick={handleConfirm}
+                  disabled={!customPos}
+                  type="button"
+                >
+                  Confirmar estampado
+                </button>
+              </>
+            ) : (
+              <p className="text-muted" style={{ fontSize: "0.8rem", textAlign: "center", padding: "1rem" }}>
+                Completá diseño y tamaño para elegir la ubicación.
+              </p>
+            )}
+          </div>
         )}
       </div>
     </div>
