@@ -1,13 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../lib/cart";
-import { useFavorites } from "../lib/favorites";
 import type { SiteSettings } from "../lib/settings";
 
 interface Props {
   settings: SiteSettings | null;
   showBack?: boolean;
   title?: string;
-  showFavorites?: boolean;
   variant?: "default" | "transparent";
 }
 
@@ -15,12 +13,10 @@ export default function AppHeader({
   settings,
   showBack,
   title,
-  showFavorites = true,
   variant = "default",
 }: Props) {
   const navigate = useNavigate();
   const { totalItems } = useCart();
-  const { favorites } = useFavorites();
   const isFloating = variant === "transparent";
 
   return (
@@ -58,21 +54,6 @@ export default function AppHeader({
           )}
 
           <div className="app-header__right">
-            {showFavorites && (
-              <button
-                className="app-header__cart"
-                onClick={() => navigate("/favoritos")}
-                aria-label={`Favoritos, ${favorites.length} ${favorites.length === 1 ? "ítem" : "ítems"}`}
-                style={{ position: "relative" }}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-                  <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                {favorites.length > 0 && (
-                  <span className="app-header__badge">{favorites.length > 9 ? "9+" : favorites.length}</span>
-                )}
-              </button>
-            )}
             <button
               className="app-header__cart"
               onClick={() => navigate("/carrito")}
