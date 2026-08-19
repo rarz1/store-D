@@ -12,8 +12,6 @@ import { supabase } from "../lib/supabase";
 import { setMeta, setCanonical, setJsonLd, clearJsonLd } from "../lib/seo";
 import type { EstampadoRow, DisenoTipoRow, EstampadoSizeRow, EstampadoLocationRow, GarmentRow } from "../lib/supabase";
 
-const ADMIN_PHONE = import.meta.env.VITE_WHATSAPP_PHONE ?? "";
-
 interface PlacedEstampado {
   estampado: EstampadoRow;
   tipo: DisenoTipoRow;
@@ -26,7 +24,7 @@ interface PlacedEstampado {
 export default function ProductPage() {
   const { garmentId } = useParams<{ garmentId: string }>();
   const navigate = useNavigate();
-  const { addItem, openCart } = useCart();
+  const { addItem } = useCart();
   const toast = useToast();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
 
@@ -46,6 +44,8 @@ export default function ProductPage() {
   const [customPos, setCustomPos] = useState<CustomPosition | null>(null);
   const [customSide, setCustomSide] = useState<"front" | "back">("front");
   const frameRef = useRef<HTMLDivElement | null>(null);
+
+  const [designFlowOpen, setDesignFlowOpen] = useState(false);
 
   // Unified free-placement drag over the whole mock frame. On each move,
   // finds which garment mock (front or back) is under the pointer and updates
@@ -91,7 +91,6 @@ export default function ProductPage() {
     if (data) setTiposByClase((prev) => ({ ...prev, [claseId]: data as DisenoTipoRow[] }));
   };
 
-  const [showColorModal, setShowColorModal] = useState(false);
   const [showSizeModal, setShowSizeModal] = useState(false);
   const [showSizeGuideModal, setShowSizeGuideModal] = useState(false);
 
@@ -189,23 +188,6 @@ export default function ProductPage() {
 
   const colorName = colors.find((c) => c.hex === selectedColor)?.name ?? "";
 
-  const buildWhatsAppMessage = () => {
-    const lines = [
-      "Hola! Quiero consultar por:",
-      `• Prenda: ${garment?.name ?? ""}`,
-      `• Color: ${colorName}`,
-      `• Talla: ${selectedSize}`,
-    ];
-    placedEstampados.forEach((p) => {
-      const sizeInc = p.size.price_increment;
-      const locInc = p.locations.reduce((s, l) => s + l.price_increment, 0);
-      const locText = p.customPosition ? (p.side === "back" ? "Ubicación libre (posterior)" : "Ubicación libre (frente)") : p.locations.map((l) => l.name).join(", ");
-      lines.push(`• ${p.estampado.name} · ${p.tipo.name} (${p.size.name}) - ${locText}: +$${(sizeInc + locInc).toLocaleString("es-AR")}`);
-    });
-    lines.push(`• Total: $${totalPrice.toLocaleString("es-AR")}`);
-    return encodeURIComponent(lines.join("\n"));
-  };
-
   const handleShare = async () => {
     try { await navigator.share({ title: `${garment?.name} · STORE`, text: `Mirá esta prenda: ${garment?.name}`, url: window.location.href }); }
     catch { /* fallback */ }
@@ -249,7 +231,7 @@ export default function ProductPage() {
       size: selectedSize,
       estampados: placedEstampados,
     });
-    openCart();
+    toast.success("Agregado al carrito");
   };
 
   const removeEstampado = (index: number) => {
@@ -276,12 +258,10 @@ export default function ProductPage() {
     return (
       <div className="product-page product-page--empty">
         <p>Prenda no encontrada</p>
-        <button className="btn-back" onClick={() => navigate("/")}>Volver al inicio</button>
+        <button className="btn-back" onClick={() => navigate("/colecciones")}>Volver a la colección</button>
       </div>
     );
   }
-
-  const whatsappMessage = buildWhatsAppMessage();
 
   const placedDesigns = placedEstampados.flatMap((p) => {
     const base = {
@@ -320,52 +300,10 @@ export default function ProductPage() {
 
   return (
     <div className="product-page">
-      <div className="breadcrumb">
-        <a onClick={() => navigate("/")} style={{ cursor: "pointer" }}>Inicio</a>
-        <span className="breadcrumb__separator">›</span>
-        <span className="breadcrumb__current">{garment.name}</span>
-      </div>
+      <AppHeader settings={null} showBack title={garment.name} variant="transparent" />
 
-      <AppHeader settings={null} showBack title={garment.name} />
-
-      <div className="product-info-bar">
-        <div className="product-info-bar__choices">
-          {colorName && <span><span className="product-info-bar__label">Color</span> {colorName}</span>}
-          {selectedSize && <span><span className="product-info-bar__label">Talla</span> {selectedSize}</span>}
-        </div>
-        <div className="product-info-bar__price">
-          {placedEstampados.length > 0 && (
-            <span className="product-info-bar__base">${Number(garment.base_price).toLocaleString("es-AR")}</span>
-          )}
-          {placedEstampados.map((p, i) => {
-            const inc = p.size.price_increment + p.locations.reduce((s, l) => s + l.price_increment, 0);
-            return <span key={i} className="product-info-bar__addon">+${inc.toLocaleString("es-AR")}</span>;
-          })}
-          <strong className="product-info-bar__total">${totalPrice.toLocaleString("es-AR")}</strong>
-          <button
-            className="btn-icon"
-            onClick={handleToggleFavorite}
-            aria-label={isFavorite(garment.id, selectedColor, selectedSize) ? "Quitar de favoritos" : "Agregar a favoritos"}
-            style={{ marginLeft: "0.25rem" }}
-          >
-            <svg viewBox="0 0 24 24" fill={isFavorite(garment.id, selectedColor, selectedSize) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" width="18" height="18">
-              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          {typeof navigator.share === "function" && (
-            <button className="btn-icon" onClick={handleShare} aria-label="Compartir" style={{ marginLeft: "0.25rem" }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="product-content">
-        <div className="mock-section">
-          {/* Unified drag frame: a single pointer handler covers both front and
-              back mocks; the side under the cursor determines customSide. */}
+      <div className="product-sheet">
+        <div className="product-sheet__mock">
           <div
             className={`mock-frame${customMode ? " mock-frame--drag" : ""}`}
             ref={frameRef}
@@ -398,10 +336,37 @@ export default function ProductPage() {
           </div>
         </div>
 
-        <div className="controls-section">
-          <h2 className="personalize-title">Personaliza tu prenda</h2>
+        <div className="product-sheet__body">
+          <div className="product-sheet__price-row">
+            <div className="product-sheet__price-group">
+              <span className="product-sheet__price">${totalPrice.toLocaleString("es-AR")}</span>
+              {placedEstampados.length > 0 && (
+                <span className="product-sheet__base">Desde ${Number(garment.base_price).toLocaleString("es-AR")}</span>
+              )}
+            </div>
+            <div className="product-sheet__actions">
+              <button
+                className="btn-icon"
+                onClick={handleToggleFavorite}
+                aria-label={isFavorite(garment.id, selectedColor, selectedSize) ? "Quitar de favoritos" : "Agregar a favoritos"}
+              >
+                <svg viewBox="0 0 24 24" fill={isFavorite(garment.id, selectedColor, selectedSize) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" width="20" height="20">
+                  <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              {typeof navigator.share === "function" && (
+                <button className="btn-icon" onClick={handleShare} aria-label="Compartir">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                    <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
 
-          {/* M6: Inline Color Swatches */}
+          <h1 className="product-sheet__name">{garment.name}</h1>
+          <p className="product-sheet__desc">{garment.description}</p>
+
           {colors.length > 0 && (
             <div className="control-group">
               <span className="control-label">
@@ -429,7 +394,6 @@ export default function ProductPage() {
             </div>
           )}
 
-          {/* M6: Inline Size Chips */}
           {sizes.length > 0 && (
             <div className="control-group">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -459,52 +423,26 @@ export default function ProductPage() {
             </div>
           )}
 
-          <div className="control-group">
-            {placedEstampados.length > 0 && (
-              <div className="placed-estampados">
-                {placedEstampados.map((p, i) => (
-                  <div key={i} className="placed-estampado-row">
-                    <div className="placed-estampado-row__info">
-                      <span className="placed-estampado-row__name">{p.estampado.name} · {p.tipo.name} · {p.size.name}</span>
-                      <span className="placed-estampado-row__locs">Ubicación libre · {(p.side ?? "front") === "back" ? "Posterior" : "Frente"}</span>
-                    </div>
-                    <span className="placed-estampado-row__price">
-                      +${(p.size.price_increment + p.locations.reduce((s, l) => s + l.price_increment, 0)).toLocaleString("es-AR")}
-                    </span>
-                    <button className="btn-small btn-small--danger" onClick={() => removeEstampado(i)}>✕</button>
+          {placedEstampados.length > 0 && (
+            <div className="placed-estampados">
+              {placedEstampados.map((p, i) => (
+                <div key={i} className="placed-estampado-row">
+                  <div className="placed-estampado-row__info">
+                    <span className="placed-estampado-row__name">{p.estampado.name} · {p.tipo.name} · {p.size.name}</span>
+                    <span className="placed-estampado-row__locs">Ubicación libre · {(p.side ?? "front") === "back" ? "Posterior" : "Frente"}</span>
                   </div>
-                ))}
-              </div>
-            )}
+                  <span className="placed-estampado-row__price">
+                    +${(p.size.price_increment + p.locations.reduce((s, l) => s + l.price_increment, 0)).toLocaleString("es-AR")}
+                  </span>
+                  <button className="btn-small btn-small--danger" onClick={() => removeEstampado(i)}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
 
-            <DesignFlow
-              estampados={estampados}
-              tiposByClase={tiposByClase}
-              stampSizes={stampSizes}
-              onSelectClase={handleSelectClase}
-              onPreviewChange={setPreviewStamp}
-              customMode={customMode}
-              customPos={customPos}
-              customSide={customSide}
-              onCustomModeChange={setCustomMode}
-              onCustomPosChange={setCustomPos}
-              onCustomSideChange={setCustomSide}
-              onAdd={(item) => {
-                const isDuplicate = placedEstampados.some((p) =>
-                  p.estampado.id === item.estampado.id &&
-                  p.tipo.id === item.tipo.id &&
-                  JSON.stringify(p.locations.map(l => l.id).sort()) === JSON.stringify(item.locations.map(l => l.id).sort()) &&
-                  JSON.stringify(p.customPosition ?? null) === JSON.stringify(item.customPosition ?? null) &&
-                  (p.side ?? "front") === (item.side ?? "front")
-                );
-                if (isDuplicate) {
-                  toast.warning("Este diseño ya está agregado en esa ubicación");
-                  return;
-                }
-                setPlacedEstampados([...placedEstampados, item]);
-              }}
-            />
-          </div>
+          <button className="btn-elegir-diseno" onClick={() => setDesignFlowOpen(true)} type="button">
+            Elegí diseño
+          </button>
         </div>
       </div>
 
@@ -538,38 +476,6 @@ export default function ProductPage() {
         </section>
       )}
 
-      {showColorModal && (
-        <div className="modal-overlay" onClick={() => setShowColorModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Elegí el color</h3>
-              <button className="btn-icon" onClick={() => setShowColorModal(false)}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-            <div className="color-grid">
-              {colors.map((c) => (
-                <button
-                  key={c.hex}
-                  className={`color-swatch${selectedColor === c.hex ? " color-swatch--active" : ""}`}
-                  style={{ background: c.hex }}
-                  onClick={() => { setSelectedColor(c.hex); setShowColorModal(false); }}
-                  aria-label={c.name} title={c.name}
-                >
-                  {selectedColor === c.hex && (
-                    <svg viewBox="0 0 12 12" fill="none" width="14" height="14">
-                      <path d="M2 6l3 3 5-5" stroke={c.hex === "#f0f0f0" ? "#1a1a1a" : "#fff"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {showSizeModal && (
         <div className="modal-overlay" onClick={() => setShowSizeModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -600,8 +506,43 @@ export default function ProductPage() {
         garmentSlug={garment?.slug}
       />
 
+      {designFlowOpen && (
+        <div className="sheet-overlay" onClick={() => setDesignFlowOpen(false)}>
+          <div className="sheet-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-panel__handle" />
+            <DesignFlow
+              estampados={estampados}
+              tiposByClase={tiposByClase}
+              stampSizes={stampSizes}
+              onSelectClase={handleSelectClase}
+              onPreviewChange={setPreviewStamp}
+              customMode={customMode}
+              customPos={customPos}
+              customSide={customSide}
+              onCustomModeChange={setCustomMode}
+              onCustomPosChange={setCustomPos}
+              onCustomSideChange={setCustomSide}
+              onAdd={(item) => {
+                const isDuplicate = placedEstampados.some((p) =>
+                  p.estampado.id === item.estampado.id &&
+                  p.tipo.id === item.tipo.id &&
+                  JSON.stringify(p.locations.map(l => l.id).sort()) === JSON.stringify(item.locations.map(l => l.id).sort()) &&
+                  JSON.stringify(p.customPosition ?? null) === JSON.stringify(item.customPosition ?? null) &&
+                  (p.side ?? "front") === (item.side ?? "front")
+                );
+                if (isDuplicate) {
+                  toast.warning("Este diseño ya está agregado en esa ubicación");
+                  return;
+                }
+                setPlacedEstampados([...placedEstampados, item]);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="product-footer">
-        <button className="btn-primary" style={{ width: "100%", marginBottom: "0.5rem" }} onClick={handleAddToCart}>
+        <button className="btn-primary" style={{ width: "100%" }} onClick={handleAddToCart}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
             <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M3 6h18" strokeLinecap="round" strokeLinejoin="round" />
@@ -609,18 +550,6 @@ export default function ProductPage() {
           </svg>
           Agregar al carrito
         </button>
-        {ADMIN_PHONE ? (
-          <a href={`https://wa.me/${ADMIN_PHONE}?text=${whatsappMessage}`} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-            </svg>
-            Consultar por WhatsApp
-          </a>
-        ) : (
-          <p style={{ textAlign: "center", fontSize: "0.75rem", color: "var(--text-muted)" }}>
-            Configurá VITE_WHATSAPP_PHONE en .env para habilitar WhatsApp
-          </p>
-        )}
       </div>
     </div>
   );
