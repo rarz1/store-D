@@ -379,4 +379,11 @@ Archivo: `client/src/lib/settings.ts`
 - **ProductPage**: header pasa de `variant="transparent"` (flotante, tapaba la prenda) a `default` (sticky); se eliminó la sección "QUIZÁS TAMBIÉN TE GUSTE" (estado, effect y JSX de recommendations + import `GarmentRow` + CSS `.recommendations`/`.recommendation-card`); `.product-sheet` reparte 60% mock / 40% body (antes 45/55 → el body tapaba la prenda); `.product-footer` sin padding horizontal → botón "Agregar al carrito" de ancho completo de pantalla.
 - **Admin**: input "Imagen de fondo de colecciones" en la tab Tienda (upload a bucket `store-images`, campo `collections_banner_url`).
 - **SQL aplicado por el usuario**: `alter table site_settings add column collections_banner_url text not null default '';` — ya ejecutado en Supabase (verificado: la columna existe). El guardado de settings desde admin funciona.
+
+### Sesión 11c — 2026-08-18 (Producto con scroll de página completo, commit `43b7e53`)
+
+- **Problema**: el botón "Elegí diseño" quedaba tapado por el `product-footer` fijo (el body tenía scroll interno de 40% de altura); además, al tener scroll interno, el navegador móvil no ocultaba su barra superior (a diferencia de colecciones) y el header (nombre + back + carrito) nunca desaparecía.
+- **Fix**: `.product-page .app-header` → `position: static` (el header se va al hacer scroll hacia la personalización). `.product-sheet` pierde el `height: calc(100dvh - 56px)` (scroll de página normal → el navegador oculta su barra). `.product-sheet__mock` pasa a `height: 52dvh; min-height 320px; max-height 520px`. `.product-sheet__body` pierde el flex/overflow interno y gana `margin-top: -20px` (solapa al mock) + `padding-bottom: calc(7rem + safe)` para que el botón "Elegí diseño" quede por encima del footer fijo.
+- **Drag preservado**: `useEffect` en ProductPage hace `scrollIntoView` del mock al abrir `designFlowOpen`, y `.product-sheet__mock--sticky` (clase activa cuando el flujo de diseño está abierto) fija el mock arriba con `z-index: 2001` (sobre el `sheet-overlay`), así la superficie de arrastre queda visible sobre el bottom sheet.
+- Verificación: `npm run build` y `npm run lint` pasan. Push `54d8972..43b7e53`.
 - Verificación: `npm run build` y `npm run lint` pasan (solo warnings preexistentes). Commit `63ed132` sin pushear.
