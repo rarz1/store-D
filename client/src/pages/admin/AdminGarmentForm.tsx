@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase, type EstampadoSizeRow, type EstampadoLocationRow } from "../../lib/supabase";
+import { recolorMockSvg } from "../../lib/recolorMock";
 
 interface ColorEntry { name: string; hex: string; }
 interface SizeEntry { name: string; }
@@ -157,7 +158,7 @@ export default function AdminGarmentForm() {
               display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
             }}>
               <div style={{ width: 80, height: 104, color: "var(--text)" }}
-                dangerouslySetInnerHTML={{ __html: svgMock.replace(/currentColor/gi, "var(--text)") }}
+                dangerouslySetInnerHTML={{ __html: recolorMockSvg(svgMock, "var(--text)") }}
               />
             </div>
             <button className="btn-small btn-small--danger" style={{ marginTop: 4 }} onClick={() => setSvgMock("")}>Quitar SVG</button>
@@ -179,7 +180,7 @@ export default function AdminGarmentForm() {
               display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
             }}>
               <div style={{ width: 80, height: 104, color: "var(--text)" }}
-                dangerouslySetInnerHTML={{ __html: svgMockBack.replace(/currentColor/gi, "var(--text)") }}
+                dangerouslySetInnerHTML={{ __html: recolorMockSvg(svgMockBack, "var(--text)") }}
               />
             </div>
             <button className="btn-small btn-small--danger" style={{ marginTop: 4 }} onClick={() => setSvgMockBack("")}>Quitar SVG</button>
