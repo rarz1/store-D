@@ -10,6 +10,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import OnboardingScreen from "./pages/OnboardingScreen";
 import HomePage from "./pages/HomePage";
 import ProductPage from "./pages/ProductPage";
+import CartPage from "./pages/CartPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminGarmentForm from "./pages/admin/AdminGarmentForm";
@@ -50,6 +51,7 @@ export default function App() {
                 <Route path="/" element={<OnboardingScreen />} />
                 <Route path="/colecciones" element={<HomePage />} />
                 <Route path="/producto/:garmentId" element={<ProductPage />} />
+                <Route path="/carrito" element={<CartPage />} />
 
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route
