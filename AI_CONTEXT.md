@@ -17,8 +17,10 @@
 ### Rutas públicas
 | Ruta | Descripción |
 |------|-------------|
-| `/` | Home con carrusel (slides desde DB) + StoreBanner con logo/título + grilla de categorías (clic → va directo a personalización) |
-| `/producto/:garmentId` | Configurador interactivo (color/talle/diseño) con mock SVG + breadcrumb |
+| `/` | Onboarding full-screen (carrusel editorial + "Let's Start" → `/colecciones`), siempre al entrar |
+| `/colecciones` | Colección: banner card navy + pills de categoría (desde tags) + grilla de prendas (clic → personalización) |
+| `/producto/:garmentId` | Detalle con mock ~50% + hoja de detalles (precio coral, color, talla, "Elegí diseño") y bottom sheet de 3 solapas |
+| `/carrito` | Carrito full-page: checkboxes redondos, stepper, breakdown de personalización, resumen sticky con envío (Retiro $0.0 / Envío a convenir), Checkout por WhatsApp, Pedidos recientes |
 
 ### Rutas admin
 | Ruta | Descripción |
@@ -31,19 +33,17 @@
 ### Características
 - SVGs de prendas (Remera, Pantaloneta, Buzo) con fill dinámico para cambio de color
 - Diseños almacenados como SVG text en Supabase, se renderizan inline sobre el mock
-- Selector de color (swatches), talle (chips), diseño (thumbnails con preview)
-- Carrusel editorial full-viewport con slides desde DB (layout full/double, imágenes)
-- StoreBanner: barra superior con glass effect sobre el carrusel, muestra logo + título + subtítulo
-- Colores aplicados como CSS variables desde `site_settings`, editables con live preview
-- Consulta por WhatsApp con resumen del producto configurado
+- Selector de color (swatches), talla (chips), diseño (thumbnails con preview)
+- Carrusel editorial full-viewport con Ken Burns (12s), auto-play 5.2s con barra de progreso en los dots, parallax/title stagger, swipe por pointer, variante `hero`/`onboarding`, respeta `prefers-reduced-motion`
+- Tema claro por defecto: `--bg #f8f9fa`, `--surface #ffffff`, `--text #1e2230`, `--accent #fa6e71` (coral), `--radius-pill: 999px`
+- Colores aplicados como CSS variables desde `site_settings` (applyColors extiende `--surface-hover`, `--text-secondary`, `--border`), editables con live preview
+- Consulta por WhatsApp con resumen del carrito seleccionado (botón SOLO en `/carrito`, no en personalización)
+- Envío configurable sin monto fijo: chips "Retiro" (`$0.0`) / "Envío" (`a convenir según distancia`); solo signo `$`
 - Admin con 5 tabs: Productos, Diseños, Tienda, Carrusel, Colores
 - Mobile-first, responsive, safe areas
-- Quick View modal eliminado: el clic en una tarjeta de categoría navega directo a la personalización (`/producto/:slug`)
-- Onboarding modal para primeros visitantes (una vez, con localStorage)
-- FAB flotante del carrito en móvil con badge dinámico
-- Breadcrumb de navegación en página de producto
+- FAB flotante del carrito en móvil con badge dinámico → `/carrito`
 - Validación inline en formularios admin con errores visuales
-- Notificaciones toast en acciones de admin (guardar, eliminar)
+- Notificaciones toast en acciones (agregar al carrito, admin, WhatsApp)
 - Animaciones de entrada en tarjetas de categoría (stagger)
 - Micro-animaciones en botones (scale on active, hover lift)
 - Skeleton shimmer animation (reemplaza pulse básico)
@@ -58,7 +58,7 @@
 - `estampado_sizes` = escala del diseño (Pequeño 25% → Full 100% del ancho), controla qué % del área de la prenda ocupa
 - `estampado_locations` = posición fija (Pecho Izq, Centro Espalda, etc.) — **ya NO se usa en el flujo de compra**, solo queda el CRUD del admin
 - `garment_estampado_sizes`/`garment_estampado_locations` = junction tables: qué sizes/locations están disponibles por prenda
-- Flujo en frontend: usuario elige clase → tipo → tamaño → arrastra el diseño sobre el mock (ubicación libre) → confirma
+- Flujo en frontend: bottom sheet con 3 solapas (Diseño → Tamaño → Ubicación); el usuario arrastra el diseño sobre el mock (ubicación libre) y confirma
 - La ubicación es SIEMPRE libre (drag sobre el mock): `customPosition {x,y}` + `side ("front"|"back")`; `locations: []` siempre
 - El estado del drag vive en `ProductPage` (`customMode`, `customPos`, `customSide`) y se pasa a `DesignFlow` como props controladas
 
@@ -83,7 +83,7 @@
 |----------|---------|--------------|
 | `VITE_SUPABASE_URL` | `https://xxx.supabase.co` | `lib/supabase.ts` |
 | `VITE_SUPABASE_ANON_KEY` | `eyJ...` | `lib/supabase.ts` |
-| `VITE_WHATSAPP_PHONE` | `54123456789` | `pages/ProductPage.tsx` |
+| `VITE_WHATSAPP_PHONE` | `54123456789` | `pages/CartPage.tsx` |
 
 ## Librería de settings
 
@@ -96,18 +96,16 @@ Archivo: `client/src/lib/settings.ts`
 
 | Componente | Ruta | Descripción |
 |------------|------|-------------|
-| `Carousel` | `components/Carousel.tsx` | Carrusel full-viewport, slides desde `carousel_slides` |
-| `StoreBanner` | `components/StoreBanner.tsx` | Header con glass effect sobre carrusel, logo + título + subtítulo |
-| `AppHeader` | `components/AppHeader.tsx` | Header persistente con logo, badge de carrito, FAB flotante en móvil |
-| `QuickViewModal` | `components/QuickViewModal.tsx` | Modal de vista rápida de productos — **ya no se usa** (las cards navegan directo) |
-| `OnboardingModal` | `components/OnboardingModal.tsx` | Modal de bienvenida para primeros visitantes |
+| `Carousel` | `components/Carousel.tsx` | Carrusel full-viewport (Ken Burns, auto-play, swipe), slides desde `carousel_slides`; prop `variant` "hero" \| "onboarding" |
+| `AppHeader` | `components/AppHeader.tsx` | Header sticky con logo, badge de carrito → `/carrito`, FAB flotante en móvil; prop `variant` "default" \| "transparent" |
+| `OnboardingScreen` | `pages/OnboardingScreen.tsx` | Pantalla de bienvenida en `/` con título/subtítulo desde settings y CTA "Let's Start" |
+| `CartPage` | `pages/CartPage.tsx` | Carrito full-page en `/carrito` con selección, envío, checkout WhatsApp y pedidos recientes |
 | `GarmentMock` | `components/GarmentMock.tsx` | Mock SVG de prenda con color dinámico, flip front/back, placement de diseños |
-| `DesignFlow` | `components/DesignFlow.tsx` | Configurador de estampados con stepper de 4 pasos; paso "location" activa el drag controlado desde ProductPage |
+| `DesignFlow` | `components/DesignFlow.tsx` | Bottom sheet con 3 solapas (Diseño/Tamaño/Ubicación); la solapa "ubicación" activa el drag controlado desde ProductPage |
 | `EstampadoSelector` | `components/EstampadoSelector.tsx` | Selector de clase de estampado con filtro por tags |
 | `SizeSelector` | `components/SizeSelector.tsx` | Selector de tamaño de estampado |
 | `SizeGuideModal` | `components/SizeGuideModal.tsx` | Guía de talles con medidas reales en cm por tipo de prenda |
 | `ConfirmModal` | `components/ConfirmModal.tsx` | Modal de confirmación reutilizable |
-| `HelpModal` | `components/HelpModal.tsx` | Modal de ayuda con pasos de personalización |
 
 ## Notas
 
@@ -354,3 +352,19 @@ Archivo: `client/src/lib/settings.ts`
 - CSS: `.cart-drawer__item-thumb` (4.5rem, `--surface-hover` bg) con override del `max-width: 380px` de `.garment-mock__custom` para que el SVG ocupe el thumb.
 - Items viejos en `localStorage` sin los SVG guardados caen al mock genérico por slug (`remeras`/`pantalones`/`buzos`) — siguen visibles.
 - Gotcha: TS2339 al acceder `d.side` sobre la unión de returns → cast `(d as { side?: string })`. Verificación: `npx tsc -b` y oxlint pasan. Commit `ae76a9b` pusheado a `main`.
+
+### Sesión 11 — 2026-08-18 (Rediseño mobile-first tema claro según referencias)
+
+- Spec + plan aprobados por el usuario: `docs/superpowers/specs/2026-08-18-mobile-redesign-light-theme-design.md` (commit `4cb14d3`) y `docs/superpowers/plans/2026-08-18-mobile-redesign-light-theme.md` (commit `4888a69`, 11 tareas). El agente NO puede leer imágenes; el usuario describió las referencias de `DISEÑO MOVIL/` por texto.
+- **Tokens**: `index.css` `:root` → tema claro (`--bg #f8f9fa`, `--surface #ffffff`, `--text #1e2230`, `--accent #fa6e71`, `--radius-pill 999px`, sombras claras). `applyColors()` en `settings.ts` extiende `--surface-hover` (lightenHex 0.02), `--text-secondary` (lightenHex text 0.05), `--border` (lightenHex surface 0.06). Seed `site_settings` en `supabase-schema.sql` actualizado a colores claros.
+- **Carousel** reescrito: `AUTOPLAY_MS=5200`, prop `variant "hero"|"onboarding"`, Ken Burns 12s (scale 1→1.12), dots con barra de progreso animada (`carousel-dot-fill`, key `progressKey`), swipe por pointer (delta 50px), shade gradiente, título multilínea con stagger (`title-rise`), `prefers-reduced-motion` desactiva animaciones.
+- **OnboardingScreen** (`pages/OnboardingScreen.tsx`): ruta `/` siempre al entrar; título/subtítulo desde `store_title`/`store_subtitle` (fallbacks "STORE" / "Personalizá tu estilo…"); CTA "Let's Start" (pill blanca) → `/colecciones` y setea `localStorage.onboarding_seen`. Rutas: `/colecciones` (HomePage), `/carrito` (CartPage).
+- **HomePage**: banner card navy (#1e2230, radio 20px) con título/subtítulo de settings, mock SVG de `garments[0]` (currentColor→accent) sobresaliendo arriba y botón "Explorar" (scroll a pills); pills de categorías derivadas de `g.tags` (pill activa = `--text`); grilla filtra por categoría. Eliminado carrusel + `OnboardingModal` de HomePage.
+- **AppHeader**: prop `variant "default"|"transparent"` (transparent = `app-header--floating`); botón carrito y FAB → `navigate("/carrito")`; logo → `/colecciones`; back → `navigate(-1)`; `.app-header__store-name` usa `--text` salvo en floating (blanco).
+- **ProductPage**: sin WhatsApp (eliminados `ADMIN_PHONE`, `buildWhatsAppMessage`, anchor); `handleAddToCart` → `toast.success("Agregado al carrito")` (sin abrir drawer); layout `product-sheet`: mock ~45% arriba + `product-sheet__body` (radius 20px top, sombra) con precio coral, base tachado, corazón favorito, share, descripción, swatches color, chips talla + guía, breakdown `placed-estampados` y botón "Elegí diseño" → abre bottom sheet (`sheet-overlay` + `sheet-panel`, max-height 60dvh, mock queda visible arriba para el drag). `AppHeader variant="transparent"` con back. Cierre del sheet al confirmar diseño (`setDesignFlowOpen(false)` en onAdd).
+- **DesignFlow**: refactor a 3 solapas (`.design-flow__tabs`: Diseño/Tamaño/Ubicación, check coral en las completadas); solapa Diseño = clase + tipos en la misma vista; solapa Ubicación activa customMode (drag) y confirma; confirm limpia selección y vuelve a "diseno". Props intactas (customMode se recibe pero ya no se destructurea). Eliminado stepper/choice-btn (CSS muerto borrado).
+- **CartPage** (`pages/CartPage.tsx`): carrito full-page. `selected Set<number>` (checkbox redondos, coral activo, "Seleccionar todo"), thumb render en vivo (GarmentMock front + back), breakdown de estampados, stepper cápsula `[− n +]`, borrar por ítem. Summary sticky: chips Retiro `$0.0` / Envío `a convenir`, filas Artículos seleccionados / Envío / Subtotal (solo ítems seleccionados), `btn-checkout` navy pill → WhatsApp (mensaje con desglose + total + envío; `placeOrder` al click), "Seguir comprando" → `/colecciones`, Volver (`navigate(-1)`) + Vaciar (btn-ghost). Pedidos recientes colapsable con `reorder`.
+- **cart.tsx**: eliminados del contexto `isOpen/openCart/closeCart`; eliminado `CartDrawer`, `CartItemThumb`, `buildCartMockDesigns`, imports de GarmentMock/useNavigate (movidos a CartPage). Siguen `items/orders/reorder/placeOrder`.
+- **Limpieza**: eliminados `OnboardingModal.tsx`, `QuickViewModal.tsx`, `StoreBanner.tsx` (dead code); CSS muerto borrado (cart-drawer/cart-overlay, breadcrumb, quick-view, stepper, choice-btn--salmon, design-flow__header). PWA: `index.html` theme-color `#f8f9fa`, `manifest.json` background/theme `#f8f9fa`, `sw.js` `CACHE_NAME store-v2 → store-v3`.
+- **Verificación**: `npm run build` y `npm run lint` pasan (solo warnings preexistentes). No hay Playwright configurado en el repo (no existe `playwright.config.ts`), así que la verificación visual quedó pendiente: revisar en `store-d-psi.vercel.app` (o `npm run dev`) el onboarding, colecciones, producto y carrito en móvil 390px.
+- Commits: `506303b` (tokens), `0d43c22` (sweep App.css), `3e7bf5e` (carousel), `6914d01` (onboarding+rutas), `0bc0fb9` (colecciones), `95b5dae` (header), `7d2396c` (product sheet), `155c807` (design flow tabs), `c9c918a` (cart page), `faf5317` (cleanup+PWA). Todo pusheado a `main` → Vercel auto-deploy.
