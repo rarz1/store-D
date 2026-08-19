@@ -4,8 +4,8 @@
   "description": "Remeras, pantalones y buzos oversize con diseño propio. Algodón orgánico, edición limitada.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#131518",
-  "theme_color": "#f97316",
+  "background_color": "#f8f9fa",
+  "theme_color": "#f8f9fa",
   "orientation": "portrait",
   "icons": [
     {
