@@ -41,22 +41,27 @@ export default function HomePage() {
     [garments, activeCategory]
   );
 
-  const bannerMock = garments[0]?.svg_mock
-    ? garments[0].svg_mock
-        .replace(/\s(width|height)="[^"]*"/g, "")
-        .replace(/currentColor/gi, "var(--accent)")
-    : null;
-
   const handleConfigure = (slug: string) => {
     navigate(`/producto/${slug}`);
   };
 
+  const bannerImage = settings?.collections_banner_url
+    ? `linear-gradient(rgba(19, 21, 24, 0.6), rgba(19, 21, 24, 0.6)), url(${settings.collections_banner_url})`
+    : undefined;
+
   return (
     <div className="home page-enter">
-      <AppHeader settings={settings} />
+      <AppHeader settings={settings} showHome />
 
       <section className="categories">
-        <div className="collections-banner">
+        <div
+          className="collections-banner"
+          style={bannerImage ? {
+            backgroundImage: bannerImage,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          } : undefined}
+        >
           <div className="collections-banner__content">
             <h2 className="collections-banner__title">
               {settings?.collections_title || "COLECCIONES"}
@@ -64,16 +69,7 @@ export default function HomePage() {
             <p className="collections-banner__subtitle">
               {settings?.collections_subtitle || "Elegí tu prenda y personalizala a tu gusto"}
             </p>
-            <button
-              className="collections-banner__cta"
-              onClick={() => document.querySelector(".collections-pills")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-            >
-              Explorar
-            </button>
           </div>
-          {bannerMock && (
-            <div className="collections-banner__mock" dangerouslySetInnerHTML={{ __html: bannerMock }} />
-          )}
         </div>
 
         {categories.length > 1 && (

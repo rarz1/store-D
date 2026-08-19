@@ -10,7 +10,7 @@ import { useFavorites } from "../lib/favorites";
 import { useGarment, useGarmentColors, useGarmentSizes, useEstampados, useGarmentEstampadoSizes } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 import { setMeta, setCanonical, setJsonLd, clearJsonLd } from "../lib/seo";
-import type { EstampadoRow, DisenoTipoRow, EstampadoSizeRow, EstampadoLocationRow, GarmentRow } from "../lib/supabase";
+import type { EstampadoRow, DisenoTipoRow, EstampadoSizeRow, EstampadoLocationRow } from "../lib/supabase";
 
 interface PlacedEstampado {
   estampado: EstampadoRow;
@@ -93,26 +93,6 @@ export default function ProductPage() {
 
   const [showSizeModal, setShowSizeModal] = useState(false);
   const [showSizeGuideModal, setShowSizeGuideModal] = useState(false);
-
-  const [recommendations, setRecommendations] = useState<GarmentRow[]>([]);
-
-  useEffect(() => {
-    if (!garment) return;
-    let cancelled = false;
-    supabase.from("garments").select("*").order("id").then(({ data, error }) => {
-      if (cancelled || error || !data) return;
-      const rows = data as GarmentRow[];
-      const others = rows.filter((g) => g.id !== garment.id);
-      const currentTags = new Set(garment.tags ?? []);
-      const ranked = [...others].sort((a, b) => {
-        const scoreA = (a.tags ?? []).filter((t) => currentTags.has(t)).length;
-        const scoreB = (b.tags ?? []).filter((t) => currentTags.has(t)).length;
-        return scoreB - scoreA;
-      });
-      setRecommendations(ranked.slice(0, 3));
-    });
-    return () => { cancelled = true; };
-  }, [garment]);
 
   useEffect(() => {
     if (colors.length > 0 && !selectedColor) setSelectedColor(colors[0].hex);
@@ -300,7 +280,7 @@ export default function ProductPage() {
 
   return (
     <div className="product-page">
-      <AppHeader settings={null} showBack title={garment.name} variant="transparent" />
+      <AppHeader settings={null} showBack title={garment.name} />
 
       <div className="product-sheet">
         <div className="product-sheet__mock">
@@ -445,36 +425,6 @@ export default function ProductPage() {
           </button>
         </div>
       </div>
-
-      {recommendations.length > 0 && (
-        <section className="recommendations">
-          <h3 className="recommendations__title">QUIZÁS TAMBIÉN TE GUSTE</h3>
-          <div className="recommendations__row">
-            {recommendations.map((r) => {
-              const mock = r.svg_mock
-                ? r.svg_mock
-                    .replace(/\s(width|height)="[^"]*"/g, "")
-                    .replace(/currentColor/gi, "var(--accent)")
-                : null;
-              return (
-                <button
-                  key={r.id}
-                  className="recommendation-card"
-                  onClick={() => navigate(`/producto/${r.slug}`)}
-                >
-                  {mock ? (
-                    <div className="recommendation-card__mock" dangerouslySetInnerHTML={{ __html: mock }} />
-                  ) : (
-                    <span className="recommendation-card__fallback">{r.name[0]}</span>
-                  )}
-                  <strong className="recommendation-card__name">{r.name}</strong>
-                  <span className="recommendation-card__price">Desde ${Number(r.base_price).toLocaleString("es-AR")}</span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      )}
 
       {showSizeModal && (
         <div className="modal-overlay" onClick={() => setShowSizeModal(false)}>

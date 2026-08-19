@@ -108,12 +108,15 @@ create table site_settings (
   logo_url text not null default '',
   collections_title text not null default 'COLECCIONES',
   collections_subtitle text not null default 'Elegí tu prenda y personalizala a tu gusto',
-  color_bg text not null default '#f8f9fa',
-  color_surface text not null default '#ffffff',
-  color_text text not null default '#1e2230',
-  color_accent text not null default '#fa6e71',
+  collections_banner_url text not null default '',
+  color_bg text not null default '#131518',
+  color_surface text not null default '#1c1f24',
+  color_text text not null default '#f2f4f7',
+  color_accent text not null default '#f97316',
   updated_at timestamptz default now()
 );
+
+-- Para DBs existentes: alter table site_settings add column collections_banner_url text not null default '';
 
 create table carousel_slides (
   id bigint primary key generated always as identity,

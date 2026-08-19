@@ -6,6 +6,7 @@ interface Props {
   settings: SiteSettings | null;
   showBack?: boolean;
   title?: string;
+  showHome?: boolean;
   variant?: "default" | "transparent";
 }
 
@@ -13,6 +14,7 @@ export default function AppHeader({
   settings,
   showBack,
   title,
+  showHome,
   variant = "default",
 }: Props) {
   const navigate = useNavigate();
@@ -54,6 +56,17 @@ export default function AppHeader({
           )}
 
           <div className="app-header__right">
+            {showHome && (
+              <button
+                className="app-header__cart"
+                onClick={() => navigate("/")}
+                aria-label="Volver a inicio"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+                  <path d="M3 10.5L12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            )}
             <button
               className="app-header__cart"
               onClick={() => navigate("/carrito")}

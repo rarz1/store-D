@@ -432,6 +432,17 @@ export default function AdminDashboard() {
           <label className="admin-label">Subtítulo de colecciones</label>
           <input className="admin-input" value={settings.collections_subtitle} onChange={(e) => setSettings({ ...settings, collections_subtitle: e.target.value })} />
 
+          <label className="admin-label">Imagen de fondo de colecciones</label>
+          <input type="file" accept="image/*" onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const { url } = await uploadImage(file, `collections/banner-${Date.now()}`);
+            if (url) setSettings({ ...settings, collections_banner_url: url });
+          }} />
+          {settings.collections_banner_url && (
+            <img src={settings.collections_banner_url} alt="Fondo de colecciones" className="admin-preview-img" style={{ width: 200, height: "auto", marginTop: 8 }} />
+          )}
+
           <button className="btn-primary" onClick={handleSaveSettings} disabled={saving}>
             {saving ? "Guardando..." : "Guardar"}
           </button>
