@@ -117,13 +117,13 @@ export default function HomePage() {
                     .replace(/currentColor/gi, "var(--accent)")
                 : null;
               return (
-                <button
+                <div
                   key={g.id}
                   className="category-card"
                   style={{ animationDelay: `${(i + 3) * 80}ms` }}
                   onClick={() => handleConfigure(g.slug)}
                 >
-                  <div className="category-card__icon">
+                  <div className="category-card__media">
                     {coloredMock ? (
                       <div
                         className="category-card__mock-svg"
@@ -132,6 +132,7 @@ export default function HomePage() {
                     ) : (
                       <span style={{ fontSize: "2rem", color: "var(--accent)" }}>{g.name[0]}</span>
                     )}
+                    <span className="category-card__badge">NUEVO</span>
                   </div>
                   <div className="category-card__info">
                     <h3 className="category-card__name">{g.name}</h3>
@@ -139,6 +140,15 @@ export default function HomePage() {
                     <span className="category-card__price">
                       Desde ${Number(g.base_price).toLocaleString("es-AR")}
                     </span>
+                    <button
+                      className="btn-buy-now"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleConfigure(g.slug);
+                      }}
+                    >
+                      COMPRAR AHORA
+                    </button>
                   </div>
                   <button
                     className="btn-icon"
@@ -166,7 +176,7 @@ export default function HomePage() {
                       <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
-                </button>
+                </div>
               );
             })}
           </div>

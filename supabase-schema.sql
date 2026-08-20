@@ -109,10 +109,10 @@ create table site_settings (
   collections_title text not null default 'COLECCIONES',
   collections_subtitle text not null default 'Elegí tu prenda y personalizala a tu gusto',
   collections_banner_url text not null default '',
-  color_bg text not null default '#f8f9fa',
+  color_bg text not null default '#f4f4f5',
   color_surface text not null default '#ffffff',
-  color_text text not null default '#1e2230',
-  color_accent text not null default '#fa6e71',
+  color_text text not null default '#000000',
+  color_accent text not null default '#84cc16',
   updated_at timestamptz default now()
 );
 

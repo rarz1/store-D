@@ -1,14 +1,14 @@
 :root {
-  --bg: #f8f9fa;
+  --bg: #f4f4f5;
   --surface: #ffffff;
-  --surface-hover: #f1f3f5;
-  --text: #1e2230;
-  --text-secondary: #4a5060;
-  --text-muted: #6b7280;
-  --border: #e0e0e0;
-  --accent: #fa6e71;
-  --accent-hover: #e85d5e;
-  --accent-glow: rgba(250, 110, 113, 0.18);
+  --surface-hover: #fafafa;
+  --text: #000000;
+  --text-secondary: #52525b;
+  --text-muted: #71717a;
+  --border: #e4e4e7;
+  --accent: #84cc16;
+  --accent-hover: #65a30d;
+  --accent-glow: rgba(132, 204, 22, 0.18);
   --radius-xs: 4px;
   --radius-sm: 8px;
   --radius: 12px;
@@ -16,7 +16,7 @@
   --radius-xl: 24px;
   --radius-pill: 999px;
   --transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  --font-display: 'Bebas Neue', 'Impact', sans-serif;
+  --font-display: 'Oswald', 'Impact', sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -56,7 +56,7 @@ body {
 
 ::selection {
   background: var(--accent);
-  color: #fff;
+  color: #000;
 }
 
 img {

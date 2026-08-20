@@ -290,17 +290,12 @@ export default function CartPage() {
             </button>
           )}
 
-          <button
-            className="btn-seguir"
-            onClick={() => navigate("/colecciones")}
-            type="button"
-          >
-            Seguir comprando
-          </button>
-
           <div className="cart-page__actions">
             <button className="btn-ghost" onClick={() => navigate(-1)} type="button">
               Volver
+            </button>
+            <button className="btn-ghost" onClick={() => navigate("/colecciones")} type="button">
+              Seguir comprando
             </button>
             <button
               className="btn-ghost btn-ghost--danger"

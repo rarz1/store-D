@@ -82,7 +82,7 @@ export default function Carousel({ variant = "hero" }: Props) {
               backgroundPosition: slide.layout === "double" ? "left center, right center" : "center",
               backgroundRepeat: "no-repeat",
             } : {
-              background: "linear-gradient(135deg, #f8f9fa 0%, #1e2230 60%, #fa6e71 100%)",
+              background: "linear-gradient(135deg, #f4f4f5 0%, #000000 60%, #84cc16 100%)",
             }}
           >
             <div className="carousel__shade" />

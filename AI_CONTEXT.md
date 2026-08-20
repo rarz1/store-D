@@ -11,16 +11,16 @@
 ## Frontend (client/)
 
 - **Stack**: React 19 + Vite + react-router-dom + @supabase/supabase-js
-- **Tipografía**: Bebas Neue (display) + Inter (body), Google Fonts
+- **Tipografía**: Oswald (display) + Inter (body), Google Fonts
 - **Paleta editable**: Fondo, superficie, texto, acento — configurables desde admin
 
 ### Rutas públicas
 | Ruta | Descripción |
 |------|-------------|
 | `/` | Onboarding full-screen (carrusel editorial + "Let's Start" → `/colecciones`), siempre al entrar |
-| `/colecciones` | Colección: banner card navy + pills de categoría (desde tags) + grilla de prendas (clic → personalización) |
-| `/producto/:garmentId` | Detalle con mock ~50% + hoja de detalles (precio coral, color, talla, "Elegí diseño") y bottom sheet de 3 solapas |
-| `/carrito` | Carrito full-page: checkboxes redondos, stepper, breakdown de personalización, resumen sticky con envío (Retiro $0.0 / Envío a convenir), Checkout por WhatsApp, Pedidos recientes |
+| `/colecciones` | Colección: banner card negro + pills de categoría (desde tags) + grilla de prendas (clic → personalización) |
+| `/producto/:garmentId` | Detalle con mock ~50% + hoja de detalles (precio negro, color, talla, "CREA TU DISEÑO" verde) y bottom sheet de 3 solapas |
+| `/carrito` | Carrito full-page: checkboxes redondos, contador `−/+` con divisores, breakdown de personalización, resumen sticky con envío (Retiro $0.0 / Envío a convenir), Checkout por WhatsApp, grilla 3 botones (Volver / Seguir comprando / Vaciar carrito), Pedidos recientes |
 
 ### Rutas admin
 | Ruta | Descripción |
@@ -35,8 +35,8 @@
 - Diseños almacenados como SVG text en Supabase, se renderizan inline sobre el mock
 - Selector de color (swatches), talla (chips), diseño (thumbnails con preview)
 - Carrusel editorial full-viewport con Ken Burns (12s), auto-play 5.2s con barra de progreso en los dots, parallax/title stagger, swipe por pointer, variante `hero`/`onboarding`, respeta `prefers-reduced-motion`
-- Tema CLARO en producción (DB `site_settings` con `color_bg #f8f9fa`, `color_surface #ffffff`, `color_text #1e2230`, `color_accent #fa6e71`; aplicado por el usuario vía SQL Editor el 2026-08-19). Seed de `supabase-schema.sql` en claro.
-- Colores aplicados como CSS variables desde `site_settings` (applyColors extiende `--surface-hover`, `--text-secondary`, `--border`), editables con live preview
+- Tema CLARO urbano en producción (DB `site_settings` con `color_bg #f4f4f5`, `color_surface #ffffff`, `color_text #000000`, `color_accent #84cc16`). Seed de `supabase-schema.sql` en esta paleta.
+- Colores aplicados como CSS variables desde `site_settings` (applyColors fija `--surface-hover #fafafa`, `--text-secondary #52525b`, `--border #e4e4e7` como constantes), editables con live preview
 - Consulta por WhatsApp con resumen del carrito seleccionado (botón SOLO en `/carrito`, no en personalización)
 - Envío configurable sin monto fijo: chips "Retiro" (`$0.0`) / "Envío" (`a convenir según distancia`); solo signo `$`
 - Admin con 5 tabs: Productos, Diseños, Tienda, Carrusel, Colores
@@ -396,6 +396,19 @@ Archivo: `client/src/lib/settings.ts`
 - Los 3 usos de `#1e2230` hardcodeado en `App.css` son intencionales (CTA onboarding, banner colecciones navy, checkout navy).
 - Verificación: `npm run build` pasa. Sin deploy necesario (los colores se leen de la DB al montar).
 - Pendientes: commitear el seed (`supabase-schema.sql`) si el usuario lo confirma.
+
+### Sesión 13 — 2026-08-19 (Rediseño urbano claro: spec estricta "Estilo Urbano Claro")
+
+- Spec del usuario (texto, sin imágenes): paleta exacta `bg #F4F4F5`, `text #000000`, `secondary #52525B`, `surface #FFFFFF`, `border 1.5px #E4E4E7`, `accent #84CC16` (verde lima), sin sombras; tarjetas radio 12px, botones de acción 8px; display Oswald (títulos/precios uppercase bold) + body Inter.
+- **Tokens (`index.css`)**: `--bg #f4f4f5`, `--text #000000`, `--text-secondary #52525b`, `--border #e4e4e7`, `--accent #84cc16`, `--accent-hover #65a30d`, `--font-display Oswald`. Eliminado uso de sombras en cards/paneles (bordes sólidos 1.5px).
+- **`settings.ts` `applyColors`**: `--surface-hover #fafafa`, `--text-secondary #52525b`, `--border #e4e4e7` ahora CONSTANTES (antes derivadas por lightenHex → con text negro/surface blanco darían valores inválidos). Acento sigue viniendo de la DB.
+- **HomePage**: card de producto rediseñada — `div` (antes button anidado → HTML inválido, warning preexistente resuelto), media 1:1 con badge negro flotante "NUEVO" (texto blanco, Oswald), nombre uppercase, precio negro Oswald, botón `btn-buy-now` negro ("COMPRAR AHORA", hover `#27272a`, 8px). Favorito sigue como botón absoluto.
+- **ProductPage**: `btn-elegir-diseno` → verde `#84cc16` texto negro 8px uppercase ("CREA TU DISEÑO"). `btn-primary` (Agregar al carrito) → negro texto blanco uppercase Oswald 8px hover `#27272a`. Precio de producto → negro Oswald (antes accent).
+- **CartPage**: 3 botones en grilla (`cart-page__actions` grid 3 columnas): Volver / Seguir comprando / Vaciar carrito (blanco, borde 1.5px gris, texto `#52525B`). `btn-checkout` → negro uppercase Oswald 8px. `cart-qty` → compacto 8px, borde 1.5px, botones transparentes con divisores verticales. Precios de ítem y breakdown → negro.
+- **Selectores**: `size-chip`, `estampado-card`, `collections-pill`, `tag-chip`, `size-guide-tab`, stepper: inactivos blancos borde 1.5px gris texto `#52525B`; activos NEGRO bg texto blanco (antes accent). `color-swatch--active` ring negro. FAB carrito → negro bg, icono blanco, badge verde `#84cc16` texto negro. Header badge verde/negro. App header → `--surface` sólido + borde 1.5px (sin blur/color-mix).
+- **PWA**: `index.html` y `manifest.json` theme/background `#f4f4f5`. Carousel fallback gradient a `#f4f4f5/#000/#84cc16`. Banner colecciones fallback navy `#1e2230` → negro `#000`.
+- **DB**: seed `supabase-schema.sql` → `#f4f4f5/#ffffff/#000000/#84cc16`. Pendiente: usuario corre el UPDATE en SQL Editor (agente no tiene acceso).
+- Verificación: `npm run build` pasa; oxlint solo warnings preexistentes.
 
 ### Sesión 11d — 2026-08-18 (Fix lógica de diseño/tamaño/ubicación, commit `98e38a6`)
 

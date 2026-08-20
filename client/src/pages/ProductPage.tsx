@@ -430,7 +430,7 @@ export default function ProductPage() {
           )}
 
           <button className="btn-elegir-diseno" onClick={() => setDesignFlowOpen(true)} type="button">
-            Elegí diseño
+            CREA TU DISEÑO
           </button>
         </div>
       </div>
