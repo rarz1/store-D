@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 
-interface FavoriteItem {
+export interface FavoriteItem {
   garmentId: number;
   garmentName: string;
   garmentSlug: string;

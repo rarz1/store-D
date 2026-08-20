@@ -51,7 +51,7 @@ export default function HomePage() {
 
   return (
     <div className="home page-enter">
-      <AppHeader settings={settings} showHome />
+      <AppHeader settings={settings} showBack title="COLECCIONES" />
 
       <section className="categories">
         <div

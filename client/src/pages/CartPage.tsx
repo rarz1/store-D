@@ -66,7 +66,6 @@ export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, totalItems, orders, reorder, placeOrder } = useCart();
   const toast = useToast();
   const [selected, setSelected] = useState<Set<number>>(new Set());
-  const [shipMode, setShipMode] = useState<"retiro" | "envio">("retiro");
   const [showOrders, setShowOrders] = useState(false);
 
   useEffect(() => {
@@ -114,7 +113,6 @@ export default function CartPage() {
       });
     });
     lines.push(`\nTotal (${selectedCount} ítems): $${selectedTotal.toLocaleString("es-AR")}`);
-    lines.push(shipMode === "retiro" ? "Envío: retiro en tienda ($0.0)" : "Envío: a convenir (según distancia)");
     return encodeURIComponent(lines.join("\n"));
   };
 
@@ -239,35 +237,20 @@ export default function CartPage() {
 
       {items.length > 0 && (
         <div className="cart-summary">
-          <div className="cart-ship">
-            <button
-              className={`cart-ship__chip${shipMode === "retiro" ? " cart-ship__chip--active" : ""}`}
-              onClick={() => setShipMode("retiro")}
-              type="button"
-            >
-              Retiro
-              <span className="cart-ship__price">$0.0</span>
-            </button>
-            <button
-              className={`cart-ship__chip${shipMode === "envio" ? " cart-ship__chip--active" : ""}`}
-              onClick={() => setShipMode("envio")}
-              type="button"
-            >
-              Envío
-              <span className="cart-ship__price">a convenir</span>
-            </button>
-          </div>
-
           <div className="cart-summary__row">
             <span>Artículos seleccionados</span>
             <strong>{selectedCount}</strong>
           </div>
           <div className="cart-summary__row">
-            <span>Envío</span>
-            <strong>{shipMode === "retiro" ? "$0.0" : "A convenir"}</strong>
+            <span>Subtotal</span>
+            <strong>${selectedTotal.toLocaleString("es-AR")}</strong>
+          </div>
+          <div className="cart-summary__row">
+            <span>Descuento</span>
+            <strong>$0</strong>
           </div>
           <div className="cart-summary__row cart-summary__row--total">
-            <span>Subtotal</span>
+            <span>Total de esta compra</span>
             <strong>${selectedTotal.toLocaleString("es-AR")}</strong>
           </div>
 
@@ -294,7 +277,7 @@ export default function CartPage() {
             <button className="btn-ghost" onClick={() => navigate(-1)} type="button">
               Volver
             </button>
-            <button className="btn-ghost" onClick={() => navigate("/colecciones")} type="button">
+            <button className="btn-ghost btn-ghost--accent" onClick={() => navigate("/colecciones")} type="button">
               Seguir comprando
             </button>
             <button

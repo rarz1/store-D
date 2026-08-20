@@ -30,7 +30,13 @@ export default function OnboardingScreen() {
       <Carousel variant="onboarding" />
       <div className="onboarding__overlay">
         <h1 className="onboarding__title">{storeTitle}</h1>
-        <p className="onboarding__subtitle">{storeSubtitle}</p>
+        <p className="onboarding__subtitle">
+          {storeSubtitle.split("·").map((part, i) => (
+            <span key={i} className="onboarding__subtitle-line">
+              {part.trim()}
+            </span>
+          ))}
+        </p>
         <button className="onboarding__cta" onClick={handleStart}>
           Let's Start
         </button>

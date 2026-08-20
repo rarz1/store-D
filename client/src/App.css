@@ -174,6 +174,24 @@
   to { transform: scaleX(1); }
 }
 
+/* Onboarding: slim selector, top-center */
+.carousel--onboarding .carousel__dots {
+  top: 1.5rem;
+  bottom: auto;
+}
+
+.carousel--onboarding .carousel__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+}
+
+.carousel--onboarding .carousel__dot--active {
+  width: 20px;
+  height: 4px;
+  border-radius: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .carousel__slide--active {
     animation: none;
@@ -195,6 +213,12 @@
   display: none;
 }
 
+/* Finger swipe: let vertical panning through, hand horizontal drags to the
+   pointer handlers on the track. */
+.carousel--onboarding {
+  touch-action: pan-y;
+}
+
 .onboarding {
   position: relative;
   min-height: 100svh;
@@ -203,19 +227,21 @@
 
 .onboarding__overlay {
   position: absolute;
-  top: 45%;
-  left: 0;
-  right: 0;
-  transform: translateY(-50%);
+  bottom: 3rem;
+  left: 1.5rem;
+  right: auto;
+  top: auto;
+  transform: none;
   z-index: 3;
-  padding: 0 2rem;
+  padding: 0;
   box-sizing: border-box;
-  text-align: center;
+  text-align: left;
+  max-width: 18rem;
 }
 
 .onboarding__title {
   font-family: var(--font-display);
-  font-size: clamp(2.6rem, 11vw, 6rem);
+  font-size: clamp(calc(2.6rem + 3px), 11vw, calc(6rem + 3px));
   line-height: 0.92;
   letter-spacing: 0.03em;
   color: #fff;
@@ -225,11 +251,18 @@
 }
 
 .onboarding__subtitle {
-  font-size: clamp(0.8rem, 2.5vw, 1rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  align-items: flex-start;
+  font-size: clamp(calc(0.8rem + 3px), 2.5vw, calc(1rem + 3px));
   color: rgba(255, 255, 255, 0.9);
-  margin: 0 auto 1.5rem;
-  max-width: 30ch;
+  margin: 0 0 1.5rem;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+}
+
+.onboarding__subtitle-line {
+  display: block;
 }
 
 .onboarding__cta {
@@ -237,7 +270,7 @@
   color: #fff;
   border: none;
   padding: 0.65rem 2.25rem;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
@@ -364,7 +397,7 @@
   color: var(--text-secondary);
   border: 1.5px solid var(--border);
   padding: 0.5rem 1.25rem;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
@@ -388,7 +421,7 @@
   display: flex;
   flex-direction: column;
   background: var(--surface);
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--text);
   border-radius: var(--radius);
   cursor: pointer;
   transition: all var(--transition);
@@ -492,7 +525,7 @@
   color: #fff;
   border: none;
   padding: 0.75rem 1rem;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   font-family: var(--font-display);
   font-size: 0.9375rem;
   font-weight: 600;
@@ -553,22 +586,13 @@
   align-items: flex-end;
 }
 
-/* While the design flow sheet is open, pin the mock at the top so the
-   drag-to-place surface stays visible above the bottom sheet. */
-.product-sheet__mock--sticky {
-  position: sticky;
-  top: 0;
-  z-index: 2001;
-  background: var(--bg);
-}
-
 .product-sheet__body {
   background: var(--surface);
   border-top: 1.5px solid var(--border);
   border-radius: 0;
   margin-top: 0;
   padding: 1.5rem 1.25rem;
-  padding-bottom: calc(7rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
 }
 
 .product-sheet__price-row {
@@ -622,10 +646,10 @@
 .btn-elegir-diseno {
   width: 100%;
   padding: 0.9rem 1.25rem;
-  background: #84cc16;
-  color: #000;
-  border: none;
-  border-radius: var(--radius-sm);
+  background: #000;
+  color: #fff;
+  border: 1.5px solid #000;
+  border-radius: var(--radius-pill);
   font-family: var(--font-display);
   font-size: 0.9375rem;
   font-weight: 600;
@@ -638,7 +662,7 @@
 
 .btn-elegir-diseno:hover,
 .btn-elegir-diseno:active {
-  background: #65a30d;
+  background: #1a1a1a;
 }
 
 /* Design Flow Bottom Sheet */
@@ -654,11 +678,9 @@
 
 .sheet-panel {
   width: 100%;
-  /* Keep the panel below the pinned garment mock (52dvh on top) so the
-     stepper and its controls are never covered by the drag surface. */
-  max-height: 44dvh;
+  height: 100dvh;
   background: var(--surface);
-  border-radius: 20px 20px 0 0;
+  border-radius: 0;
   padding: 0.75rem 1.25rem 1.5rem;
   box-sizing: border-box;
   overflow-y: auto;
@@ -760,20 +782,6 @@
   justify-content: center;
 }
 
-.mock-frame--drag {
-  touch-action: none;
-  cursor: grab;
-}
-
-.mock-frame--drag:active {
-  cursor: grabbing;
-}
-
-.mock-frame--drag .garment-mock {
-  box-shadow: inset 0 0 0 2px var(--accent);
-  border-radius: var(--radius-sm);
-}
-
 .mock-duo {
   display: flex;
   flex-direction: column;
@@ -792,23 +800,42 @@
   display: none;
 }
 
-/* show both front + back mocks in the unified drag frame, even on mobile */
-.mock-frame--drag .mock-duo .garment-mock + .garment-mock {
+/* Design flow placement: stack front + back mocks inside the sheet, both
+   visible on every screen so the free-placed design can reach either image. */
+.design-flow__mock {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.design-flow__mock .mock-duo {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.design-flow__mock .mock-duo .garment-mock {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 210px;
+}
+
+.design-flow__mock .mock-duo .garment-mock + .garment-mock {
   display: flex;
 }
 
-/* drag mode: place the two mocks side by side (as one continuous frame) even
-   on mobile so the free-placed design can reach either image without
-   scrolling */
-.mock-frame--drag .mock-duo {
-  flex-direction: row;
-  align-items: flex-start;
+.design-flow__mock--drag {
+  touch-action: none;
+  cursor: grab;
 }
 
-.mock-frame--drag .mock-duo .garment-mock {
-  flex: 1;
-  min-width: 0;
-  max-width: 48%;
+.design-flow__mock--drag:active {
+  cursor: grabbing;
+}
+
+.design-flow__mock--drag .garment-mock {
+  box-shadow: inset 0 0 0 2px var(--accent);
+  border-radius: var(--radius-sm);
 }
 
 .controls-section {
@@ -924,12 +951,21 @@
 }
 
 .control-clear {
-  font-weight: 400;
+  font-weight: 700;
   font-size: 0.7rem;
-  letter-spacing: 0;
-  color: var(--accent);
+  letter-spacing: 0.05em;
+  color: #000;
+  background: #84cc16;
+  border: none;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-pill);
   cursor: pointer;
   text-transform: none;
+  transition: background var(--transition);
+}
+
+.control-clear:hover {
+  background: #65a30d;
 }
 
 /* Color Selector */
@@ -1152,6 +1188,10 @@
   box-shadow: none;
 }
 
+.btn-primary--pill {
+  border-radius: var(--radius-pill);
+}
+
 /* WhatsApp-specific CTA */
 .btn-whatsapp {
   display: flex;
@@ -1201,27 +1241,6 @@
 .btn-danger:active {
   background: rgba(239, 68, 68, 0.08);
   border-color: #ef4444;
-}
-
-/* ==============================
-   PRODUCT FOOTER
-   ============================== */
-
-.product-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  padding: 0.75rem 0;
-  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
-  background: var(--surface);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
 }
 
 /* ==============================
@@ -2032,6 +2051,7 @@
 .cart-checkbox {
   width: 22px;
   height: 22px;
+  min-height: 0;
   border-radius: 50%;
   border: 2px solid var(--border);
   background: var(--surface);
@@ -2189,50 +2209,12 @@
 /* Sticky Checkout Summary */
 
 .cart-summary {
-  position: sticky;
-  bottom: 0;
-  z-index: 40;
   max-width: 520px;
-  margin: 0 auto;
-  background: var(--surface);
-  border-top: 1.5px solid var(--border);
-  border-radius: 0;
-  padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom));
-}
-
-.cart-ship {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.cart-ship__chip {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  padding: 0.6rem 0.5rem;
+  margin: 1rem auto 0;
   background: var(--surface);
   border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all var(--transition);
-}
-
-.cart-ship__chip--active {
-  border-color: var(--text);
-  background: var(--text);
-  color: var(--surface);
-}
-
-.cart-ship__price {
-  font-size: 0.6875rem;
-  font-weight: 500;
-  color: var(--text-muted);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom));
 }
 
 .cart-summary__row {
@@ -2309,6 +2291,29 @@
   color: var(--accent);
 }
 
+/* "Seguir diseñando" — neon green pill shown on the product page after a
+   design has been confirmed, reopens the design flow. */
+.btn-seguir-disenando {
+  width: 100%;
+  padding: 0.9rem 1.25rem;
+  background: #84cc16;
+  color: #000;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-top: 0.75rem;
+  transition: background var(--transition);
+}
+
+.btn-seguir-disenando:hover {
+  background: #65a30d;
+}
+
 .cart-page__actions {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -2335,6 +2340,18 @@
 
 .btn-ghost--danger {
   color: var(--text-secondary);
+}
+
+.btn-ghost--accent {
+  background: #84cc16;
+  border-color: #84cc16;
+  color: #000;
+}
+
+.btn-ghost--accent:hover {
+  border-color: #65a30d;
+  background: #65a30d;
+  color: #000;
 }
 
 /* Recent Orders */
@@ -2670,6 +2687,8 @@
 }
 
 .design-flow__header-title {
+  flex: 1;
+  text-align: center;
   font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 600;
@@ -2820,11 +2839,19 @@
   margin-top: 0.5rem;
 }
 
+.design-flow__preview {
+  margin-top: 0.5rem;
+}
+
+.design-flow__preview .estampado-card {
+  cursor: default;
+}
+
 
 .design-flow__back {
   flex-shrink: 0;
-  width: 42px;
-  height: 42px;
+  width: 34px;
+  height: 34px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   display: flex;
@@ -3095,8 +3122,45 @@
   to { transform: scale(1); opacity: 1; }
 }
 
+/* Product page: floating "Add to cart" pill that replaces the removed
+   fixed footer button. */
+.fab-add-cart {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  min-height: 0;
+  padding: 0;
+  background: #84cc16;
+  color: #000;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  transition: background var(--transition), transform var(--transition);
+  animation: fab-in 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.fab-add-cart:hover {
+  background: #65a30d;
+  transform: scale(1.04);
+}
+
+.fab-add-cart:active {
+  transform: scale(0.96);
+}
+
 @media (min-width: 768px) {
   .fab-cart {
+    display: none;
+  }
+
+  .fab-add-cart {
     display: none;
   }
 }
@@ -3170,7 +3234,7 @@
 
 .app-header__title {
   flex: 1;
-  font-size: 0.9rem;
+  font-size: calc(0.9rem + 2px);
   font-weight: 600;
   color: var(--text);
   letter-spacing: 0.02em;

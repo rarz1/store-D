@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import GarmentMock from "../components/GarmentMock";
-import DesignFlow, { type CustomPosition } from "../components/DesignFlow";
+import DesignFlow from "../components/DesignFlow";
 import SizeGuideModal from "../components/SizeGuideModal";
 import AppHeader from "../components/AppHeader";
 import { useCart } from "../lib/cart";
@@ -24,7 +24,7 @@ interface PlacedEstampado {
 export default function ProductPage() {
   const { garmentId } = useParams<{ garmentId: string }>();
   const navigate = useNavigate();
-  const { addItem } = useCart();
+  const { addItem, upsertItem } = useCart();
   const toast = useToast();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
 
@@ -38,61 +38,8 @@ export default function ProductPage() {
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [placedEstampados, setPlacedEstampados] = useState<PlacedEstampado[]>([]);
-  const [previewStamp, setPreviewStamp] = useState<{ svgContent: string; locations: EstampadoLocationRow[]; name: string; imageUrl?: string; customPosition?: { x: number; y: number } | null; widthPercent?: number; side?: "front" | "back" } | null>(null);
-
-  const [customMode, setCustomMode] = useState(false);
-  const [customPos, setCustomPos] = useState<CustomPosition | null>(null);
-  const [customSide, setCustomSide] = useState<"front" | "back">("front");
-  const frameRef = useRef<HTMLDivElement | null>(null);
 
   const [designFlowOpen, setDesignFlowOpen] = useState(false);
-
-  // When the design flow opens, bring the garment mock back into view (it can
-  // be scrolled off since the page now scrolls as a whole) and keep it pinned
-  // at the top so the drag-to-place surface stays visible above the sheet.
-  useEffect(() => {
-    if (designFlowOpen) {
-      document.querySelector(".product-sheet__mock")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [designFlowOpen]);
-
-  // Unified free-placement drag over the whole mock frame. On each move,
-  // finds which garment mock (front or back) is under the pointer and updates
-  // customPos + customSide accordingly, so the design can be placed on either
-  // image from a single drag surface.
-  const handleFramePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!customMode) return;
-    e.preventDefault();
-    const el = frameRef.current;
-    if (!el) return;
-    el.setPointerCapture(e.pointerId);
-    const update = (clientX: number, clientY: number) => {
-      const mocks = Array.from(el.querySelectorAll("[data-side]"));
-      const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
-      for (const mock of mocks) {
-        const rect = (mock as HTMLElement).getBoundingClientRect();
-        if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
-          const side = (mock as HTMLElement).dataset.side === "back" ? "back" : "front";
-          const x = clamp(((clientX - rect.left) / rect.width) * 100, 5, 95);
-          const y = clamp(((clientY - rect.top) / rect.height) * 100, 5, 95);
-          setCustomSide(side);
-          setCustomPos({ x, y });
-          break;
-        }
-      }
-    };
-    update(e.clientX, e.clientY);
-    const move = (ev: PointerEvent) => update(ev.clientX, ev.clientY);
-    const end = () => {
-      el.removeEventListener("pointermove", move);
-      el.removeEventListener("pointerup", end);
-      el.removeEventListener("pointercancel", end);
-      if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
-    };
-    el.addEventListener("pointermove", move);
-    el.addEventListener("pointerup", end);
-    el.addEventListener("pointercancel", end);
-  };
 
   const handleSelectClase = async (claseId: number) => {
     if (tiposByClase[claseId]) return;
@@ -139,6 +86,9 @@ export default function ProductPage() {
   // Shareable product links: encode configuration as URL params
   useEffect(() => {
     if (!garment) return;
+    // Only rewrite the URL while still on this product page — never clobber a
+    // navigation that already happened (e.g. opening the cart after confirm).
+    if (!window.location.pathname.startsWith(`/producto/${garment.slug}`)) return;
     const params = new URLSearchParams();
     if (selectedColor) params.set("color", selectedColor);
     if (selectedSize) params.set("size", selectedSize);
@@ -274,30 +224,15 @@ export default function ProductPage() {
     }));
   });
 
-  // Design that is being dragged/previewed directly on the garment mock while
-  // the user is in the free placement ("location") step.
-  const dragDesign = customMode && previewStamp
-    ? {
-        imageUrl: previewStamp.imageUrl,
-        svgContent: previewStamp.svgContent,
-        widthPercent: previewStamp.widthPercent ?? 40,
-        position: customPos ?? { x: 50, y: 50 },
-      }
-    : null;
-
   const allMockDesigns = placedDesigns;
 
   return (
     <div className="product-page">
-      <AppHeader settings={null} showBack title={garment.name} />
+      <AppHeader settings={null} showBack title={garment.name} hideFab />
 
       <div className="product-sheet">
-        <div className={`product-sheet__mock${designFlowOpen ? " product-sheet__mock--sticky" : ""}`}>
-          <div
-            className={`mock-frame${customMode ? " mock-frame--drag" : ""}`}
-            ref={frameRef}
-            onPointerDown={customMode ? handleFramePointerDown : undefined}
-          >
+        <div className="product-sheet__mock">
+          <div className="mock-frame">
             <div className="mock-duo">
               <GarmentMock
                 garmentId={garmentId as string}
@@ -305,11 +240,9 @@ export default function ProductPage() {
                 svgMock={garment.svg_mock}
                 svgMockBack={garment.svg_mock_back}
                 placedDesigns={allMockDesigns}
-                side={customMode ? "front" : undefined}
-                hideFlip={customMode}
-                dragDesign={customMode && customSide === "front" ? dragDesign : null}
+                side="front"
               />
-              {(customMode || garment.svg_mock_back) && (
+              {garment.svg_mock_back && (
                 <GarmentMock
                   garmentId={garmentId as string}
                   color={selectedColor}
@@ -317,8 +250,6 @@ export default function ProductPage() {
                   svgMockBack={garment.svg_mock_back}
                   placedDesigns={allMockDesigns}
                   side="back"
-                  hideFlip
-                  dragDesign={customMode && customSide === "back" ? dragDesign : null}
                 />
               )}
             </div>
@@ -429,6 +360,12 @@ export default function ProductPage() {
             </div>
           )}
 
+          {placedEstampados.length > 0 && (
+            <button className="btn-seguir-disenando" onClick={() => setDesignFlowOpen(true)} type="button">
+              SEGUIR DISEÑANDO
+            </button>
+          )}
+
           <button className="btn-elegir-diseno" onClick={() => setDesignFlowOpen(true)} type="button">
             CREA TU DISEÑO
           </button>
@@ -473,14 +410,12 @@ export default function ProductPage() {
               estampados={estampados}
               tiposByClase={tiposByClase}
               stampSizes={stampSizes}
+              garmentId={garmentId as string}
+              color={selectedColor}
+              svgMock={garment.svg_mock}
+              svgMockBack={garment.svg_mock_back}
+              placedDesigns={allMockDesigns}
               onSelectClase={handleSelectClase}
-              onPreviewChange={setPreviewStamp}
-              customMode={customMode}
-              customPos={customPos}
-              customSide={customSide}
-              onCustomModeChange={setCustomMode}
-              onCustomPosChange={setCustomPos}
-              onCustomSideChange={setCustomSide}
               onClose={() => setDesignFlowOpen(false)}
               onAdd={(item) => {
                 const isDuplicate = placedEstampados.some((p) =>
@@ -494,24 +429,35 @@ export default function ProductPage() {
                   toast.warning("Este diseño ya está agregado en esa ubicación");
                   return;
                 }
-                setPlacedEstampados([...placedEstampados, item]);
+                const next = [...placedEstampados, item];
+                setPlacedEstampados(next);
                 setDesignFlowOpen(false);
+                upsertItem({
+                  garmentId: garment.id,
+                  garmentName: garment.name,
+                  garmentSlug: garment.slug,
+                  garmentBasePrice: garment.base_price,
+                  garmentSvgMock: garment.svg_mock,
+                  garmentSvgMockBack: garment.svg_mock_back,
+                  colorHex: selectedColor,
+                  colorName: colorName,
+                  size: selectedSize,
+                  estampados: next,
+                });
+                navigate("/carrito");
               }}
             />
           </div>
         </div>
       )}
 
-      <div className="product-footer">
-        <button className="btn-primary" style={{ width: "100%" }} onClick={handleAddToCart}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
-            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M3 6h18" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M16 10a4 4 0 010 8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Agregar al carrito
-        </button>
-      </div>
+      <button className="fab-add-cart" onClick={handleAddToCart} type="button" aria-label="Agregar al carrito">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M3 6h18" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M16 10a4 4 0 010 8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
     </div>
   );
 }

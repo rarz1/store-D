@@ -11,6 +11,7 @@ import OnboardingScreen from "./pages/OnboardingScreen";
 import HomePage from "./pages/HomePage";
 import ProductPage from "./pages/ProductPage";
 import CartPage from "./pages/CartPage";
+import FavoritesPage from "./pages/FavoritesPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminGarmentForm from "./pages/admin/AdminGarmentForm";
@@ -52,6 +53,7 @@ export default function App() {
                 <Route path="/colecciones" element={<HomePage />} />
                 <Route path="/producto/:garmentId" element={<ProductPage />} />
                 <Route path="/carrito" element={<CartPage />} />
+                <Route path="/favoritos" element={<FavoritesPage />} />
 
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route

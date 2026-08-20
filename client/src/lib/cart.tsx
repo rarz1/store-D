@@ -31,6 +31,7 @@ export interface Order {
 interface CartContextType {
   items: CartItem[];
   addItem: (item: CartItem) => void;
+  upsertItem: (item: CartItem) => void;
   updateQuantity: (index: number, quantity: number) => void;
   removeItem: (index: number) => void;
   clearCart: () => void;
@@ -104,6 +105,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // One cart item per garment configuration: if a garment with the same
+  // color + size already exists, replace its confirmed designs with the
+  // current working set instead of duplicating the item.
+  const upsertItem = useCallback((item: CartItem) => {
+    setItems((prev) => {
+      const existingIdx = prev.findIndex(
+        (i) => i.garmentId === item.garmentId && i.colorHex === item.colorHex && i.size === item.size
+      );
+      if (existingIdx >= 0) {
+        const updated = [...prev];
+        const qty = updated[existingIdx].quantity ?? 1;
+        updated[existingIdx] = { ...updated[existingIdx], ...item, quantity: qty };
+        return updated;
+      }
+      return [...prev, { ...item, quantity: item.quantity ?? 1 }];
+    });
+  }, []);
+
   const updateQuantity = useCallback((index: number, quantity: number) => {
     if (quantity <= 0) {
       setItems((prev) => prev.filter((_, i) => i !== index));
@@ -164,7 +183,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, 0);
 
   return (
-    <CartContext.Provider value={{ items, addItem, updateQuantity, removeItem, clearCart, totalItems, totalPrice, orders, reorder, placeOrder }}>
+    <CartContext.Provider value={{ items, addItem, upsertItem, updateQuantity, removeItem, clearCart, totalItems, totalPrice, orders, reorder, placeOrder }}>
       {children}
     </CartContext.Provider>
   );

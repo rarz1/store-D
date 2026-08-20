@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../lib/cart";
+import { useFavorites } from "../lib/favorites";
 import type { SiteSettings } from "../lib/settings";
 
 interface Props {
@@ -7,6 +8,7 @@ interface Props {
   showBack?: boolean;
   title?: string;
   showHome?: boolean;
+  hideFab?: boolean;
   variant?: "default" | "transparent";
 }
 
@@ -15,10 +17,12 @@ export default function AppHeader({
   showBack,
   title,
   showHome,
+  hideFab,
   variant = "default",
 }: Props) {
   const navigate = useNavigate();
   const { totalItems } = useCart();
+  const { totalCount: totalFavs } = useFavorites();
   const isFloating = variant === "transparent";
 
   return (
@@ -69,6 +73,18 @@ export default function AppHeader({
             )}
             <button
               className="app-header__cart"
+              onClick={() => navigate("/favoritos")}
+              aria-label={`Favoritos, ${totalFavs} ${totalFavs === 1 ? "favorito" : "favoritos"}`}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {totalFavs > 0 && (
+                <span className="app-header__badge">{totalFavs > 9 ? "9+" : totalFavs}</span>
+              )}
+            </button>
+            <button
+              className="app-header__cart"
               onClick={() => navigate("/carrito")}
               aria-label={`Carrito, ${totalItems} ${totalItems === 1 ? "ítem" : "ítems"}`}
             >
@@ -86,7 +102,7 @@ export default function AppHeader({
         </div>
       </header>
 
-      {totalItems > 0 && (
+      {!hideFab && totalItems > 0 && (
         <button className="fab-cart" onClick={() => navigate("/carrito")} aria-label="Abrir carrito" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
             <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" />
