@@ -29,7 +29,7 @@ export default function OnboardingScreen() {
     <div className="onboarding page-enter">
       <Carousel variant="onboarding" />
       <div className="onboarding__overlay">
-        <h1 className="onboarding__title">{storeTitle}</h1>
+        <h1 className="onboarding__title">{storeTitle.replace(/\s+/g, "_")}</h1>
         <p className="onboarding__subtitle">
           {storeSubtitle.split("·").map((part, i) => (
             <span key={i} className="onboarding__subtitle-line">

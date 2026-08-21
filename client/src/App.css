@@ -174,22 +174,25 @@
   to { transform: scaleX(1); }
 }
 
-/* Onboarding: slim selector, top-center */
+/* Onboarding: slim, discreet selector, top-center */
 .carousel--onboarding .carousel__dots {
-  top: 1.5rem;
+  top: 1.1rem;
   bottom: auto;
+  gap: 0.35rem;
 }
 
 .carousel--onboarding .carousel__dot {
-  width: 4px;
-  height: 4px;
+  width: 3px;
+  height: 3px;
   border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .carousel--onboarding .carousel__dot--active {
-  width: 20px;
-  height: 4px;
-  border-radius: 2px;
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.55);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -241,7 +244,7 @@
 
 .onboarding__title {
   font-family: var(--font-display);
-  font-size: clamp(calc(2.6rem + 3px), 11vw, calc(6rem + 3px));
+  font-size: clamp(calc(2.6rem + 6px), 11vw, calc(6rem + 6px));
   line-height: 0.92;
   letter-spacing: 0.03em;
   color: #fff;
@@ -255,7 +258,7 @@
   flex-direction: column;
   gap: 0.1rem;
   align-items: flex-start;
-  font-size: clamp(calc(0.8rem + 3px), 2.5vw, calc(1rem + 3px));
+  font-size: clamp(calc(0.8rem + 6px), 2.5vw, calc(1rem + 6px));
   color: rgba(255, 255, 255, 0.9);
   margin: 0 0 1.5rem;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
@@ -269,9 +272,9 @@
   background: #000;
   color: #fff;
   border: none;
-  padding: 0.65rem 2.25rem;
+  padding: 1rem 3.4rem;
   border-radius: var(--radius-pill);
-  font-size: 0.9375rem;
+  font-size: 1.15rem;
   font-weight: 600;
   cursor: pointer;
   transition: background var(--transition);
@@ -681,7 +684,7 @@
   height: 100dvh;
   background: var(--surface);
   border-radius: 0;
-  padding: 0.75rem 1.25rem 1.5rem;
+  padding: 0.5rem 0.6rem 1.25rem;
   box-sizing: border-box;
   overflow-y: auto;
   animation: sheet-up 300ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -818,7 +821,9 @@
 .garment-canvas {
   position: relative;
   width: 100%;
-  touch-action: none;
+  /* Vertical swipes over the garment scroll the page; drags starting on a
+     design are captured by .df-design (touch-action: none). */
+  touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -839,6 +844,7 @@
   transform: translate(-50%, -50%);
   cursor: grab;
   z-index: 3;
+  touch-action: none;
 }
 
 .df-design:active {
@@ -925,27 +931,42 @@
   color: var(--text);
 }
 
-/* Size rail: vertical column of square rounded buttons on the right side. */
+/* Size rail: vertical column of round buttons on the right side. */
 .df-size-rail {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   gap: 0.45rem;
   flex-shrink: 0;
 }
 
+.df-size-rail__title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text);
+  line-height: 1.25;
+  margin-bottom: 0.2rem;
+}
+
 .df-size-btn {
   min-height: 0;
-  width: 46px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   border: none;
-  border-radius: 10px;
+  border-radius: 50%;
   background: var(--text);
   color: #fff;
   font-family: var(--font-display);
-  font-size: 0.62rem;
+  font-size: 0.55rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
   padding: 0;
@@ -2378,10 +2399,10 @@
   gap: 0.5rem;
   padding: 0.95rem 1.25rem;
   margin-top: 0.75rem;
-  background: #000;
-  color: #fff;
-  border: 1.5px solid #000;
-  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--text);
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius-pill);
   font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 600;
@@ -2389,7 +2410,11 @@
   text-transform: uppercase;
   cursor: pointer;
   text-decoration: none;
-  transition: background var(--transition);
+  transition: filter var(--transition);
+}
+
+.btn-checkout:hover {
+  filter: brightness(0.92);
 }
 
 .btn-checkout:active {
@@ -2399,6 +2424,36 @@
 .btn-checkout:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Cart action pills */
+.btn-pill-outline,
+.btn-pill-dark {
+  min-height: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: filter var(--transition);
+}
+
+.btn-pill-outline {
+  background: #fff;
+  color: var(--text);
+  border: 1.5px solid var(--text);
+}
+
+.btn-pill-dark {
+  background: var(--text);
+  color: #fff;
+  border: 1.5px solid var(--text);
+}
+
+.btn-pill-outline:hover,
+.btn-pill-dark:hover {
+  filter: brightness(0.94);
 }
 
 .btn-seguir {
@@ -2812,7 +2867,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.4rem;
 }
 
 .design-flow__header-title {
@@ -2932,7 +2987,7 @@
 .df-pills {
   display: flex;
   gap: 0.6rem;
-  margin-bottom: 0.9rem;
+  margin-bottom: 0.45rem;
 }
 
 .df-pill {
@@ -3234,13 +3289,16 @@
 
 .toast-container {
   position: fixed;
-  top: 1rem;
-  right: 1rem;
+  bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  right: auto;
+  top: auto;
   z-index: 10000;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  max-width: 360px;
+  width: min(360px, calc(100vw - 2rem));
 }
 
 .toast {
@@ -3257,8 +3315,8 @@
 }
 
 @keyframes toast-in {
-  from { opacity: 0; transform: translateX(100%); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .toast__icon { flex-shrink: 0; display: flex; }
@@ -3400,7 +3458,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem 1.25rem;
+  padding: 0.3rem 1rem;
   max-width: 1300px;
   margin: 0 auto;
 }
@@ -3421,7 +3479,7 @@
 }
 
 .app-header__logo {
-  height: 36px;
+  height: 30px;
   width: auto;
   object-fit: contain;
   filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
@@ -3454,12 +3512,15 @@
 .app-header__right {
   margin-left: auto;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .app-header__cart {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3481,6 +3542,12 @@
 
 .app-header__cart:hover {
   background: var(--surface-hover);
+}
+
+.app-header .btn-icon {
+  min-height: 0;
+  width: 36px;
+  height: 36px;
 }
 
 .app-header__badge {

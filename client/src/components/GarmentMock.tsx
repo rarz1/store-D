@@ -171,8 +171,9 @@ function RenderMock({ garmentId, color, svgMock, svgMockBack, placedDesigns, des
 
 export default function GarmentMock(props: Props) {
   const { onToggleSide, hideFlip } = props;
-  const [localSide, setLocalSide] = useState<Side>("front");
-  const side = props.side ?? localSide;
+  const [localSide, setLocalSide] = useState<Side>(props.side ?? "front");
+  // Uncontrolled when there is no external side handler: the flip button must work.
+  const side = onToggleSide ? (props.side ?? localSide) : localSide;
 
   const toggle = onToggleSide ?? (() => setLocalSide((s) => (s === "front" ? "back" : "front")));
 

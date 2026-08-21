@@ -246,57 +246,54 @@ export default function DesignFlow({
               Elige diseño
             </button>
             <button
-              className={`df-pill${designs.length > 0 ? " df-pill--active" : ""}`}
+              className={`df-pill df-pill--confirm${designs.length > 0 ? " df-pill--active" : ""}`}
               onClick={handleConfirm}
-              disabled={designs.length === 0}
               type="button"
             >
               Confirma Diseño
             </button>
           </div>
 
-          {designs.length === 0 ? (
-            <p className="text-muted" style={{ textAlign: "center", padding: "2rem 1rem" }}>
-              Todavía no elegiste ningún diseño. Tocá “Elige diseño” para empezar.
-            </p>
-          ) : (
-            <div className="df-editor">
-              <div className="df-editor__canvas">
-                <GarmentCanvas
-                  garmentId={garmentId}
-                  color={color}
-                  svgMock={svgMock}
-                  svgMockBack={svgMockBack}
-                  designs={designs.map((d) => ({
-                    uid: d.uid,
-                    imageUrl: d.tipo.image_url || undefined,
-                    svgContent: d.tipo.svg_content || d.estampado.svg_content || "",
-                    widthPercent: d.size.width_percent,
-                    x: d.x,
-                    y: d.y,
-                    active: d.uid === activeUid,
-                    pinned: d.pinned,
-                  }))}
-                  onSelect={handleSelectDesign}
-                  onMove={handleMove}
-                  renderToolbar={renderToolbar}
-                />
-              </div>
-              <div className="df-size-rail">
-                {sizeOptions.map((o) => (
-                  <button
-                    key={o.row.id}
-                    className={`df-size-btn${activeDesign?.size.id === o.row.id ? " df-size-btn--active" : ""}`}
-                    onClick={() => handleSizeChange(o.row)}
-                    disabled={!activeDesign}
-                    type="button"
-                  >
-                    {o.label}
-                  </button>
-                ))}
-              </div>
+          <div className="df-editor">
+            <div className="df-editor__canvas">
+              <GarmentCanvas
+                garmentId={garmentId}
+                color={color}
+                svgMock={svgMock}
+                svgMockBack={svgMockBack}
+                designs={designs.map((d) => ({
+                  uid: d.uid,
+                  imageUrl: d.tipo.image_url || undefined,
+                  svgContent: d.tipo.svg_content || d.estampado.svg_content || "",
+                  widthPercent: d.size.width_percent,
+                  x: d.x,
+                  y: d.y,
+                  active: d.uid === activeUid,
+                  pinned: d.pinned,
+                }))}
+                onSelect={handleSelectDesign}
+                onMove={handleMove}
+                renderToolbar={renderToolbar}
+              />
             </div>
-          )}
+            <div className="df-size-rail">
+              <span className="df-size-rail__title">
+                <span>Elige</span>
+                <span>Tamaño</span>
+              </span>
+              {sizeOptions.map((o) => (
+                <button
+                  key={o.row.id}
+                  className={`df-size-btn${activeDesign?.size.id === o.row.id ? " df-size-btn--active" : ""}`}
+                  onClick={() => handleSizeChange(o.row)}
+                  disabled={!activeDesign}
+                  type="button"
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {designs.length > 0 && (
             <p className="text-muted df-hint">
@@ -392,7 +389,6 @@ export default function DesignFlow({
                         </div>
                         <div className="estampado-card__info">
                           <span className="estampado-card__name">{c.name}</span>
-                          {c.description && <span className="estampado-card__desc">{c.description}</span>}
                         </div>
                       </button>
                     ))}
@@ -432,7 +428,6 @@ export default function DesignFlow({
                           </div>
                           <div className="estampado-card__info">
                             <span className="estampado-card__name">{t.name}</span>
-                            {t.description && <span className="estampado-card__desc">{t.description}</span>}
                           </div>
                         </button>
                       ))}
