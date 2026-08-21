@@ -800,42 +800,171 @@
   display: none;
 }
 
-/* Design flow placement: stack front + back mocks inside the sheet, both
-   visible on every screen so the free-placed design can reach either image. */
-.design-flow__mock {
+/* Design flow editor: single vertical canvas (front + back stacked) with a
+   size rail on the right. The canvas is one drag surface with no borders
+   between the two garment views. */
+.df-editor {
   display: flex;
-  justify-content: center;
-  margin-bottom: 0.75rem;
+  align-items: stretch;
+  gap: 0.5rem;
+  width: 100%;
 }
 
-.design-flow__mock .mock-duo {
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.design-flow__mock .mock-duo .garment-mock {
-  flex: 1 1 auto;
+.df-editor__canvas {
+  flex: 1;
   min-width: 0;
-  max-width: 210px;
 }
 
-.design-flow__mock .mock-duo .garment-mock + .garment-mock {
-  display: flex;
-}
-
-.design-flow__mock--drag {
+.garment-canvas {
+  position: relative;
+  width: 100%;
   touch-action: none;
-  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.design-flow__mock--drag:active {
+.garment-canvas__half {
+  width: 100%;
+}
+
+.garment-canvas__half svg,
+.garment-canvas__half img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.df-design {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  z-index: 3;
+}
+
+.df-design:active {
   cursor: grabbing;
 }
 
-.design-flow__mock--drag .garment-mock {
-  box-shadow: inset 0 0 0 2px var(--accent);
-  border-radius: var(--radius-sm);
+.df-design--active {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.df-design--pinned {
+  cursor: pointer;
+}
+
+.df-design__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+.df-design__svg {
+  pointer-events: none;
+}
+
+.df-design__svg svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.df-toolbar {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--surface);
+  border: 1.5px solid var(--text);
+  border-radius: 999px;
+  padding: 2px 4px;
+  z-index: 6;
+  white-space: nowrap;
+}
+
+.df-toolbar__btn {
+  min-height: 0;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: var(--text);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.df-toolbar__btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.df-toolbar__btn--pin {
+  margin-left: 4px;
+  background: var(--accent);
+  color: var(--text);
+}
+
+.df-toolbar__count {
+  min-width: 18px;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Size rail: vertical column of square rounded buttons on the right side. */
+.df-size-rail {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.df-size-btn {
+  min-height: 0;
+  width: 46px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: var(--text);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  padding: 0;
+}
+
+.df-size-btn--active {
+  background: var(--accent);
+  color: var(--text);
+}
+
+.df-size-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.df-hint {
+  font-size: 0.75rem;
+  text-align: center;
+  margin: 0.6rem 0 0;
 }
 
 .controls-section {
@@ -2748,28 +2877,25 @@
 }
 
 .stepper-step__dot {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  border: 2px solid var(--border);
+  background: var(--text);
+  border: 2px solid var(--text);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   font-size: 0.6rem;
   font-weight: 700;
+  color: #fff;
 }
 
-.stepper-step--done .stepper-step__dot {
-  background: var(--text);
-  border-color: var(--text);
-  color: var(--surface);
-}
-
+.stepper-step--done .stepper-step__dot,
 .stepper-step--active .stepper-step__dot {
-  border-color: var(--text);
+  background: var(--accent);
+  border-color: var(--accent);
   color: var(--text);
-  box-shadow: 0 0 0 3px var(--border);
 }
 
 .stepper-step__label {
@@ -2799,7 +2925,88 @@
 }
 
 .stepper-connector--done {
+  background: var(--accent);
+}
+
+/* Phase pills: "Elige diseño" / "Confirma Diseño" */
+.df-pills {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+
+.df-pill {
+  flex: 1;
+  min-height: 0;
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: var(--radius-pill);
   background: var(--text);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.df-pill--active {
+  background: var(--accent);
+  color: var(--text);
+}
+
+.df-pill:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Selection sections in "crea" phase */
+.df-section {
+  margin-bottom: 1.25rem;
+}
+
+.df-section-title {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 0.6rem;
+}
+
+.df-cat-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.df-cat-card {
+  min-height: 0;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--text);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.df-cat-card--active {
+  background: var(--accent);
+  color: var(--text);
+}
+
+.df-pick-btn {
+  width: 100%;
+  margin-top: 0.75rem;
 }
 
 /* On narrow sheet widths, wrap the stepper into a compact 2x2 grid. */

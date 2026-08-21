@@ -1,13 +1,13 @@
 import { lazy, Suspense, type ComponentType, useRef, useState, type ReactNode } from "react";
 import { recolorMockSvg } from "../lib/recolorMock";
 
-const garmentComponents: Record<string, ComponentType<{ color: string }>> = {
+export const garmentComponents: Record<string, ComponentType<{ color: string }>> = {
   remeras: lazy(() => import("../assets/garments/TShirtSVG")),
   pantalones: lazy(() => import("../assets/garments/ShortsSVG")),
   buzos: lazy(() => import("../assets/garments/HoodieSVG")),
 };
 
-function isLight(hex: string) {
+export function isLight(hex: string) {
   const c = hex.replace("#", "");
   const r = parseInt(c.substring(0, 2), 16);
   const g = parseInt(c.substring(2, 4), 16);

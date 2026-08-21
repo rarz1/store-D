@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import GarmentMock from "../components/GarmentMock";
-import DesignFlow from "../components/DesignFlow";
+import DesignFlow, { type PlacedEstampado } from "../components/DesignFlow";
 import SizeGuideModal from "../components/SizeGuideModal";
 import AppHeader from "../components/AppHeader";
 import { useCart } from "../lib/cart";
@@ -10,16 +10,7 @@ import { useFavorites } from "../lib/favorites";
 import { useGarment, useGarmentColors, useGarmentSizes, useEstampados, useGarmentEstampadoSizes } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 import { setMeta, setCanonical, setJsonLd, clearJsonLd } from "../lib/seo";
-import type { EstampadoRow, DisenoTipoRow, EstampadoSizeRow, EstampadoLocationRow } from "../lib/supabase";
-
-interface PlacedEstampado {
-  estampado: EstampadoRow;
-  tipo: DisenoTipoRow;
-  size: EstampadoSizeRow;
-  locations: EstampadoLocationRow[];
-  customPosition?: { x: number; y: number } | null;
-  side?: "front" | "back";
-}
+import type { DisenoTipoRow } from "../lib/supabase";
 
 export default function ProductPage() {
   const { garmentId } = useParams<{ garmentId: string }>();
@@ -414,23 +405,11 @@ export default function ProductPage() {
               color={selectedColor}
               svgMock={garment.svg_mock}
               svgMockBack={garment.svg_mock_back}
-              placedDesigns={allMockDesigns}
+              initialDesigns={placedEstampados}
               onSelectClase={handleSelectClase}
               onClose={() => setDesignFlowOpen(false)}
-              onAdd={(item) => {
-                const isDuplicate = placedEstampados.some((p) =>
-                  p.estampado.id === item.estampado.id &&
-                  p.tipo.id === item.tipo.id &&
-                  JSON.stringify(p.locations.map(l => l.id).sort()) === JSON.stringify(item.locations.map(l => l.id).sort()) &&
-                  JSON.stringify(p.customPosition ?? null) === JSON.stringify(item.customPosition ?? null) &&
-                  (p.side ?? "front") === (item.side ?? "front")
-                );
-                if (isDuplicate) {
-                  toast.warning("Este diseño ya está agregado en esa ubicación");
-                  return;
-                }
-                const next = [...placedEstampados, item];
-                setPlacedEstampados(next);
+              onConfirm={(items) => {
+                setPlacedEstampados(items);
                 setDesignFlowOpen(false);
                 upsertItem({
                   garmentId: garment.id,
@@ -442,7 +421,7 @@ export default function ProductPage() {
                   colorHex: selectedColor,
                   colorName: colorName,
                   size: selectedSize,
-                  estampados: next,
+                  estampados: items,
                 });
                 navigate("/carrito");
               }}
