@@ -157,10 +157,13 @@ export default function CartPage() {
         ) : (
           <>
             <div className="cart-select-all-row">
+              <span className="cart-select-all-row__title">CARRITO</span>
               <button className="cart-select-all" onClick={toggleAll} type="button">
                 Seleccionar todo
               </button>
-              <span className="cart-select-all__count">{totalItems}</span>
+              {totalItems > 0 && (
+                <span className="count-badge">{totalItems > 9 ? "9+" : totalItems}</span>
+              )}
               <button
                 className={`cart-checkbox${selected.size === items.length ? " cart-checkbox--checked" : ""}`}
                 onClick={toggleAll}
@@ -178,79 +181,90 @@ export default function CartPage() {
             <div className="cart-items">
               {items.map((item, i) => {
                 const qty = item.quantity ?? 1;
+                const designsTotal = item.estampados.reduce(
+                  (s, p) => s + p.size.price_increment + p.locations.reduce((a, l) => a + l.price_increment, 0),
+                  0
+                );
                 return (
-                  <div key={i} className="cart-item">
+                  <div key={i} className="cart-item cart-item--order">
                     <div className="cart-item__thumb-col">
                       <CartItemThumb item={item} />
                     </div>
-                    <div className="cart-item__info">
-                      <strong className="cart-item__name">{item.garmentName}</strong>
-                      <span className="cart-item__meta">
-                        Color: {item.colorName} – Talla: {item.size}
-                      </span>
-                      <span className="cart-item__meta">
-                        Basica: ${Number(item.garmentBasePrice).toLocaleString("es-AR")}
-                      </span>
-                      {item.estampados.length > 0 && (
-                        <div className="cart-item__designs">
-                          {item.estampados.map((p, j) => {
-                            const inc = p.size.price_increment + p.locations.reduce((a, l) => a + l.price_increment, 0);
-                            return (
-                              <div key={j} className="cart-item__design">
-                                <span className="cart-item__design-name">
-                                  {p.tipo.name}
-                                </span>
-                                <span className="cart-item__design-price">
-                                  {stampSizeLabel(p.size)}: +${inc.toLocaleString("es-AR")}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                      <div className="cart-qty">
+                    <div className="cart-item__main">
+                      <div className="ci-row ci-row--name">
+                        <strong className="cart-item__name">{item.garmentName}</strong>
                         <button
-                          className="cart-qty__btn"
-                          onClick={() => updateQuantity(i, qty - 1)}
-                          aria-label="Disminuir cantidad"
+                          className={`cart-checkbox${selected.has(i) ? " cart-checkbox--checked" : ""}`}
+                          onClick={() => toggleSelect(i)}
+                          aria-label={selected.has(i) ? "Quitar de la selección" : "Seleccionar ítem"}
                           type="button"
                         >
-                          −
-                        </button>
-                        <span className="cart-qty__value">{qty}</span>
-                        <button
-                          className="cart-qty__btn"
-                          onClick={() => updateQuantity(i, qty + 1)}
-                          aria-label="Aumentar cantidad"
-                          type="button"
-                        >
-                          +
+                          {selected.has(i) && (
+                            <svg viewBox="0 0 12 12" fill="none" width="12" height="12">
+                              <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
                         </button>
                       </div>
-                    </div>
-                    <div className="cart-item__side">
-                      <button
-                        className={`cart-checkbox${selected.has(i) ? " cart-checkbox--checked" : ""}`}
-                        onClick={() => toggleSelect(i)}
-                        aria-label={selected.has(i) ? "Quitar de la selección" : "Seleccionar ítem"}
-                        type="button"
-                      >
-                        {selected.has(i) && (
-                          <svg viewBox="0 0 12 12" fill="none" width="12" height="12">
-                            <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <div className="ci-row">
+                        <span className="ci-label">Color: {item.colorName}</span>
+                      </div>
+                      <div className="ci-row">
+                        <span className="ci-label">Talla: {item.size}</span>
+                      </div>
+                      <div className="ci-row">
+                        <span className="ci-label">Básica:</span>
+                        <span className="ci-value">${Number(item.garmentBasePrice).toLocaleString("es-AR")}</span>
+                      </div>
+                      {item.estampados.map((p, j) => {
+                        const inc = p.size.price_increment + p.locations.reduce((a, l) => a + l.price_increment, 0);
+                        return (
+                          <div key={j}>
+                            <div className="ci-row">
+                              <span className="ci-label">Diseño: {p.tipo.name}</span>
+                            </div>
+                            <div className="ci-row">
+                              <span className="ci-label">Tamaño: {stampSizeLabel(p.size)}</span>
+                              <span className="ci-value">+${inc.toLocaleString("es-AR")}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div className="ci-row ci-row--total">
+                        <span className="ci-label">Valor</span>
+                        <span className="ci-value">=${(Number(item.garmentBasePrice) + designsTotal).toLocaleString("es-AR")}</span>
+                      </div>
+                      <div className="ci-row ci-row--last">
+                        <div className="cart-qty">
+                          <button
+                            className="cart-qty__btn"
+                            onClick={() => updateQuantity(i, qty - 1)}
+                            aria-label="Disminuir cantidad"
+                            type="button"
+                          >
+                            −
+                          </button>
+                          <span className="cart-qty__value">{qty}</span>
+                          <button
+                            className="cart-qty__btn"
+                            onClick={() => updateQuantity(i, qty + 1)}
+                            aria-label="Aumentar cantidad"
+                            type="button"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <button
+                          className="cart-item__remove"
+                          onClick={() => removeItem(i)}
+                          aria-label="Quitar del carrito"
+                          type="button"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="26" height="26">
+                            <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M10 11v6M14 11v6" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
-                        )}
-                      </button>
-                      <button
-                        className="cart-item__remove"
-                        onClick={() => removeItem(i)}
-                        aria-label="Quitar del carrito"
-                        type="button"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="26" height="26">
-                          <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M10 11v6M14 11v6" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

@@ -469,3 +469,13 @@ Archivo: `client/src/lib/settings.ts`
 - **Carrito**: header con store-d grande; layout tarjeta en grid 40%/50%/10% (thumb grande / info lista / selección+eliminar); select-all movido a la derecha (frase + contador + círculo); tamaños de diseño como iniciales (S/M/L/XL/FULL via `stampSizeLabel` por width_percent); sin "Ubicación libre" ni nombre de vista; qty selector abajo de la franja central; delete verde neón grande; checkout verde neón hardcode #84cc16; Volver → página de la prenda del ítem seleccionado; Seguir comprando → colecciones.
 - **Favoritos**: tarjetas grid 30%/55%/15% (imagen básica / info / eliminar arriba + ojo "ver prenda" abajo, ambos verde neón).
 - **Verificación**: `npm run build` OK; oxlint solo warnings preexistentes; Playwright e2e 38/38 checks (scripts `%TEMP%\opencode\test_round6.py`, `test_round6b.py`). Sin commit/push (usuario no lo pidió).
+
+### Sesión 18 — 2026-08-22 (Ronda 6: fixes de badges + layout carrito/favoritos refinado)
+
+- **Fix badges del header**: causa raíz — al renombrar `.app-header__cart` a `.btn-icon.app-header__icon-btn` se perdió `position: relative` y el badge absoluto quedaba anclado al ancestro posicionado (invisible). Fix: `.app-header__icon-btn { position: relative }`.
+- Onboarding title −20% (`clamp(3.5rem+8px, 14.5vw, 8rem+8px)`). Colecciones: tarjetas 80%→96%, corazón activo verde neón.
+- Producto: separador movido entre tallas y CREA TU DISEÑO (ya no entre los dos botones); "Guía de tallas" blanca/borde negro; corazón activo neón; nueva fila `.product-actions-row`: "Añade al Carrito" + "Ver el Carrito" (blanca, borde negro, badge neón con count estilo header "9+").
+- DesignFlow: selector de tamaño ahora es fila horizontal centrada (`.df-size-row`) debajo de los pills (título "Elige Tamaño" + cuadrados en línea); canvas ocupa todo el ancho (`.df-editor__canvas` eliminado); hint "Arrastrá el diseño..." eliminado; botón "−" del clonador elimina también el último diseño (sin guard `count<=1`, disabled removido); back/close sin borde e íconos strokeWidth 2.5; "Elige la Imagen" verde neón.
+- Carrito: fila superior con "CARRITO" a la izquierda + "Seleccionar todo" + badge neón `.count-badge` + círculo; tarjetas `.cart-item--order` flex 50/50 — mitad izquierda imágenes personalizadas, mitad derecha filas `ci-row` (label izquierda / precio derecha alineados): Nombre+checkbox / Color / Talla / Básica:$ / Diseño:X / Tamaño:X:+$ / Valor==$total / qty+eliminar.
+- Favoritos mantienen grid 30/55/15 (`.fav-item` ahora define su propio display:grid porque `.cart-item` dejó de ser grid).
+- Verificación: build OK, lint solo warnings previos, Playwright ronda 7: 26/26 (badge de "Ver el Carrito" verificado post-add). Commit + push → Vercel auto-deploy.

@@ -15,7 +15,7 @@ import type { DisenoTipoRow } from "../lib/supabase";
 export default function ProductPage() {
   const { garmentId } = useParams<{ garmentId: string }>();
   const navigate = useNavigate();
-  const { addItem, upsertItem } = useCart();
+  const { addItem, upsertItem, totalItems } = useCart();
   const toast = useToast();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
 
@@ -260,6 +260,7 @@ export default function ProductPage() {
                 className="btn-icon"
                 onClick={handleToggleFavorite}
                 aria-label={isFavorite(garment.id, selectedColor, selectedSize) ? "Quitar de favoritos" : "Agregar a favoritos"}
+                style={{ color: isFavorite(garment.id, selectedColor, selectedSize) ? "#84cc16" : undefined }}
               >
                 <svg viewBox="0 0 24 24" fill={isFavorite(garment.id, selectedColor, selectedSize) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" width="22" height="22">
                   <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" strokeLinecap="round" strokeLinejoin="round" />
@@ -361,15 +362,23 @@ export default function ProductPage() {
             </button>
           )}
 
+          <div className="product-separator" />
+
           <button className="btn-elegir-diseno" onClick={() => setDesignFlowOpen(true)} type="button">
             CREA TU DISEÑO
           </button>
 
-          <div className="product-separator" />
-
-          <button className="btn-add-cart-pill" onClick={handleAddToCart} type="button">
-            Añade al Carrito
-          </button>
+          <div className="product-actions-row">
+            <button className="btn-add-cart-pill" onClick={handleAddToCart} type="button">
+              Añade al Carrito
+            </button>
+            <button className="btn-view-cart-pill" onClick={() => navigate("/carrito")} type="button">
+              Ver el Carrito
+              {totalItems > 0 && (
+                <span className="btn-view-cart-pill__badge">{totalItems > 9 ? "9+" : totalItems}</span>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 

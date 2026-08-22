@@ -171,8 +171,6 @@ export default function DesignFlow({
   const handleRemoveClone = (uid: string) => {
     const src = designs.find((d) => d.uid === uid);
     if (!src) return;
-    const sameKind = designs.filter((d) => d.tipo.id === src.tipo.id);
-    if (sameKind.length <= 1) return;
     setDesigns((prev) => prev.filter((d) => d.uid !== uid));
     setActiveUid(null);
   };
@@ -213,7 +211,7 @@ export default function DesignFlow({
     const count = designs.filter((x) => x.tipo.id === d.tipo.id).length;
     return (
       <div className="df-toolbar" onPointerDown={(e) => e.stopPropagation()}>
-        <button className="df-toolbar__btn" onClick={() => handleRemoveClone(uid)} disabled={count <= 1} type="button" aria-label="Quitar copia">
+        <button className="df-toolbar__btn" onClick={() => handleRemoveClone(uid)} type="button" aria-label="Quitar copia">
           −
         </button>
         <span className="df-toolbar__count">{count}</span>
@@ -233,7 +231,7 @@ export default function DesignFlow({
     <div className="design-flow">
       <div className="design-flow__header">
         <button className="design-flow__back" onClick={goBack} type="button" aria-label="Volver">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="20" height="20">
             <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
@@ -242,7 +240,7 @@ export default function DesignFlow({
         </span>
         {onClose && (
           <button className="design-flow__close" onClick={onClose} type="button" aria-label="Cerrar">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="20" height="20">
               <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
@@ -285,33 +283,9 @@ export default function DesignFlow({
             </div>
           )}
 
-          <div className="df-editor">
-            <div className="df-editor__canvas">
-              <GarmentCanvas
-                garmentId={garmentId}
-                color={color}
-                svgMock={svgMock}
-                svgMockBack={svgMockBack}
-                designs={designs.map((d) => ({
-                  uid: d.uid,
-                  imageUrl: d.tipo.image_url || undefined,
-                  svgContent: d.tipo.svg_content || d.estampado.svg_content || "",
-                  widthPercent: d.size.width_percent,
-                  x: d.x,
-                  y: d.y,
-                  active: d.uid === activeUid,
-                  pinned: d.pinned,
-                }))}
-                onSelect={handleSelectDesign}
-                onMove={handleMove}
-                renderToolbar={renderToolbar}
-              />
-            </div>
-            <div className="df-size-rail">
-              <span className="df-size-rail__title">
-                <span>Elige</span>
-                <span>Tamaño</span>
-              </span>
+          <div className="df-size-row">
+            <span className="df-size-row__title">Elige Tamaño</span>
+            <div className="df-size-row__btns">
               {sizeOptions.map((o) => (
                 <button
                   key={o.row.id}
@@ -326,11 +300,27 @@ export default function DesignFlow({
             </div>
           </div>
 
-          {designs.length > 0 && (
-            <p className="text-muted df-hint">
-              Arrastrá el diseño sobre la prenda. Tocá un diseño fijo para volver a moverlo.
-            </p>
-          )}
+          <div className="df-editor">
+            <GarmentCanvas
+              garmentId={garmentId}
+              color={color}
+              svgMock={svgMock}
+              svgMockBack={svgMockBack}
+              designs={designs.map((d) => ({
+                uid: d.uid,
+                imageUrl: d.tipo.image_url || undefined,
+                svgContent: d.tipo.svg_content || d.estampado.svg_content || "",
+                widthPercent: d.size.width_percent,
+                x: d.x,
+                y: d.y,
+                active: d.uid === activeUid,
+                pinned: d.pinned,
+              }))}
+              onSelect={handleSelectDesign}
+              onMove={handleMove}
+              renderToolbar={renderToolbar}
+            />
+          </div>
         </>
       )}
 
