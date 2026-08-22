@@ -443,6 +443,17 @@ export default function AdminDashboard() {
             <img src={settings.collections_banner_url} alt="Fondo de colecciones" className="admin-preview-img" style={{ width: 200, height: "auto", marginTop: 8 }} />
           )}
 
+          <label className="admin-label">Imagen de fondo de la página (detrás de las tarjetas)</label>
+          <input type="file" accept="image/*" onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const { url } = await uploadImage(file, `collections/page-bg-${Date.now()}`);
+            if (url) setSettings({ ...settings, collections_bg_url: url });
+          }} />
+          {settings.collections_bg_url && (
+            <img src={settings.collections_bg_url} alt="Fondo de la página" className="admin-preview-img" style={{ width: 200, height: "auto", marginTop: 8 }} />
+          )}
+
           <button className="btn-primary" onClick={handleSaveSettings} disabled={saving}>
             {saving ? "Guardando..." : "Guardar"}
           </button>

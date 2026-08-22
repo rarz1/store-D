@@ -8,6 +8,15 @@ import { setMeta } from "../lib/seo";
 
 const ADMIN_PHONE = import.meta.env.VITE_WHATSAPP_PHONE ?? "";
 
+/* Stamp size shown as initial (S, M, L, XL); FULL keeps the full word. */
+function stampSizeLabel(size: { name: string; width_percent: number }): string {
+  if (size.width_percent >= 100) return "FULL";
+  if (size.width_percent <= 25) return "S";
+  if (size.width_percent <= 50) return "M";
+  if (size.width_percent <= 75) return "L";
+  return "XL";
+}
+
 function buildCartMockDesigns(estampados: CartItem["estampados"]) {
   return estampados.flatMap((p) => {
     const base = {
@@ -131,7 +140,7 @@ export default function CartPage() {
 
   return (
     <div className="cart-page page-enter">
-      <AppHeader settings={null} title="Carrito" />
+      <AppHeader settings={null} storeName="store-d" bigStoreName hideFab />
 
       <div className="cart-page__body">
         {items.length === 0 ? (
@@ -147,57 +156,53 @@ export default function CartPage() {
           </div>
         ) : (
           <>
-            <button className="cart-select-all" onClick={toggleAll} type="button">
-              <span className={`cart-checkbox${selected.size === items.length ? " cart-checkbox--checked" : ""}`}>
+            <div className="cart-select-all-row">
+              <button className="cart-select-all" onClick={toggleAll} type="button">
+                Seleccionar todo
+              </button>
+              <span className="cart-select-all__count">{totalItems}</span>
+              <button
+                className={`cart-checkbox${selected.size === items.length ? " cart-checkbox--checked" : ""}`}
+                onClick={toggleAll}
+                aria-label={selected.size === items.length ? "Deseleccionar todo" : "Seleccionar todo"}
+                type="button"
+              >
                 {selected.size === items.length && (
                   <svg viewBox="0 0 12 12" fill="none" width="12" height="12">
                     <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
-              </span>
-              Seleccionar todo ({totalItems})
-            </button>
+              </button>
+            </div>
 
             <div className="cart-items">
               {items.map((item, i) => {
                 const qty = item.quantity ?? 1;
-                const unitAddons = item.estampados.reduce((s, p) => s + p.size.price_increment + p.locations.reduce((a, l) => a + l.price_increment, 0), 0);
-                const itemTotal = (item.garmentBasePrice + unitAddons) * qty;
                 return (
                   <div key={i} className="cart-item">
-                    <button
-                      className={`cart-checkbox${selected.has(i) ? " cart-checkbox--checked" : ""}`}
-                      onClick={() => toggleSelect(i)}
-                      aria-label={selected.has(i) ? "Quitar de la selección" : "Seleccionar ítem"}
-                      type="button"
-                    >
-                      {selected.has(i) && (
-                        <svg viewBox="0 0 12 12" fill="none" width="12" height="12">
-                          <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </button>
-                    <CartItemThumb item={item} />
+                    <div className="cart-item__thumb-col">
+                      <CartItemThumb item={item} />
+                    </div>
                     <div className="cart-item__info">
                       <strong className="cart-item__name">{item.garmentName}</strong>
                       <span className="cart-item__meta">
-                        {item.colorName} · Talla {item.size}
+                        Color: {item.colorName} – Talla: {item.size}
                       </span>
-                      <span className="cart-item__price">${itemTotal.toLocaleString("es-AR")}</span>
+                      <span className="cart-item__meta">
+                        Basica: ${Number(item.garmentBasePrice).toLocaleString("es-AR")}
+                      </span>
                       {item.estampados.length > 0 && (
                         <div className="cart-item__designs">
                           {item.estampados.map((p, j) => {
                             const inc = p.size.price_increment + p.locations.reduce((a, l) => a + l.price_increment, 0);
-                            const locText = p.customPosition
-                              ? (p.side === "back" ? "Ubicación libre (posterior)" : "Ubicación libre (frente)")
-                              : p.locations.map((l) => l.name).join(", ");
                             return (
                               <div key={j} className="cart-item__design">
                                 <span className="cart-item__design-name">
-                                  {p.estampado.name} · {p.tipo.name} ({p.size.name})
+                                  {p.tipo.name}
                                 </span>
-                                <span className="cart-item__design-meta">{locText}</span>
-                                <span className="cart-item__design-price">+${inc.toLocaleString("es-AR")}</span>
+                                <span className="cart-item__design-price">
+                                  {stampSizeLabel(p.size)}: +${inc.toLocaleString("es-AR")}
+                                </span>
                               </div>
                             );
                           })}
@@ -223,16 +228,30 @@ export default function CartPage() {
                         </button>
                       </div>
                     </div>
-                    <button
-                      className="cart-item__remove"
-                      onClick={() => removeItem(i)}
-                      aria-label="Quitar del carrito"
-                      type="button"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                        <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </button>
+                    <div className="cart-item__side">
+                      <button
+                        className={`cart-checkbox${selected.has(i) ? " cart-checkbox--checked" : ""}`}
+                        onClick={() => toggleSelect(i)}
+                        aria-label={selected.has(i) ? "Quitar de la selección" : "Seleccionar ítem"}
+                        type="button"
+                      >
+                        {selected.has(i) && (
+                          <svg viewBox="0 0 12 12" fill="none" width="12" height="12">
+                            <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </button>
+                      <button
+                        className="cart-item__remove"
+                        onClick={() => removeItem(i)}
+                        aria-label="Quitar del carrito"
+                        type="button"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="26" height="26">
+                          <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M10 11v6M14 11v6" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -280,7 +299,15 @@ export default function CartPage() {
           )}
 
           <div className="cart-page__actions">
-            <button className="btn-pill-outline" onClick={() => navigate(-1)} type="button">
+            <button
+              className="btn-pill-outline"
+              onClick={() => {
+                const last = selectedItems[0] ?? items[0];
+                if (last) navigate(`/producto/${last.garmentSlug}`);
+                else navigate(-1);
+              }}
+              type="button"
+            >
               Volver
             </button>
             <button className="btn-pill-dark" onClick={() => navigate("/colecciones", { replace: true })} type="button">

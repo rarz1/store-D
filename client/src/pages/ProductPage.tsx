@@ -261,13 +261,13 @@ export default function ProductPage() {
                 onClick={handleToggleFavorite}
                 aria-label={isFavorite(garment.id, selectedColor, selectedSize) ? "Quitar de favoritos" : "Agregar a favoritos"}
               >
-                <svg viewBox="0 0 24 24" fill={isFavorite(garment.id, selectedColor, selectedSize) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" width="20" height="20">
+                <svg viewBox="0 0 24 24" fill={isFavorite(garment.id, selectedColor, selectedSize) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" width="22" height="22">
                   <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
               {typeof navigator.share === "function" && (
                 <button className="btn-icon" onClick={handleShare} aria-label="Compartir">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
                     <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
@@ -277,6 +277,8 @@ export default function ProductPage() {
 
           <h1 className="product-sheet__name">{garment.name}</h1>
           <p className="product-sheet__desc">{garment.description}</p>
+
+          <div className="product-separator" />
 
           {colors.length > 0 && (
             <div className="control-group">
@@ -304,6 +306,8 @@ export default function ProductPage() {
               </div>
             </div>
           )}
+
+          <div className="product-separator" />
 
           {sizes.length > 0 && (
             <div className="control-group">
@@ -359,6 +363,12 @@ export default function ProductPage() {
 
           <button className="btn-elegir-diseno" onClick={() => setDesignFlowOpen(true)} type="button">
             CREA TU DISEÑO
+          </button>
+
+          <div className="product-separator" />
+
+          <button className="btn-add-cart-pill" onClick={handleAddToCart} type="button">
+            Añade al Carrito
           </button>
         </div>
       </div>
@@ -429,14 +439,6 @@ export default function ProductPage() {
           </div>
         </div>
       )}
-
-      <button className="fab-add-cart" onClick={handleAddToCart} type="button" aria-label="Agregar al carrito">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M3 6h18" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M16 10a4 4 0 010 8" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
     </div>
   );
 }

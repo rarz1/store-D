@@ -8,6 +8,7 @@ export interface SiteSettings {
   collections_title: string;
   collections_subtitle: string;
   collections_banner_url: string;
+  collections_bg_url: string;
   color_bg: string;
   color_surface: string;
   color_text: string;

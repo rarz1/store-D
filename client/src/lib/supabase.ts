@@ -14,6 +14,7 @@ export type GarmentRow = {
   svg_mock: string;
   svg_mock_back: string;
   tags: string[];
+  badge_label: string;
   created_at: string;
 };
 

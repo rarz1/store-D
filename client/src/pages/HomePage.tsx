@@ -49,9 +49,18 @@ export default function HomePage() {
     ? `linear-gradient(rgba(19, 21, 24, 0.6), rgba(19, 21, 24, 0.6)), url(${settings.collections_banner_url})`
     : undefined;
 
+  const pageBgStyle = settings?.collections_bg_url
+    ? {
+        backgroundImage: `linear-gradient(rgba(244, 244, 245, 0.82), rgba(244, 244, 245, 0.82)), url(${settings.collections_bg_url})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+      }
+    : undefined;
+
   return (
-    <div className="home page-enter">
-      <AppHeader settings={settings} showBack title="COLECCIONES" />
+    <div className="home page-enter" style={pageBgStyle}>
+      <AppHeader settings={settings} showBack title="COLECCIONES" hideFab />
 
       <section className="categories">
         <div
@@ -132,7 +141,7 @@ export default function HomePage() {
                     ) : (
                       <span style={{ fontSize: "2rem", color: "var(--accent)" }}>{g.name[0]}</span>
                     )}
-                    <span className="category-card__badge">NUEVO</span>
+                    <span className="category-card__badge">{g.badge_label || "Nuevo"}</span>
                   </div>
                   <div className="category-card__info">
                     <h3 className="category-card__name">{g.name}</h3>

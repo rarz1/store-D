@@ -2,6 +2,15 @@ import { useRef, useState } from "react";
 import type { EstampadoRow, DisenoTipoRow, EstampadoSizeRow, EstampadoLocationRow } from "../lib/supabase";
 import GarmentCanvas from "./GarmentCanvas";
 
+const USAGE_GUIDE_STEPS = [
+  "Elija el diseño",
+  "Cuando el diseño esté sobre la prenda, arrástrelo hacia la ubicación elegida",
+  "Elija el tamaño de su diseño",
+  'Puede clonar ese diseño las veces que desee con el selector "+" o eliminarlo con "-"',
+  "Una vez que el diseño se encuentre en el lugar deseado fíjelo con el selector del chinche",
+  "Una vez satisfecho con su diseño, agregue al carrito",
+];
+
 export interface CustomPosition {
   x: number;
   y: number;
@@ -76,6 +85,7 @@ export default function DesignFlow({
   onConfirm,
 }: Props) {
   const [phase, setPhase] = useState<Phase>("personaliza");
+  const [showGuide, setShowGuide] = useState(false);
   const [designs, setDesigns] = useState<EditorDesign[]>(() =>
     initialDesigns.map((p, i) => ({
       uid: `init-${i}`,
@@ -245,14 +255,35 @@ export default function DesignFlow({
             <button className="df-pill" onClick={() => setPhase("crea")} type="button">
               Elige diseño
             </button>
+            <button className="df-pill df-pill--guide" onClick={() => setShowGuide(true)} type="button">
+              Guía de Uso
+            </button>
             <button
               className={`df-pill df-pill--confirm${designs.length > 0 ? " df-pill--active" : ""}`}
               onClick={handleConfirm}
               type="button"
             >
-              Confirma Diseño
+              Añade al Carrito
             </button>
           </div>
+
+          {showGuide && (
+            <div className="df-guide-overlay" onClick={() => setShowGuide(false)}>
+              <div className="df-guide-box" onClick={(e) => e.stopPropagation()}>
+                <div className="df-guide-box__header">
+                  <span className="df-guide-box__title">Guía de Uso</span>
+                  <button className="df-guide-box__close" onClick={() => setShowGuide(false)} type="button" aria-label="Cerrar guía">
+                    ✕
+                  </button>
+                </div>
+                <ol className="df-guide-box__list">
+                  {USAGE_GUIDE_STEPS.map((step, i) => (
+                    <li key={i}>{step}</li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+          )}
 
           <div className="df-editor">
             <div className="df-editor__canvas">

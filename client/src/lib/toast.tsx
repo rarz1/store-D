@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 
 export type ToastType = "success" | "error" | "warning" | "info";
 
@@ -27,7 +27,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const showToast = useCallback((toast: Omit<Toast, "id">) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-    const newToast = { ...toast, id, duration: toast.duration ?? 4000 };
+    const newToast = { ...toast, id, duration: toast.duration ?? 2000 };
     setToasts((prev) => [...prev, newToast]);
     return id;
   }, []);
@@ -111,10 +111,16 @@ function Toast({ toast, onHide }: { toast: Toast; onHide: (id: string) => void }
   const Icon = typeIcons[toast.type];
   const [isExiting, setIsExiting] = useState(false);
 
-  const handleClose = () => {
-    setIsExiting(true);
-    setTimeout(() => onHide(toast.id), 250);
-  };
+  // Auto-dismiss after the configured duration (no manual close button).
+  useEffect(() => {
+    if (!toast.duration || toast.duration <= 0) return;
+    const exitTimer = setTimeout(() => setIsExiting(true), toast.duration);
+    const hideTimer = setTimeout(() => onHide(toast.id), toast.duration + 250);
+    return () => {
+      clearTimeout(exitTimer);
+      clearTimeout(hideTimer);
+    };
+  }, [toast.duration, toast.id, onHide]);
 
   return (
     <div
@@ -134,15 +140,6 @@ function Toast({ toast, onHide }: { toast: Toast; onHide: (id: string) => void }
         <strong className="toast__title">{toast.title}</strong>
         {toast.message && <p className="toast__message">{toast.message}</p>}
       </div>
-      <button
-        className="toast__close"
-        onClick={handleClose}
-        aria-label="Cerrar notificación"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-          <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
       {toast.duration && toast.duration > 0 && (
         <div
           className="toast__progress"

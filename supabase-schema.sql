@@ -11,6 +11,7 @@ create table garments (
   description text not null default '',
   base_price numeric(10,2) not null default 0,
   svg_mock text not null default '',
+  badge_label text not null default 'Nuevo',
   created_at timestamptz default now()
 );
 
@@ -109,6 +110,7 @@ create table site_settings (
   collections_title text not null default 'COLECCIONES',
   collections_subtitle text not null default 'Elegí tu prenda y personalizala a tu gusto',
   collections_banner_url text not null default '',
+  collections_bg_url text not null default '',
   color_bg text not null default '#f4f4f5',
   color_surface text not null default '#ffffff',
   color_text text not null default '#000000',
@@ -116,7 +118,10 @@ create table site_settings (
   updated_at timestamptz default now()
 );
 
--- Para DBs existentes: alter table site_settings add column collections_banner_url text not null default '';
+-- Para DBs existentes:
+-- alter table site_settings add column collections_banner_url text not null default '';
+-- alter table site_settings add column collections_bg_url text not null default '';
+-- alter table garments add column badge_label text not null default 'Nuevo';
 
 create table carousel_slides (
   id bigint primary key generated always as identity,

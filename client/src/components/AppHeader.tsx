@@ -10,7 +10,12 @@ interface Props {
   showHome?: boolean;
   hideFab?: boolean;
   variant?: "default" | "transparent";
+  storeName?: string;
+  bigStoreName?: boolean;
 }
+
+/* Shared icon set: same stroke style and size across every page header. */
+const ICON_SIZE = 22;
 
 export default function AppHeader({
   settings,
@@ -19,6 +24,8 @@ export default function AppHeader({
   showHome,
   hideFab,
   variant = "default",
+  storeName,
+  bigStoreName,
 }: Props) {
   const navigate = useNavigate();
   const { totalItems } = useCart();
@@ -36,7 +43,7 @@ export default function AppHeader({
                 onClick={() => navigate(-1)}
                 aria-label="Volver"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width={ICON_SIZE} height={ICON_SIZE}>
                   <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
@@ -46,10 +53,15 @@ export default function AppHeader({
                 onClick={() => navigate("/colecciones")}
                 aria-label="Ir a la colección"
               >
-                {settings?.logo_url ? (
+                {settings?.logo_url && !storeName ? (
                   <img src={settings.logo_url} alt={settings.store_title} className="app-header__logo" />
                 ) : (
-                  <span className="app-header__store-name">{settings?.store_title ?? "STORE"}</span>
+                  <span
+                    className={`app-header__store-name${bigStoreName ? " app-header__store-name--big" : ""}`}
+                    title={storeName ?? settings?.store_title}
+                  >
+                    {storeName ?? settings?.store_title ?? "STORE"}
+                  </span>
                 )}
               </button>
             )}
@@ -62,21 +74,21 @@ export default function AppHeader({
           <div className="app-header__right">
             {showHome && (
               <button
-                className="app-header__cart"
+                className="btn-icon app-header__icon-btn"
                 onClick={() => navigate("/")}
                 aria-label="Volver a inicio"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width={ICON_SIZE} height={ICON_SIZE}>
                   <path d="M3 10.5L12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             )}
             <button
-              className="app-header__cart"
+              className="btn-icon app-header__icon-btn"
               onClick={() => navigate("/favoritos")}
               aria-label={`Favoritos, ${totalFavs} ${totalFavs === 1 ? "favorito" : "favoritos"}`}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width={ICON_SIZE} height={ICON_SIZE}>
                 <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {totalFavs > 0 && (
@@ -84,15 +96,15 @@ export default function AppHeader({
               )}
             </button>
             <button
-              className="app-header__cart"
+              className="btn-icon app-header__icon-btn"
               onClick={() => navigate("/carrito")}
               aria-label={`Carrito, ${totalItems} ${totalItems === 1 ? "ítem" : "ítems"}`}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M3 6h18" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="9" cy="21" r="1" fill="currentColor" stroke="none" />
-                <circle cx="20" cy="21" r="1" fill="currentColor" stroke="none" />
+              {/* Supermarket shopping cart */}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width={ICON_SIZE} height={ICON_SIZE}>
+                <circle cx="9" cy="21" r="1" />
+                <circle cx="19" cy="21" r="1" />
+                <path d="M2.5 3h2l2.4 12.2a1.8 1.8 0 001.8 1.4h8.6a1.8 1.8 0 001.8-1.4L22.5 7H6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {totalItems > 0 && (
                 <span className="app-header__badge">{totalItems > 9 ? "9+" : totalItems}</span>
@@ -105,10 +117,9 @@ export default function AppHeader({
       {!hideFab && totalItems > 0 && (
         <button className="fab-cart" onClick={() => navigate("/carrito")} aria-label="Abrir carrito" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
-            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M3 6h18" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="9" cy="21" r="1" fill="currentColor" stroke="none" />
-            <circle cx="20" cy="21" r="1" fill="currentColor" stroke="none" />
+            <circle cx="9" cy="21" r="1" />
+            <circle cx="19" cy="21" r="1" />
+            <path d="M2.5 3h2l2.4 12.2a1.8 1.8 0 001.8 1.4h8.6a1.8 1.8 0 001.8-1.4L22.5 7H6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <span className="fab-cart__badge">{totalItems > 9 ? "9+" : totalItems}</span>
         </button>

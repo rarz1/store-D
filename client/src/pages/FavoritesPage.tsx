@@ -12,40 +12,56 @@ function FavoriteCard({ fav }: { fav: FavoriteItem }) {
   const { data: garment } = useGarment(fav.garmentSlug);
 
   return (
-    <div className="cart-item">
-      <div className="cart-item__thumb">
-        {garment ? (
-          <GarmentMock
-            garmentId={fav.garmentSlug}
-            color={fav.colorHex}
-            svgMock={garment.svg_mock}
-            svgMockBack={garment.svg_mock_back}
-            placedDesigns={[]}
-            side="front"
-            hideFlip
-          />
-        ) : (
-          <div className="skeleton skeleton--mock" />
-        )}
+    <div className="cart-item fav-item">
+      <div className="fav-item__thumb-col">
+        <div className="cart-item__thumb">
+          {garment ? (
+            <GarmentMock
+              garmentId={fav.garmentSlug}
+              color={fav.colorHex}
+              svgMock={garment.svg_mock}
+              svgMockBack={garment.svg_mock_back}
+              placedDesigns={[]}
+              side="front"
+              hideFlip
+            />
+          ) : (
+            <div className="skeleton skeleton--mock" />
+          )}
+        </div>
       </div>
       <div className="cart-item__info">
         <strong className="cart-item__name">{fav.garmentName}</strong>
-        <span className="cart-item__meta">{fav.colorName} · Talla {fav.size}</span>
-        <span className="cart-item__price">${fav.basePrice.toLocaleString("es-AR")}</span>
-        <button className="btn-small" onClick={() => navigate(`/producto/${fav.garmentSlug}`)} type="button">
-          Ver prenda
+        <span className="cart-item__meta">
+          Color: {fav.colorName} – Talla: {fav.size}
+        </span>
+        <span className="cart-item__meta">
+          ${Number(fav.basePrice).toLocaleString("es-AR")}
+        </span>
+      </div>
+      <div className="cart-item__side">
+        <button
+          className="cart-item__remove cart-item__remove--neon"
+          onClick={() => removeFavorite(fav.garmentId, fav.colorHex, fav.size)}
+          aria-label="Quitar de favoritos"
+          type="button"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="24" height="24">
+            <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M10 11v6M14 11v6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <button
+          className="cart-item__remove cart-item__remove--neon"
+          onClick={() => navigate(`/producto/${fav.garmentSlug}`)}
+          aria-label="Ver la prenda"
+          type="button"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="26" height="26">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
         </button>
       </div>
-      <button
-        className="cart-item__remove"
-        onClick={() => removeFavorite(fav.garmentId, fav.colorHex, fav.size)}
-        aria-label="Quitar de favoritos"
-        type="button"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
     </div>
   );
 }

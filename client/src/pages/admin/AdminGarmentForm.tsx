@@ -20,6 +20,7 @@ export default function AdminGarmentForm() {
   const [svgMock, setSvgMock] = useState("");
   const [svgMockBack, setSvgMockBack] = useState("");
   const [tags, setTags] = useState("");
+  const [badgeLabel, setBadgeLabel] = useState("Nuevo");
   const [colors, setColors] = useState<ColorEntry[]>([{ name: "", hex: "#000000" }]);
   const [sizes, setSizes] = useState<SizeEntry[]>([{ name: "" }]);
   const [allStampSizes, setAllStampSizes] = useState<EstampadoSizeRow[]>([]);
@@ -43,6 +44,7 @@ export default function AdminGarmentForm() {
       if (g.svg_mock) setSvgMock(g.svg_mock);
       if (g.svg_mock_back) setSvgMockBack(g.svg_mock_back);
       if (g.tags?.length) setTags(g.tags.join(", "));
+      if (g.badge_label !== undefined && g.badge_label !== null) setBadgeLabel(g.badge_label);
     });
     supabase.from("garment_colors").select("*").eq("garment_id", numId).then(({ data, error }) => {
       if (error) { console.error("Error loading colors:", error); return; }
@@ -87,7 +89,7 @@ export default function AdminGarmentForm() {
       if (isEdit) {
         const numId = Number(id);
         const parsedTags = tags.split(",").map((t) => t.trim()).filter(Boolean);
-        const { error: eg } = await supabase.from("garments").update({ name, slug, description, base_price: parseFloat(basePrice), svg_mock: svgMock, svg_mock_back: svgMockBack, tags: parsedTags }).eq("id", numId);
+        const { error: eg } = await supabase.from("garments").update({ name, slug, description, base_price: parseFloat(basePrice), svg_mock: svgMock, svg_mock_back: svgMockBack, tags: parsedTags, badge_label: badgeLabel }).eq("id", numId);
         if (eg) throw eg;
         await supabase.from("garment_colors").delete().eq("garment_id", numId);
         await supabase.from("garment_sizes").delete().eq("garment_id", numId);
@@ -99,7 +101,7 @@ export default function AdminGarmentForm() {
         if (selectedLocationIds.length > 0) await supabase.from("garment_estampado_locations").insert(selectedLocationIds.map((lid) => ({ garment_id: numId, estampado_location_id: lid })));
       } else {
         const parsedTags = tags.split(",").map((t) => t.trim()).filter(Boolean);
-        const { data, error } = await supabase.from("garments").insert({ name, slug, description, base_price: parseFloat(basePrice), svg_mock: svgMock, svg_mock_back: svgMockBack, tags: parsedTags }).select().single();
+        const { data, error } = await supabase.from("garments").insert({ name, slug, description, base_price: parseFloat(basePrice), svg_mock: svgMock, svg_mock_back: svgMockBack, tags: parsedTags, badge_label: badgeLabel }).select().single();
         if (error) throw error;
         if (data) {
           await supabase.from("garment_colors").insert(colors.filter((c) => c.name).map((c) => ({ garment_id: data.id, name: c.name, hex: c.hex })));
@@ -194,6 +196,14 @@ export default function AdminGarmentForm() {
           </span>
         </label>
         <input className="admin-input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="hombre, mujer, unisex, urbano" />
+
+         <label className="admin-label">
+           Etiqueta de la tarjeta
+           <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginLeft: 8, fontWeight: 400 }}>
+             palabra destacada en la tarjeta (ej: Nuevo, Oferta, Descuento)
+           </span>
+         </label>
+         <input className="admin-input" value={badgeLabel} onChange={(e) => setBadgeLabel(e.target.value)} placeholder="Nuevo" />
 
          <label className="admin-label">
            Colores
