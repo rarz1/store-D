@@ -459,7 +459,7 @@ Archivo: `client/src/lib/settings.ts`
 
 ### Sesión 17 — 2026-08-21 (Ronda 5 UI: header unificado, carrito/favoritos 3 columnas, badge DB, guía de uso)
 
-- **SQL pendiente de ejecutar por el usuario** (`docs/sql/2026-08-21-round5-badge-and-bg.sql`): `alter table garments add column badge_label text not null default 'Nuevo';` + `alter table site_settings add column collections_bg_url text not null default '';`. Sin estas columnas el badge muestra "Nuevo" por defecto y el fondo configurable no funciona.
+- **SQL APLICADO en Supabase (confirmado por el usuario, 2026-08-22)** (`docs/sql/2026-08-21-round5-badge-and-bg.sql`): `garments.badge_label text not null default 'Nuevo'` + `site_settings.collections_bg_url text not null default ''`. El badge editable por prenda (Admin → editar prenda → "Etiqueta de la tarjeta") y el fondo de página de colecciones (Admin → Tienda → "Imagen de fondo de la página") están operativos.
 - **Header unificado**: `.app-header__title` ahora Oswald 700 1.05rem uppercase en todas las páginas; iconos unificados a 22px stroke 2 sin bordes (clase `.app-header__icon-btn`); icono del carrito reemplazado por carrito de supermercado. AppHeader gana props `storeName` y `bigStoreName` (usadas en `/carrito` para mostrar "store-d" grande y en negrilla).
 - **Toast**: duración 2000ms, sin botón de cerrar, auto-dismiss con useEffect (exit anim 250ms).
 - **Onboarding/carrusel**: título de tienda cambia a Inter 800 y +70% (`clamp(calc(4.4rem+10px), 18vw, calc(10rem+10px))`); dots del carrusel hero rediseñados como barras finas discretas (16×3px, activo 34×3px con barra de progreso).
@@ -478,4 +478,5 @@ Archivo: `client/src/lib/settings.ts`
 - DesignFlow: selector de tamaño ahora es fila horizontal centrada (`.df-size-row`) debajo de los pills (título "Elige Tamaño" + cuadrados en línea); canvas ocupa todo el ancho (`.df-editor__canvas` eliminado); hint "Arrastrá el diseño..." eliminado; botón "−" del clonador elimina también el último diseño (sin guard `count<=1`, disabled removido); back/close sin borde e íconos strokeWidth 2.5; "Elige la Imagen" verde neón.
 - Carrito: fila superior con "CARRITO" a la izquierda + "Seleccionar todo" + badge neón `.count-badge` + círculo; tarjetas `.cart-item--order` flex 50/50 — mitad izquierda imágenes personalizadas, mitad derecha filas `ci-row` (label izquierda / precio derecha alineados): Nombre+checkbox / Color / Talla / Básica:$ / Diseño:X / Tamaño:X:+$ / Valor==$total / qty+eliminar.
 - Favoritos mantienen grid 30/55/15 (`.fav-item` ahora define su propio display:grid porque `.cart-item` dejó de ser grid).
-- Verificación: build OK, lint solo warnings previos, Playwright ronda 7: 26/26 (badge de "Ver el Carrito" verificado post-add). Commit + push → Vercel auto-deploy.
+- Verificación: build OK, lint solo warnings previos, Playwright ronda 7: 26/26 (badge de "Ver el Carrito" verificado post-add). Commit `1f3ddd3` + push → Vercel auto-deploy.
+- SQL aplicado por el usuario (2026-08-22): `garments.badge_label` y `site_settings.collections_bg_url` ya existen en producción.
