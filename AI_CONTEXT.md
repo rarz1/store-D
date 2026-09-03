@@ -499,3 +499,12 @@ Archivo: `client/src/lib/settings.ts`
 - **Botones de prenda (ProductPage)**: `.btn-add-cart-pill` ahora muestra el texto "AÑADE" + icono de carrito; `.btn-view-cart-pill` muestra "VER" + icono de carrito, y el contador `btn-view-cart-pill__badge` ya NO flota absoluto top-right sino que va DENTRO del boton (posicionado sobre el icono, `top:50%; left:calc(50% + 8px); transform:translateY(calc(-50% - 12px))`). Botones con `gap:0.35rem`, `font-size:0.8rem`, `font-weight:700`, uppercase Oswald.
 - **Verificacion**: `npm run build` OK (solo warning chunk-size preexistente); oxlint solo warnings preexistentes (unused vars en settings.ts, exhaustive-deps, only-export-components).
 - **Deploy**: commit `27c94d5` pusheado a `main` -> Vercel auto-deploy en `store-d-psi.vercel.app`. `Cambios.docx` (raiz) NO se commitea (archivo del usuario).
+
+### Sesion 21 - 2026-09-02 (Ronda 9: carrusel - eliminar imagen en admin, solo full, autoplay 50% y fix de avance)
+
+- **Admin - eliminar imagenes del carrusel**: nueva funcion `deleteImage(url)` en `lib/settings.ts` (extrae el path del bucket de la URL publica `store-images/`, `remove([path])`). En el tab Carrusel, debajo de cada imagen subida hay un boton rojo `btn-danger` "Eliminar imagen" que borra del bucket y limpia `image_1_url` (toast success/error). Quitados los campos "Texto overlay", "Subtitulo" y el selector de "Layout" (Completa/Doble): el carrusel es SIEMPRE imagen completa. Label "Imagen 1" -> "Imagen".
+- **Normalizacion a full en datos**: `getSlides()` mapea cada slide forcando `layout:"full"`, `image_2_url:""`, `text_overlay:""`, `subtitle:""` (la vista usuario ignora textos/doble de la DB al instante). `saveSlide()` persiste el mismo payload limpio (full, textos vacios) -> el proximo "Guardar carrusel" limpia la DB vieja.
+- **Autoplay al 50%** (`components/Carousel.tsx` + `App.css`): `AUTOPLAY_MS 5200 -> 2600` y la barra de progreso del dot `carousel-dot-fill 5200ms -> 2600ms` sincronizada.
+- **Fix "al vencer el tiempo no cambia la imagen"**: causa raiz - `setProgressKey` (un setState) se llamaba DENTRO del updater de `setCurrent`, violando la pureza del updater -> React podia descartar el avance. Fix: `setProgressKey` sale del updater en `next`/`prev`/`goTo`. Regla: nunca llamar setState dentro del updater de otro setState.
+- **Verificacion**: `npm run build` OK (solo warning chunk-size); oxlint solo warnings preexistentes.
+- **Deploy**: commit `ac52db3` pusheado a `main` -> Vercel auto-deploy. `Cambios.docx` sin commitear.
