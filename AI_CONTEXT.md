@@ -508,3 +508,11 @@ Archivo: `client/src/lib/settings.ts`
 - **Fix "al vencer el tiempo no cambia la imagen"**: causa raiz - `setProgressKey` (un setState) se llamaba DENTRO del updater de `setCurrent`, violando la pureza del updater -> React podia descartar el avance. Fix: `setProgressKey` sale del updater en `next`/`prev`/`goTo`. Regla: nunca llamar setState dentro del updater de otro setState.
 - **Verificacion**: `npm run build` OK (solo warning chunk-size); oxlint solo warnings preexistentes.
 - **Deploy**: commit `ac52db3` pusheado a `main` -> Vercel auto-deploy. `Cambios.docx` sin commitear.
+
+### Sesion 22 - 2026-09-02 (Ronda 10: eliminar imagenes de colecciones, overlay tarjeta al 40%, separacion de acciones)
+
+- **Admin - eliminar imagenes de colecciones**: reuso de `deleteImage(url)` (helper del carrusel). En la tab Tienda, ahora hay un boton rojo `btn-danger` "Eliminar imagen" bajo el fondo de la tarjeta de colecciones (`collections_banner_url`) y bajo el fondo de la pagina (`collections_bg_url`). Borran del bucket `store-images` y limpian el campo; el usuario presiona "Guardar" para persistir (mismo patron que handleSaveSettings). Uploads de colecciones ahora reportan error en toast (antes sordo).
+- **Fondo de la tarjeta aclarado 40%**: en `HomePage.tsx` el overlay oscuro del banner (`collections_banner_url`) paso de `rgba(19,21,24,0.6)` a `rgba(19,21,24,0.36)` (60% x 0.6 = 36%) para que la imagen subida se vea bien. Nota: el fondo de la pag (`collections_bg_url`) ya estaba en 0.49 desde la sesion 20; este cambio es SOLO la tarjeta.
+- **Separacion en la pagina de la prenda**: `.product-actions-row` (que contiene "AÑADE" y "VER") gano `margin-top: 1rem` en `App.css` para separarlo del boton "CREA TU DISEÑO".
+- **Verificacion**: build OK (solo warning chunk-size); oxlint solo warnings preexistentes.
+- **Deploy**: commit `4e4e269` pusheado a `main` -> Vercel auto-deploy. `Cambios.docx` sin commitear. Delete de imagenes listo para las tres superficies: carrusel (sesion 21), tarjeta colecciones y fondo pag (esta sesion).
