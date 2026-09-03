@@ -43,9 +43,10 @@ export async function getSlides(): Promise<CarouselSlide[]> {
   return data ?? [];
 }
 
-export async function saveSlide(id: number, slide: Partial<CarouselSlide>): Promise<boolean> {
+export async function saveSlide(id: number, slide: Partial<CarouselSlide>): Promise<{ ok: boolean; error: string | null }> {
   const { error } = await supabase.from("carousel_slides").update(slide).eq("id", id);
-  return !error;
+  if (error) console.error("saveSlide error:", error);
+  return { ok: !error, error: error?.message ?? null };
 }
 
 export async function uploadImage(file: File, path: string): Promise<{ url: string | null; error: string | null }> {

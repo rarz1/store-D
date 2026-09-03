@@ -480,3 +480,13 @@ Archivo: `client/src/lib/settings.ts`
 - Favoritos mantienen grid 30/55/15 (`.fav-item` ahora define su propio display:grid porque `.cart-item` dejó de ser grid).
 - Verificación: build OK, lint solo warnings previos, Playwright ronda 7: 26/26 (badge de "Ver el Carrito" verificado post-add). Commit `1f3ddd3` + push → Vercel auto-deploy.
 - SQL aplicado por el usuario (2026-08-22): `garments.badge_label` y `site_settings.collections_bg_url` ya existen en producción.
+
+### Sesión 19 — 2026-08-22 (Ronda 7: fixes editor carrusel + botones producto/carrito/checkout)
+
+- **Carrusel — texto sobre imágenes no aparecía**: causa raíz en `Carousel.tsx` — `slide.text_overlay.split("\\n")` busca el literal de 2 caracteres `\`+`n`, pero el seed SQL guarda un LF real (byte `\n`, 1 char) → el título nunca se separaba en líneas. Fix: `.replace(/\\n/g, "\n").split("\n")` acepta tanto el LF real como el literal.
+- **Carrusel — "no sube imágenes" / sin feedback**: `saveSlide()` ahora devuelve `{ ok, error }` sobre el update real (antes `boolean` sordo). `AdminDashboard` pasó a usar `useToast` (import de `lib/toast`; `ToastProvider` ya envuelve `/admin` en App.tsx): toasts de éxito/error al subir imagen 1/2 y al "Guardar carrusel" (recorre slides y reporta si alguno falla). `AdminSettings.tsx` (código muerto) conserva el retorno sin usar, por eso sigue compilando.
+- **Producto — botones de carrito**: `.product-actions-row` ya no lleva texto; los dos botones ahora son píldoras icono SOLO con el icono de carrito de supermercado (reutilizado del header). CSS `.btn-add-cart-pill`/`.btn-view-cart-pill` unificados: `flex:1`, `height:3rem`, píldoras centradas; add-cart verde `#84cc16` (hover `#65a30d`), view-cart blanca borde negro, badge `btn-view-cart-pill__badge` ahora `position:absolute` top-right. Aria-labels "Agregar al carrito"/"Ver el carrito".
+- **Carrito — contador al deseleccionar**: el badge de la fila select-all usaba `totalItems` (total global) → no bajaba al deseleccionar. Ahora usa `selectedCount` (solo items seleccionados). Se eliminó `totalItems` de la destrucción de `useCart()` en CartPage (TS6133).
+- **Badges "9+" → 3 cifras**: todos los badges del AppHeader (carrito, favoritos), FAB y `btn-view-cart-pill` muestran el número real hasta `999+`.
+- **Checkout verde**: `.btn-checkout` ya usaba `#84cc16`; su hover `filter: brightness(0.92)` oscurecía a otro verde. Alineado al patrón verde neón de la app: hover `background:#65a30d` (+`border-color`), disabled `filter:none`.
+- **Verificación**: `npm run build` pasa (solo warning chunk-size preexistente); oxlint solo warnings preexistentes (exhaustive-deps en ProductPage/CartPage). Sin commit/push (el usuario no lo pidió).

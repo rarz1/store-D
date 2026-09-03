@@ -369,13 +369,21 @@ export default function ProductPage() {
           </button>
 
           <div className="product-actions-row">
-            <button className="btn-add-cart-pill" onClick={handleAddToCart} type="button">
-              Añade al Carrito
+            <button className="btn-add-cart-pill" onClick={handleAddToCart} type="button" aria-label="Agregar al carrito">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+                <circle cx="9" cy="21" r="1" />
+                <circle cx="19" cy="21" r="1" />
+                <path d="M2.5 3h2l2.4 12.2a1.8 1.8 0 001.8 1.4h8.6a1.8 1.8 0 001.8-1.4L22.5 7H6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </button>
-            <button className="btn-view-cart-pill" onClick={() => navigate("/carrito")} type="button">
-              Ver el Carrito
+            <button className="btn-view-cart-pill" onClick={() => navigate("/carrito")} type="button" aria-label="Ver el carrito">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+                <circle cx="9" cy="21" r="1" />
+                <circle cx="19" cy="21" r="1" />
+                <path d="M2.5 3h2l2.4 12.2a1.8 1.8 0 001.8 1.4h8.6a1.8 1.8 0 001.8-1.4L22.5 7H6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
               {totalItems > 0 && (
-                <span className="btn-view-cart-pill__badge">{totalItems > 9 ? "9+" : totalItems}</span>
+                <span className="btn-view-cart-pill__badge">{totalItems > 999 ? "999+" : totalItems}</span>
               )}
             </button>
           </div>

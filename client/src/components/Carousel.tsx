@@ -88,12 +88,15 @@ export default function Carousel({ variant = "hero" }: Props) {
             <div className="carousel__shade" />
             <div className="carousel__content" key={i === current ? `active-${current}` : `inactive-${i}`}>
               <h2 className="carousel__title">
-                {slide.text_overlay.split("\\n").map((line, j) => (
-                  <span key={j} className="carousel__title-line">
-                    {line}
-                    {j === 0 && <br />}
-                  </span>
-                ))}
+                {slide.text_overlay
+                  .replace(/\\n/g, "\n")
+                  .split("\n")
+                  .map((line, j) => (
+                    <span key={j} className="carousel__title-line">
+                      {line}
+                      {j === 0 && <br />}
+                    </span>
+                  ))}
               </h2>
               {slide.subtitle && <p className="carousel__subtitle">{slide.subtitle}</p>}
             </div>

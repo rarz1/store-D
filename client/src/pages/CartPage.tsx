@@ -72,7 +72,7 @@ function CartItemThumb({ item }: { item: CartItem }) {
 
 export default function CartPage() {
   const navigate = useNavigate();
-  const { items, updateQuantity, removeItem, clearCart, totalItems, orders, reorder, placeOrder } = useCart();
+  const { items, updateQuantity, removeItem, clearCart, orders, reorder, placeOrder } = useCart();
   const toast = useToast();
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [showOrders, setShowOrders] = useState(false);
@@ -161,8 +161,8 @@ export default function CartPage() {
               <button className="cart-select-all" onClick={toggleAll} type="button">
                 Seleccionar todo
               </button>
-              {totalItems > 0 && (
-                <span className="count-badge">{totalItems > 9 ? "9+" : totalItems}</span>
+              {selectedCount > 0 && (
+                <span className="count-badge">{selectedCount > 999 ? "999+" : selectedCount}</span>
               )}
               <button
                 className={`cart-checkbox${selected.size === items.length ? " cart-checkbox--checked" : ""}`}

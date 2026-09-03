@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase, type GarmentRow, type EstampadoSizeRow, type EstampadoLocationRow } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
+import { useToast } from "../../lib/toast";
 import ConfirmModal from "../../components/ConfirmModal";
 import AdminDesignsTab from "./AdminDesignsTab";
 import { getSettings, saveSettings, getSlides, saveSlide, uploadImage, applyColors, type SiteSettings, type CarouselSlide } from "../../lib/settings";
@@ -11,6 +12,7 @@ type Tab = "products" | "disenos" | "store" | "carousel" | "colors";
 export default function AdminDashboard() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [tab, setTab] = useState<Tab>("products");
   const [garments, setGarments] = useState<GarmentRow[]>([]);
   const [confirmTarget, setConfirmTarget] = useState<{ type: "garment" | "bulk-garments"; id?: number; ids?: number[] } | null>(null);
@@ -480,11 +482,16 @@ export default function AdminDashboard() {
               <input type="file" accept="image/*" onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
-                const { url } = await uploadImage(file, `carousel/slide-${slide.id}-1-${Date.now()}`);
+                const { url, error } = await uploadImage(file, `carousel/slide-${slide.id}-1-${Date.now()}`);
+                if (error) {
+                  toast.error("Error al subir la imagen", error);
+                  return;
+                }
                 if (url) {
                   const copy = [...slides];
                   copy[i] = { ...copy[i], image_1_url: url };
                   setSlides(copy);
+                  toast.success("Imagen subida");
                 }
               }} />
               {slide.image_1_url && <img src={slide.image_1_url} alt="" className="admin-preview-img" style={{ width: 200, height: "auto", marginTop: 8 }} />}
@@ -495,11 +502,16 @@ export default function AdminDashboard() {
                   <input type="file" accept="image/*" onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    const { url } = await uploadImage(file, `carousel/slide-${slide.id}-2-${Date.now()}`);
+                    const { url, error } = await uploadImage(file, `carousel/slide-${slide.id}-2-${Date.now()}`);
+                    if (error) {
+                      toast.error("Error al subir la imagen", error);
+                      return;
+                    }
                     if (url) {
                       const copy = [...slides];
                       copy[i] = { ...copy[i], image_2_url: url };
                       setSlides(copy);
+                      toast.success("Imagen subida");
                     }
                   }} />
                   {slide.image_2_url && <img src={slide.image_2_url} alt="" className="admin-preview-img" style={{ width: 200, height: "auto", marginTop: 8 }} />}
@@ -523,10 +535,17 @@ export default function AdminDashboard() {
           ))}
           <button className="btn-primary" onClick={async () => {
             setSaving(true);
+            let failed = false;
             for (const slide of slides) {
-              await saveSlide(slide.id, slide);
+              const { ok, error } = await saveSlide(slide.id, slide);
+              if (!ok) {
+                failed = true;
+                console.error(`Error guardando slide ${slide.id}:`, error);
+              }
             }
             setSaving(false);
+            if (failed) toast.error("No se pudo guardar el carrusel");
+            else toast.success("Carrusel guardado");
           }} disabled={saving}>
             {saving ? "Guardando..." : "Guardar carrusel"}
           </button>

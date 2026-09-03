@@ -92,7 +92,7 @@ export default function AppHeader({
                 <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {totalFavs > 0 && (
-                <span className="app-header__badge">{totalFavs > 9 ? "9+" : totalFavs}</span>
+                <span className="app-header__badge">{totalFavs > 999 ? "999+" : totalFavs}</span>
               )}
             </button>
             <button
@@ -107,7 +107,7 @@ export default function AppHeader({
                 <path d="M2.5 3h2l2.4 12.2a1.8 1.8 0 001.8 1.4h8.6a1.8 1.8 0 001.8-1.4L22.5 7H6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {totalItems > 0 && (
-                <span className="app-header__badge">{totalItems > 9 ? "9+" : totalItems}</span>
+                <span className="app-header__badge">{totalItems > 999 ? "999+" : totalItems}</span>
               )}
             </button>
           </div>
@@ -121,7 +121,7 @@ export default function AppHeader({
             <circle cx="19" cy="21" r="1" />
             <path d="M2.5 3h2l2.4 12.2a1.8 1.8 0 001.8 1.4h8.6a1.8 1.8 0 001.8-1.4L22.5 7H6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span className="fab-cart__badge">{totalItems > 9 ? "9+" : totalItems}</span>
+          <span className="fab-cart__badge">{totalItems > 999 ? "999+" : totalItems}</span>
         </button>
       )}
     </>
