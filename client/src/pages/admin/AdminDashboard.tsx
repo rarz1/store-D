@@ -535,16 +535,16 @@ export default function AdminDashboard() {
           ))}
           <button className="btn-primary" onClick={async () => {
             setSaving(true);
-            let failed = false;
+            let firstError: string | null = null;
             for (const slide of slides) {
               const { ok, error } = await saveSlide(slide.id, slide);
               if (!ok) {
-                failed = true;
+                firstError = error;
                 console.error(`Error guardando slide ${slide.id}:`, error);
               }
             }
             setSaving(false);
-            if (failed) toast.error("No se pudo guardar el carrusel");
+            if (firstError) toast.error("No se pudo guardar el carrusel", firstError);
             else toast.success("Carrusel guardado");
           }} disabled={saving}>
             {saving ? "Guardando..." : "Guardar carrusel"}

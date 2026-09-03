@@ -687,9 +687,9 @@
   margin: 0.9rem 0;
 }
 
-/* Fixed icon buttons under "CREA TU DISEÑO": add-to-cart (neon) + view-cart (outline).
-   Compact icon pills, matched in size so neither looks bigger than the other or
-   than the "CREA TU DISEÑO" button. */
+/* Fixed action pills under "CREA TU DISEÑO": add-to-cart (neon) + view-cart (outline).
+   Each shows a word ("AÑADE" / "VER") + the supermarket cart icon, matched in size
+   so neither looks bigger than the other or than the "CREA TU DISEÑO" button. */
 .btn-add-cart-pill,
 .btn-view-cart-pill {
   flex: 1;
@@ -698,8 +698,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.35rem;
   border-radius: var(--radius-pill);
   font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   cursor: pointer;
   transition: background var(--transition);
@@ -720,13 +724,13 @@
   transform: scale(0.98);
 }
 
-/* "Añade al Carrito" + "Ver el Carrito" side by side */
+/* "AÑADE" + "VER" side by side */
 .product-actions-row {
   display: flex;
   gap: 0.6rem;
 }
 
-/* White pill "Ver el Carrito" with neon count badge */
+/* White pill "VER" with the count badge inside (over the cart icon) */
 .btn-view-cart-pill {
   background: #fff;
   color: #000;
@@ -740,8 +744,9 @@
 
 .btn-view-cart-pill__badge {
   position: absolute;
-  top: -0.4rem;
-  right: -0.4rem;
+  top: 50%;
+  left: calc(50% + 8px);
+  transform: translateY(calc(-50% - 12px));
   min-width: 18px;
   height: 18px;
   padding: 0 5px;

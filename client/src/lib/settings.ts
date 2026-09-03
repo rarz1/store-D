@@ -44,7 +44,15 @@ export async function getSlides(): Promise<CarouselSlide[]> {
 }
 
 export async function saveSlide(id: number, slide: Partial<CarouselSlide>): Promise<{ ok: boolean; error: string | null }> {
-  const { error } = await supabase.from("carousel_slides").update(slide).eq("id", id);
+  const payload = {
+    sort_order: slide.sort_order,
+    layout: slide.layout,
+    image_1_url: slide.image_1_url ?? "",
+    image_2_url: slide.image_2_url ?? "",
+    text_overlay: slide.text_overlay ?? "",
+    subtitle: slide.subtitle ?? "",
+  };
+  const { error } = await supabase.from("carousel_slides").update(payload).eq("id", Number(id));
   if (error) console.error("saveSlide error:", error);
   return { ok: !error, error: error?.message ?? null };
 }

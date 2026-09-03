@@ -375,6 +375,7 @@ export default function ProductPage() {
                 <circle cx="19" cy="21" r="1" />
                 <path d="M2.5 3h2l2.4 12.2a1.8 1.8 0 001.8 1.4h8.6a1.8 1.8 0 001.8-1.4L22.5 7H6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
+              <span>AÑADE</span>
             </button>
             <button className="btn-view-cart-pill" onClick={() => navigate("/carrito")} type="button" aria-label="Ver el carrito">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
@@ -382,6 +383,7 @@ export default function ProductPage() {
                 <circle cx="19" cy="21" r="1" />
                 <path d="M2.5 3h2l2.4 12.2a1.8 1.8 0 001.8 1.4h8.6a1.8 1.8 0 001.8-1.4L22.5 7H6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
+              <span>VER</span>
               {totalItems > 0 && (
                 <span className="btn-view-cart-pill__badge">{totalItems > 999 ? "999+" : totalItems}</span>
               )}

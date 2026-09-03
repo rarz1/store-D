@@ -51,7 +51,7 @@ export default function HomePage() {
 
   const pageBgStyle = settings?.collections_bg_url
     ? {
-        backgroundImage: `linear-gradient(rgba(244, 244, 245, 0.82), rgba(244, 244, 245, 0.82)), url(${settings.collections_bg_url})`,
+        backgroundImage: `linear-gradient(rgba(244, 244, 245, 0.49), rgba(244, 244, 245, 0.49)), url(${settings.collections_bg_url})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundAttachment: "fixed",
