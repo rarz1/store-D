@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { getSlides, type CarouselSlide } from "../lib/settings";
 
-const AUTOPLAY_MS = 5200;
+const AUTOPLAY_MS = 2600;
 
 interface Props {
   variant?: "hero" | "onboarding";
@@ -21,24 +21,18 @@ export default function Carousel({ variant = "hero" }: Props) {
   }, []);
 
   const next = useCallback(() => {
-    setCurrent((prev) => {
-      const n = (prev + 1) % slides.length;
-      setProgressKey((k) => k + 1);
-      return n;
-    });
+    setProgressKey((k) => k + 1);
+    setCurrent((prev) => (prev + 1) % slides.length);
   }, [slides.length]);
 
   const prev = useCallback(() => {
-    setCurrent((prev) => {
-      const n = (prev - 1 + slides.length) % slides.length;
-      setProgressKey((k) => k + 1);
-      return n;
-    });
+    setProgressKey((k) => k + 1);
+    setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
   }, [slides.length]);
 
   const goTo = (index: number) => {
-    setCurrent(index);
     setProgressKey((k) => k + 1);
+    setCurrent(index);
   };
 
   useEffect(() => {

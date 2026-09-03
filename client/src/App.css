@@ -168,7 +168,7 @@
   inset: 0;
   background: #fff;
   transform-origin: left;
-  animation: carousel-dot-fill 5200ms linear forwards;
+  animation: carousel-dot-fill 2600ms linear forwards;
 }
 
 @keyframes carousel-dot-fill {

@@ -40,20 +40,37 @@ export async function saveSettings(settings: Partial<SiteSettings>): Promise<boo
 
 export async function getSlides(): Promise<CarouselSlide[]> {
   const { data } = await supabase.from("carousel_slides").select("*").order("sort_order");
-  return data ?? [];
+  return (data ?? []).map((s) => ({
+    ...s,
+    layout: "full" as const,
+    image_2_url: "",
+    text_overlay: "",
+    subtitle: "",
+  }));
 }
 
 export async function saveSlide(id: number, slide: Partial<CarouselSlide>): Promise<{ ok: boolean; error: string | null }> {
   const payload = {
     sort_order: slide.sort_order,
-    layout: slide.layout,
+    layout: "full" as const,
     image_1_url: slide.image_1_url ?? "",
-    image_2_url: slide.image_2_url ?? "",
-    text_overlay: slide.text_overlay ?? "",
-    subtitle: slide.subtitle ?? "",
+    image_2_url: "",
+    text_overlay: "",
+    subtitle: "",
   };
   const { error } = await supabase.from("carousel_slides").update(payload).eq("id", Number(id));
   if (error) console.error("saveSlide error:", error);
+  return { ok: !error, error: error?.message ?? null };
+}
+
+export async function deleteImage(url: string): Promise<{ ok: boolean; error: string | null }> {
+  const marker = "/object/public/store-images/";
+  const idx = url.indexOf(marker);
+  if (idx === -1) return { ok: true, error: null };
+  const path = url.substring(idx + marker.length).split("?")[0];
+  if (!path) return { ok: true, error: null };
+  const { error } = await supabase.storage.from("store-images").remove([path]);
+  if (error) console.error("deleteImage error:", error);
   return { ok: !error, error: error?.message ?? null };
 }
 

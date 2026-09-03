@@ -5,7 +5,7 @@ import { useAuth } from "../../lib/auth";
 import { useToast } from "../../lib/toast";
 import ConfirmModal from "../../components/ConfirmModal";
 import AdminDesignsTab from "./AdminDesignsTab";
-import { getSettings, saveSettings, getSlides, saveSlide, uploadImage, applyColors, type SiteSettings, type CarouselSlide } from "../../lib/settings";
+import { getSettings, saveSettings, getSlides, saveSlide, uploadImage, deleteImage, applyColors, type SiteSettings, type CarouselSlide } from "../../lib/settings";
 
 type Tab = "products" | "disenos" | "store" | "carousel" | "colors";
 
@@ -468,17 +468,7 @@ export default function AdminDashboard() {
             <div key={slide.id} className="admin-carousel-slide">
               <h3 className="admin-carousel-slide__title">Slide {i + 1}</h3>
 
-              <label className="admin-label">Layout</label>
-              <select className="admin-input" value={slide.layout} onChange={(e) => {
-                const copy = [...slides];
-                copy[i] = { ...copy[i], layout: e.target.value as "full" | "double" };
-                setSlides(copy);
-              }}>
-                <option value="full">Completa</option>
-                <option value="double">Doble</option>
-              </select>
-
-              <label className="admin-label">Imagen 1</label>
+              <label className="admin-label">Imagen</label>
               <input type="file" accept="image/*" onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
@@ -494,43 +484,24 @@ export default function AdminDashboard() {
                   toast.success("Imagen subida");
                 }
               }} />
-              {slide.image_1_url && <img src={slide.image_1_url} alt="" className="admin-preview-img" style={{ width: 200, height: "auto", marginTop: 8 }} />}
-
-              {slide.layout === "double" && (
-                <>
-                  <label className="admin-label">Imagen 2</label>
-                  <input type="file" accept="image/*" onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const { url, error } = await uploadImage(file, `carousel/slide-${slide.id}-2-${Date.now()}`);
+              {slide.image_1_url && (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                  <img src={slide.image_1_url} alt="" className="admin-preview-img" style={{ width: 200, height: "auto", marginTop: 8 }} />
+                  <button className="btn-danger" type="button" onClick={async () => {
+                    const { error } = await deleteImage(slide.image_1_url);
                     if (error) {
-                      toast.error("Error al subir la imagen", error);
+                      toast.error("Error al eliminar la imagen", error);
                       return;
                     }
-                    if (url) {
-                      const copy = [...slides];
-                      copy[i] = { ...copy[i], image_2_url: url };
-                      setSlides(copy);
-                      toast.success("Imagen subida");
-                    }
-                  }} />
-                  {slide.image_2_url && <img src={slide.image_2_url} alt="" className="admin-preview-img" style={{ width: 200, height: "auto", marginTop: 8 }} />}
-                </>
+                    const copy = [...slides];
+                    copy[i] = { ...copy[i], image_1_url: "" };
+                    setSlides(copy);
+                    toast.success("Imagen eliminada");
+                  }}>
+                    Eliminar imagen
+                  </button>
+                </div>
               )}
-
-              <label className="admin-label">Texto overlay</label>
-              <textarea className="admin-input admin-textarea" value={slide.text_overlay} onChange={(e) => {
-                const copy = [...slides];
-                copy[i] = { ...copy[i], text_overlay: e.target.value };
-                setSlides(copy);
-              }} placeholder="NUEVA\nCOLECCIÓN" style={{ fontFamily: "monospace", fontSize: "0.75rem" }} />
-
-              <label className="admin-label">Subtítulo</label>
-              <input className="admin-input" value={slide.subtitle} onChange={(e) => {
-                const copy = [...slides];
-                copy[i] = { ...copy[i], subtitle: e.target.value };
-                setSlides(copy);
-              }} />
             </div>
           ))}
           <button className="btn-primary" onClick={async () => {
