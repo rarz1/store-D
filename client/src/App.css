@@ -728,6 +728,7 @@
 .product-actions-row {
   display: flex;
   gap: 0.6rem;
+  margin-top: 1rem;
 }
 
 /* White pill "VER" with the count badge inside (over the cart icon) */

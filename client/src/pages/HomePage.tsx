@@ -46,7 +46,7 @@ export default function HomePage() {
   };
 
   const bannerImage = settings?.collections_banner_url
-    ? `linear-gradient(rgba(19, 21, 24, 0.6), rgba(19, 21, 24, 0.6)), url(${settings.collections_banner_url})`
+    ? `linear-gradient(rgba(19, 21, 24, 0.36), rgba(19, 21, 24, 0.36)), url(${settings.collections_banner_url})`
     : undefined;
 
   const pageBgStyle = settings?.collections_bg_url

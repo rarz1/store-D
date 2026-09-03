@@ -438,22 +438,56 @@ export default function AdminDashboard() {
           <input type="file" accept="image/*" onChange={async (e) => {
             const file = e.target.files?.[0];
             if (!file) return;
-            const { url } = await uploadImage(file, `collections/banner-${Date.now()}`);
+            const { url, error } = await uploadImage(file, `collections/banner-${Date.now()}`);
+            if (error) {
+              toast.error("Error al subir la imagen", error);
+              return;
+            }
             if (url) setSettings({ ...settings, collections_banner_url: url });
           }} />
           {settings.collections_banner_url && (
-            <img src={settings.collections_banner_url} alt="Fondo de colecciones" className="admin-preview-img" style={{ width: 200, height: "auto", marginTop: 8 }} />
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+              <img src={settings.collections_banner_url} alt="Fondo de colecciones" className="admin-preview-img" style={{ width: 200, height: "auto", marginTop: 8 }} />
+              <button className="btn-danger" type="button" onClick={async () => {
+                const { error } = await deleteImage(settings.collections_banner_url);
+                if (error) {
+                  toast.error("Error al eliminar la imagen", error);
+                  return;
+                }
+                setSettings({ ...settings, collections_banner_url: "" });
+                toast.success("Imagen eliminada");
+              }}>
+                Eliminar imagen
+              </button>
+            </div>
           )}
 
           <label className="admin-label">Imagen de fondo de la página (detrás de las tarjetas)</label>
           <input type="file" accept="image/*" onChange={async (e) => {
             const file = e.target.files?.[0];
             if (!file) return;
-            const { url } = await uploadImage(file, `collections/page-bg-${Date.now()}`);
+            const { url, error } = await uploadImage(file, `collections/page-bg-${Date.now()}`);
+            if (error) {
+              toast.error("Error al subir la imagen", error);
+              return;
+            }
             if (url) setSettings({ ...settings, collections_bg_url: url });
           }} />
           {settings.collections_bg_url && (
-            <img src={settings.collections_bg_url} alt="Fondo de la página" className="admin-preview-img" style={{ width: 200, height: "auto", marginTop: 8 }} />
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+              <img src={settings.collections_bg_url} alt="Fondo de la página" className="admin-preview-img" style={{ width: 200, height: "auto", marginTop: 8 }} />
+              <button className="btn-danger" type="button" onClick={async () => {
+                const { error } = await deleteImage(settings.collections_bg_url);
+                if (error) {
+                  toast.error("Error al eliminar la imagen", error);
+                  return;
+                }
+                setSettings({ ...settings, collections_bg_url: "" });
+                toast.success("Imagen eliminada");
+              }}>
+                Eliminar imagen
+              </button>
+            </div>
           )}
 
           <button className="btn-primary" onClick={handleSaveSettings} disabled={saving}>
