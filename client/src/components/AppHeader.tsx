@@ -49,7 +49,7 @@ export default function AppHeader({
       <header className={`app-header glass${isFloating ? " app-header--floating" : ""}`}>
         <div className="app-header__inner">
           <div className="app-header__left">
-            {showBack ? (
+            {showBack && (
               <button
                 className="btn-icon"
                 onClick={() => navigate(-1)}
@@ -59,24 +59,30 @@ export default function AppHeader({
                   <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
-            ) : (
-              <button
-                className="app-header__logo-btn"
-                onClick={() => navigate("/colecciones")}
-                aria-label="Ir a la colección"
-              >
-                {headerSettings?.logo_url ? (
-                  <img src={headerSettings.logo_url} alt={headerSettings.store_title} className="app-header__logo" />
-                ) : (
-                  <span
-                    className={`app-header__store-name${bigStoreName ? " app-header__store-name--big" : ""}`}
-                    title={storeName ?? headerSettings?.store_title}
-                  >
-                    {storeName ?? headerSettings?.store_title ?? "STORE"}
-                  </span>
-                )}
-              </button>
             )}
+            <button
+              className="app-header__logo-btn"
+              onClick={() => navigate("/colecciones")}
+              aria-label="Ir a la colección"
+            >
+              {headerSettings?.logo_url ? (
+                <>
+                  <img src={headerSettings.logo_url} alt={headerSettings.store_title} className="app-header__logo" />
+                  {storeName && (
+                    <span className="app-header__store-name app-header__store-name--aside" title={storeName}>
+                      {storeName}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span
+                  className={`app-header__store-name${bigStoreName ? " app-header__store-name--big" : ""}`}
+                  title={storeName ?? headerSettings?.store_title}
+                >
+                  {storeName ?? headerSettings?.store_title ?? "STORE"}
+                </span>
+              )}
+            </button>
           </div>
 
           {title && (

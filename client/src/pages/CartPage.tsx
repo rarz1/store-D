@@ -140,7 +140,7 @@ export default function CartPage() {
 
   return (
     <div className="cart-page page-enter">
-      <AppHeader settings={null} storeName="store-d" bigStoreName hideFab />
+      <AppHeader settings={null} storeName="store-d" hideFab />
 
       <div className="cart-page__body">
         {items.length === 0 ? (
