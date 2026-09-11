@@ -1,7 +1,8 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../lib/cart";
 import { useFavorites } from "../lib/favorites";
-import type { SiteSettings } from "../lib/settings";
+import { getSettings, type SiteSettings } from "../lib/settings";
 
 interface Props {
   settings: SiteSettings | null;
@@ -31,6 +32,17 @@ export default function AppHeader({
   const { totalItems } = useCart();
   const { totalCount: totalFavs } = useFavorites();
   const isFloating = variant === "transparent";
+  const [loadedSettings, setLoadedSettings] = useState<SiteSettings | null>(settings);
+
+  useEffect(() => {
+    if (settings) {
+      setLoadedSettings(settings);
+      return;
+    }
+    getSettings().then(setLoadedSettings);
+  }, [settings]);
+
+  const headerSettings = loadedSettings;
 
   return (
     <>
@@ -53,14 +65,14 @@ export default function AppHeader({
                 onClick={() => navigate("/colecciones")}
                 aria-label="Ir a la colección"
               >
-                {settings?.logo_url && !storeName ? (
-                  <img src={settings.logo_url} alt={settings.store_title} className="app-header__logo" />
+                {headerSettings?.logo_url ? (
+                  <img src={headerSettings.logo_url} alt={headerSettings.store_title} className="app-header__logo" />
                 ) : (
                   <span
                     className={`app-header__store-name${bigStoreName ? " app-header__store-name--big" : ""}`}
-                    title={storeName ?? settings?.store_title}
+                    title={storeName ?? headerSettings?.store_title}
                   >
-                    {storeName ?? settings?.store_title ?? "STORE"}
+                    {storeName ?? headerSettings?.store_title ?? "STORE"}
                   </span>
                 )}
               </button>

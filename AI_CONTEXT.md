@@ -516,3 +516,16 @@ Archivo: `client/src/lib/settings.ts`
 - **Separacion en la pagina de la prenda**: `.product-actions-row` (que contiene "AÑADE" y "VER") gano `margin-top: 1rem` en `App.css` para separarlo del boton "CREA TU DISEÑO".
 - **Verificacion**: build OK (solo warning chunk-size); oxlint solo warnings preexistentes.
 - **Deploy**: commit `4e4e269` pusheado a `main` -> Vercel auto-deploy. `Cambios.docx` sin commitear. Delete de imagenes listo para las tres superficies: carrusel (sesion 21), tarjeta colecciones y fondo pag (esta sesion).
+
+### Sesión 23 — 2026-09-10 (Logo en toda la app + íconos PWA + checkout verde neón)
+
+- **Logo en el header de todas las páginas**: `AppHeader.tsx` ahora auto-carga `site_settings` con `getSettings()` cuando recibe `settings={null}` (ProductPage, FavoritesPage, CartPage), por lo que el `<img>` del logo (`.app-header__logo`, 30px) aparece en colecciones, producto, carrito y favoritos. Se eliminó la condición `!storeName` que bloqueaba el logo en el carrito (el texto "store-d" queda solo como fallback si no hay `logo_url`). Formato guardado en la DB: logo 346x330 PNG en `site_settings.logo_url`.
+- **Logo en la página de inicio**: `OnboardingScreen.tsx` muestra el logo arriba a la izquierda sobre el carrusel (`.onboarding__logo`: absolute, top safe-area, z-index 5, clamp 2.5-3.75rem, max-width 42vw, pointer-events none, drop-shadow).
+- **Miniatura de la aplicación**:
+  - Favicon dinámico: helper `setFavicon(url)` en `lib/settings.ts`, llamado en `App.tsx` tras `getSettings()`; actualiza `<link rel="icon">` con el logo de la DB en cualquier carga (cubre admin también).
+  - Íconos PWA estáticos generados con System.Drawing (PowerShell) desde el logo real de Supabase: `public/logo-192.png`, `logo-512.png`, `logo-maskable-512.png` (fondo `#f4f4f5`, logo 64%), `apple-touch-icon.png` (180px fondo blanco), `logo-favicon-32.png`. `manifest.json` apunta a los PNG (any 192/512 + maskable 512) en vez del `icons.svg` genérico. `index.html` ganó `<link rel="apple-touch-icon">`.
+- **Checkout verde neón**: `.btn-checkout` pasa de `#84cc16` hardcodeado a `var(--accent)`/`var(--accent-hover)` para seguir el color del resto de la app. El `.btn-whatsapp` (#25d366) sigue siendo código muerto (no se usa en ningún tsx).
+- **Caché PWA**: `sw.js` `CACHE_NAME` `store-v4` → `store-v5` (la causa de que el usuario viera el verde viejo era la caché stale-while-revalidate con el CSS de una versión anterior; producción ya servía `#84cc16`).
+- **Dato**: el `logo_url` ya estaba guardado en la DB (el logo SÍ se reflejaba en `/colecciones`); el usuario no lo veía porque la página de inicio y el ícono no lo mostraban. Verificado contra producción via REST (consulta anónima a `site_settings`, data pública).
+- **Pendiente detectado**: `store_subtitle` en la DB quedó corrupto (`DISE�O PERSONALIZADO`, carácter de reemplazo por un mal guardado previo de la Ñ). No se tocó.
+- **Verificación**: `npm run build` OK (solo warning chunk-size preexistente); `npm run lint` solo warnings preexistentes. Sin commitear, a la espera de aprobación.

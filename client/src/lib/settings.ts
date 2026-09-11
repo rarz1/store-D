@@ -103,6 +103,17 @@ export function lightenHex(hex: string, percent: number): string {
   return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 }
 
+export function setFavicon(url: string) {
+  let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.appendChild(link);
+  }
+  link.type = "image/png";
+  link.href = url;
+}
+
 export function applyColors(settings: SiteSettings) {
   const root = document.documentElement;
   root.style.setProperty("--bg", settings.color_bg);

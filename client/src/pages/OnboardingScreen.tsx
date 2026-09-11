@@ -11,12 +11,14 @@ export default function OnboardingScreen() {
   const navigate = useNavigate();
   const [storeTitle, setStoreTitle] = useState(FALLBACK_TITLE);
   const [storeSubtitle, setStoreSubtitle] = useState(FALLBACK_SUBTITLE);
+  const [logoUrl, setLogoUrl] = useState("");
 
   useEffect(() => {
     setMeta({ title: `${FALLBACK_TITLE} · Bienvenida`, description: FALLBACK_SUBTITLE });
     getSettings().then((s) => {
       if (s?.store_title) setStoreTitle(s.store_title);
       if (s?.store_subtitle) setStoreSubtitle(s.store_subtitle);
+      if (s?.logo_url) setLogoUrl(s.logo_url);
     });
   }, []);
 
@@ -28,6 +30,9 @@ export default function OnboardingScreen() {
   return (
     <div className="onboarding page-enter">
       <Carousel variant="onboarding" />
+      {logoUrl && (
+        <img src={logoUrl} alt={storeTitle} className="onboarding__logo" aria-hidden />
+      )}
       <div className="onboarding__overlay">
         <h1 className="onboarding__title">{storeTitle.replace(/\s+/g, "_")}</h1>
         <p className="onboarding__subtitle">

@@ -16,7 +16,7 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminGarmentForm from "./pages/admin/AdminGarmentForm";
 import AdminDesigns from "./pages/admin/AdminDesigns";
-import { getSettings, applyColors, type SiteSettings } from "./lib/settings";
+import { getSettings, applyColors, setFavicon, type SiteSettings } from "./lib/settings";
 import "./App.css";
 
 const queryClient = new QueryClient({
@@ -33,6 +33,7 @@ export default function App() {
       if (s) {
         setSettings(s);
         applyColors(s);
+        if (s.logo_url) setFavicon(s.logo_url);
       }
     });
     if ("serviceWorker" in navigator) {

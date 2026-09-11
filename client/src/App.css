@@ -287,6 +287,19 @@
   background: #27272a;
 }
 
+.onboarding__logo {
+  position: absolute;
+  top: max(1.25rem, env(safe-area-inset-top));
+  left: 1.5rem;
+  z-index: 5;
+  height: clamp(2.5rem, 9vw, 3.75rem);
+  width: auto;
+  max-width: 42vw;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
+}
+
 /* ==============================
    HOME
    ============================== */
@@ -2647,9 +2660,9 @@
   gap: 0.5rem;
   padding: 0.95rem 1.25rem;
   margin-top: 0.75rem;
-  background: #84cc16;
+  background: var(--accent);
   color: #000;
-  border: 1.5px solid #84cc16;
+  border: 1.5px solid var(--accent);
   border-radius: var(--radius-pill);
   font-family: var(--font-display);
   font-size: 1rem;
@@ -2662,8 +2675,8 @@
 }
 
 .btn-checkout:hover {
-  background: #65a30d;
-  border-color: #65a30d;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 .btn-checkout:active {
